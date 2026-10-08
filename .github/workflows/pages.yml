@@ -1,11 +1,12 @@
-# Сайт на GitHub Pages: https://xrnskew.github.io/hitbox/ или свой домен (Settings → Pages → Custom domain).
-# Собирает сайт при пуше в main и выкладывает его.
+# Проверки и сайт на GitHub Pages: https://hitbox.space (или https://xrnskew.github.io/hitbox/ без своего домена).
+# При пуше в dev — только проверки и пробная сборка. При пуше в main — проверки, сборка и выкладка;
+# если проверки красные, сайт не меняется.
 # Рядом с сайтом кладёт hitbox.html — версию одним файлом для работы без интернета.
 name: GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   workflow_dispatch:
 
 permissions:
@@ -13,13 +14,51 @@ permissions:
   pages: write
   id-token: write
 
-# одна выкладка за раз; новая отменяет недоделанную
+# одна выкладка за раз на ветку; новая отменяет недоделанную
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  check:
+    name: Проверки
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Линтер
+        run: npm run lint
+
+      - name: Типы и сборка
+        run: npm run build
+
+      - name: Юнит-тесты
+        run: npm test
+
+      - name: Браузер для сквозных проверок
+        run: npx playwright install --with-deps chromium
+
+      - name: Сквозные проверки
+        run: npm run test:e2e
+
+      # упал сквозной тест — запись шагов (trace) можно скачать со страницы запуска
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results
+          path: test-results
+          retention-days: 7
+
   build:
+    name: Сборка
+    needs: check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -34,7 +73,7 @@ jobs:
       # Где живёт сайт: без своего домена — в подпапке (base_path = '/hitbox'),
       # со своим доменом — в корне (base_path пустой). Pages знает это сам.
       - id: pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
 
       - name: Сайт для Pages
         run: npm run build
@@ -46,22 +85,24 @@ jobs:
           npm run build:single
           cp dist-single/hitbox.html dist/hitbox.html
 
-      - uses: actions/upload-pages-artifact@v4
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
 
       # тот же файл — для скачивания со страницы запуска в Actions
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: hitbox
           path: dist-single/hitbox.html
 
   deploy:
+    name: Выкладка
     needs: build
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

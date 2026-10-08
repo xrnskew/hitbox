@@ -77,10 +77,19 @@ npm run test:e2e   # playwright: hitbox.html через file:// и сайт в /
 - `dev` → `main`, когда пользователь просит выложить: fast-forward `git push origin dev:main`
   (если `main` ушла вперёд — сначала влить `main` в `dev`). Других веток не заводить.
 
-Хостинг — только GitHub Pages (Vercel убран): `.github/workflows/pages.yml` собирает `main` при каждом пуше,
-`BASE_PATH` берёт у `actions/configure-pages` (на github.io — `/hitbox/`, на своём домене — `/`); туда же
-кладётся `hitbox.html`. Свой домен с reg.ru — `docs/DOMAIN.md`. Вручную ничего не выкладывать без явной
-просьбы пользователя.
+Хостинг — только GitHub Pages (Vercel убран), домен `hitbox.space` (reg.ru, `docs/DOMAIN.md`).
+`.github/workflows/pages.yml` на каждый пуш в `dev` и `main`: «Проверки» (линтер, сборка, юнит-тесты,
+сквозные в Chromium) → «Сборка» (`BASE_PATH` от `actions/configure-pages`: на github.io — `/hitbox/`, на своём
+домене — `/`; рядом `hitbox.html`) → «Выкладка» только для `main`. Красные проверки — сайт не меняется.
+Вручную ничего не выкладывать без явной просьбы пользователя.
+
+## Задачи в Notion
+
+План и статусы — в Notion: страница «TimeBox — состояние проекта»
+(https://app.notion.com/p/3f3b2e3f46ad81739c03fa270e4c9aab), в ней база «Задачи TimeBox»
+(data source `collection://61229841-8f10-4bc5-adf8-e85e4e31cdd8`; поля «Задача», «Статус»: Сделано / В работе /
+Доработать / Идея, «Область», «Приоритет», «Описание»). Просьба пользователя: вести её самому — взял задачу →
+«В работе», сделал → «Сделано» (описание — что сделано), нашёл новое → новая карточка.
 
 ## Дизайн
 
