@@ -103,3 +103,24 @@ A-запись. Остальные записи из 2а (ещё три A и CNA
 | «Domain is improperly configured»           | DNS ещё не разошёлся — подождать до суток; проверить на https://dnschecker.org    |
 | Enforce HTTPS не включается                 | Подождать; если есть записи CAA — разрешить в них `letsencrypt.org`.              |
 | Домен `.рф`                                 | В GitHub вводить в punycode (`xn--...`); reg.ru показывает его в карточке домена. |
+
+## «DNS check unsuccessful / InvalidDNSError» при верных записях
+
+Так было у `hitbox.space` 8 октября 2026: записи верные, публичные DNS их отдают, DNSSEC выключен, Remove → Save
+не помогает. Похоже, проверка GitHub не получает ответ от DNS-серверов reg.ru: с конца сентября 2026 так же
+застрял другой домен на `ns1.reg.ru`/`ns2.reg.ru`
+([обсуждение на GitHub](https://github.com/orgs/community/discussions/209249)). Сайт по `http://` при этом
+открывается — не выпускается только HTTPS-сертификат.
+
+Что делать по порядку:
+
+1. Подождать сутки с последней правки записей и нажать **Check again**.
+2. Написать в поддержку GitHub (https://support.github.com → GitHub Pages): домен, записи и что проверка их не видит.
+3. Перенести DNS с reg.ru на Cloudflare (бесплатно). Домен остаётся на reg.ru, меняются только DNS-серверы:
+   - https://dash.cloudflare.com → **Add a domain** → `hitbox.space` → тариф **Free**;
+   - проверить записи: четыре **A** `@` на `185.199.108.153`…`185.199.111.153` и **CNAME** `www` →
+     `xrnskew.github.io`; у всех **Proxy status: DNS only** (серое облако) — иначе GitHub не выпустит сертификат;
+   - Cloudflare покажет два своих сервера вида `…ns.cloudflare.com`;
+   - в reg.ru: домен → **DNS-серверы и управление зоной** → **Изменить** → свой список DNS-серверов → вписать
+     оба сервера Cloudflare → сохранить;
+   - когда Cloudflare напишет **Active** (от минут до суток), в GitHub: **Remove** → **Save** → **Check again**.
