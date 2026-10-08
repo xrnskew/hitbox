@@ -7,8 +7,8 @@ import { defineConfig, type Plugin } from 'vite'
 import { viteSingleFile } from 'vite-plugin-singlefile'
 
 // Две сборки:
-// - `npm run build` → dist/ — обычный сайт (Vercel, GitHub Pages). Адрес, где он живёт,
-//   задаёт BASE_PATH: на Pages это '/<репозиторий>/', на Vercel и локально — '/'.
+// - `npm run build` → dist/ — обычный сайт для GitHub Pages. Адрес, где он живёт, задаёт BASE_PATH:
+//   на github.io это '/<репозиторий>/', на своём домене и локально — '/'.
 // - `npm run build:single` (режим single) → dist-single/hitbox.html — один файл со всем
 //   внутри (JS, CSS, шрифты): открывается двойным кликом с флешки, без интернета и сервера.
 export default defineConfig(({ mode }) => {

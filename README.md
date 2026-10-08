@@ -23,24 +23,28 @@ npm run dev        # http://localhost:5173
 
 ## Скрипты
 
-| Команда                | Что делает                                                              |
-| ---------------------- | ----------------------------------------------------------------------- |
-| `npm run dev`          | дев-сервер Vite                                                         |
-| `npm run build`        | проверка типов + сайт в `dist/` (Vercel, GitHub Pages)                  |
-| `npm run build:single` | один файл `dist-single/hitbox.html` для работы без интернета            |
-| `npm test`             | юнит-тесты (Vitest): склейка, синтаксис, переводы, логика игры          |
+| Команда                | Что делает                                                             |
+| ---------------------- | ---------------------------------------------------------------------- |
+| `npm run dev`          | дев-сервер Vite                                                        |
+| `npm run build`        | проверка типов + сайт в `dist/` (GitHub Pages)                         |
+| `npm run build:single` | один файл `dist-single/hitbox.html` для работы без интернета           |
+| `npm test`             | юнит-тесты (Vitest): склейка, синтаксис, переводы, логика игры         |
 | `npm run test:e2e`     | сквозные проверки (Playwright): файл через file:// и сайт в `/hitbox/` |
-| `npm run check`        | линтер, сборка и юнит-тесты                                             |
-| `npm run lint`         | линтер (oxlint)                                                         |
-| `npm run preview`      | локальный просмотр собранного `dist/`                                   |
+| `npm run check`        | линтер, сборка и юнит-тесты                                            |
+| `npm run lint`         | линтер (oxlint)                                                        |
+| `npm run preview`      | локальный просмотр собранного `dist/`                                  |
+
+## Ветки
+
+- `main` — то, что на сайте. Каждый пуш в `main` выкладывает сайт на GitHub Pages.
+- `dev` — рабочая ветка: все изменения сначала сюда, в `main` — после проверок, когда пора выкладывать.
 
 ## Где открыть
 
-- **Vercel** — https://timeboxcl.vercel.app, собирается сам из основной ветки.
-- **GitHub Pages** — https://xrnskew.github.io/hitbox/, запасной адрес (vercel.app из России
-  без VPN открывается плохо). Собирает `.github/workflows/pages.yml` при пуше в основную
-  ветку; сайт лежит в подпапке, поэтому сборке передаётся `BASE_PATH=/hitbox/`
-  (на Vercel и локально — `/`).
+- **GitHub Pages** — https://xrnskew.github.io/hitbox/ (единственный хостинг). Собирает
+  `.github/workflows/pages.yml` при пуше в `main`. Путь сайта сборка узнаёт у Pages сама: на github.io
+  это подпапка `/hitbox/`, на своём домене — корень `/` (локально тоже `/`). Как подключить свой домен
+  с reg.ru — `docs/DOMAIN.md`.
 - **Без интернета** — `dist-single/hitbox.html` (`npm run build:single`): один файл со всем
   внутри (код, стили, шрифты), открывается двойным кликом в Chrome с флешки, без сервера.
   Готовый файл есть и на Pages: https://xrnskew.github.io/hitbox/hitbox.html (сохранить
@@ -88,6 +92,7 @@ tests/unit/               Vitest
 tests/e2e/                Playwright
 docs/SPEC.md              ТЗ
 docs/PLAN.md              план и предложения
+docs/DOMAIN.md            свой домен с reg.ru для GitHub Pages
 ```
 
 Импорты из `src` можно писать через алиас `@/`, например `import App from '@/App'`.

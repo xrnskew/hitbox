@@ -27,9 +27,6 @@ dist-ssr
 test-results
 playwright-report
 
-# Vercel
-.vercel
-
 # Сборки: одиночный файл и проверочная сборка для Pages (e2e)
 dist-single
 dist-pages

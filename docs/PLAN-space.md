@@ -515,8 +515,8 @@ function checkHits() {
 ## 12. Порядок работы
 
 Работа идёт по этапам из раздела 10. После каждого этапа: `npm run lint`, `npm run build`, `npm test`,
-коммит и пуш в рабочую ветку. После этапов 3 и 4 ещё `npm run test:e2e`. Когда всё зелёное — fast-forward
-в основную ветку (`claude/magical-carson-tegs5x`), как сказано в `CLAUDE.md`, и Vercel сам выложит сайт.
+коммит и пуш в рабочую ветку. После этапов 3 и 4 ещё `npm run test:e2e`. Когда всё зелёное — в `main`,
+как сказано в `CLAUDE.md`, и GitHub Pages сам выложит сайт.
 
 ### Этап 1. Игра без интерфейса — `src/lessons/space/tabs.ts`
 

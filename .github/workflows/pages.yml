@@ -1,5 +1,5 @@
-# Запасной адрес сайта без Vercel: https://<владелец>.github.io/<репозиторий>/
-# Собирает сайт при пуше в основную ветку и выкладывает на GitHub Pages.
+# Сайт на GitHub Pages: https://xrnskew.github.io/hitbox/ или свой домен (Settings → Pages → Custom domain).
+# Собирает сайт при пуше в main и выкладывает его.
 # Рядом с сайтом кладёт hitbox.html — версию одним файлом для работы без интернета.
 name: GitHub Pages
 
@@ -31,10 +31,15 @@ jobs:
 
       - run: npm ci
 
-      - name: Сайт для Pages (живёт в подпапке /<репозиторий>/)
+      # Где живёт сайт: без своего домена — в подпапке (base_path = '/hitbox'),
+      # со своим доменом — в корне (base_path пустой). Pages знает это сам.
+      - id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Сайт для Pages
         run: npm run build
         env:
-          BASE_PATH: /${{ github.event.repository.name }}/
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}/
 
       - name: Версия одним файлом
         run: |
