@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { currentQuest, extraStates, hereStation, lessonProgress, levelStates, stationList } from '@/core/levels.ts'
 import { checkFinishedPassword } from '@/core/lock.ts'
+import { isPicture } from '@/core/pictures.ts'
 import { functionLines } from '@/core/progress.ts'
 import { pickKind } from '@/editor/pickers.ts'
 import { GUIDE_EXTRAS, GUIDE_STEPS } from '@/lessons/catch/guide.ts'
+import { LESSONS } from '@/lessons/index.ts'
 import {
   BOMB_APPLES,
   BOMB_CATCH,
@@ -226,6 +228,24 @@ describe('станции карты', () => {
     expect(list.map((s) => s.key)).toEqual(['step-1', 'step-2', 'step-3', 'extra-4', 'extra-5', 'finish'])
     expect(list.map((s) => s.state)).toEqual(['now', 'locked', 'locked', 'locked', 'locked', 'locked'])
     expect(hereStation(list).key).toBe('step-1')
+  })
+
+  it('у каждой игры: шаги 1…N, бонусы нумеруются дальше, ключи не повторяются, картинки есть в наборе', () => {
+    for (const l of LESSONS) {
+      const list = stationList(l, lessonProgress(l, l.tutorial.initial))
+      expect(
+        l.steps.map((s) => s.step),
+        l.id,
+      ).toEqual(l.steps.map((_, i) => i + 1))
+      // номер бонуса — это id блока «guide-task-N» и подпись чек-поинта в шапке
+      expect(
+        l.extras.map((x) => x.n),
+        l.id,
+      ).toEqual(l.extras.map((_, i) => l.steps.length + i + 1))
+      expect(new Set(list.map((s) => s.key)).size, l.id).toBe(list.length)
+      for (const s of list) expect(isPicture(s.pic), `${l.id}: ${s.title} — ${s.pic}`).toBe(true)
+      expect(hereStation(list).key, l.id).toBe('step-1')
+    }
   })
 
   it('всё пройдено — ты на финише', () => {

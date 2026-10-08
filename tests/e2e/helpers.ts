@@ -140,3 +140,31 @@ export async function buildGame(page: Page) {
   await buildCatch(page)
   await tab(page, 'Гайд')
 }
+
+/** Птичка, весь шаг 1: создать и нарисовать птицу, собрать, падение по кусочкам, гравитация 0.4. */
+export async function birdStep1(page: Page) {
+  await openQuest(page, 1, 'Открыть «Птица»')
+  await addPieces(page, 1)
+  await page.locator('.cm-pick').first().click()
+  await pick(page, 'сова')
+  await addPieces(page, 2)
+  await run(page)
+  await openQuest(page, 1, 'Открыть «Птица»', 'Птица падает')
+  await addPieces(page, 4)
+  await openQuest(page, 1, 'Открыть «Движок»', 'Включи гравитацию')
+  await page.keyboard.type('0.4')
+}
+
+/** Космос, весь шаг 1: создать и нарисовать корабль, собрать, полёт по кусочкам, скорость 6. */
+export async function spaceStep1(page: Page) {
+  await openQuest(page, 1, 'Открыть «Корабль»')
+  await addPieces(page, 1)
+  await page.locator('.cm-pick').first().click()
+  await pick(page, 'тарелка')
+  await addPieces(page, 2)
+  await run(page)
+  await openQuest(page, 1, 'Открыть «Корабль»', 'Научи корабль летать')
+  await addPieces(page, 4)
+  await openQuest(page, 1, 'Открыть «Движок»', 'Скорость корабля')
+  await page.keyboard.type('6')
+}
