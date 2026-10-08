@@ -5,8 +5,7 @@ name: GitHub Pages
 
 on:
   push:
-    # main — на будущее; сейчас основная ветка репозитория — claude/magical-carson-tegs5x
-    branches: [main, claude/magical-carson-tegs5x]
+    branches: [main]
   workflow_dispatch:
 
 permissions:

@@ -170,7 +170,7 @@ Ctrl-y явно. Тема с `{ dark: true }`. Подсветка — класс
 ## 10–11. Как проверять
 
 Сценарии проверки перед сдачей — в `tests/e2e/sandbox.spec.ts` (Playwright на
-`dist-single/hitbox.html` через file:// и на сайте в `/TimeBox/`, включая офлайн и ширину 375px).
+`dist-single/hitbox.html` через file:// и на сайте в `/hitbox/`, включая офлайн и ширину 375px).
 
 ## 12. Если источника нет — скажи об этом
 
@@ -338,4 +338,4 @@ Ctrl-y явно. Тема с `{ dark: true }`. Подсветка — класс
 - **Сборки (версия 4):** `npm run build` — обычный сайт в `dist/` для Vercel и GitHub Pages
   (base из `BASE_PATH`); офлайн-версия одним файлом — `npm run build:single` →
   `dist-single/hitbox.html`. Сквозные проверки идут на обеих: файл через file:// и сайт
-  в подпапке `/TimeBox/`.
+  в подпапке `/hitbox/`.

@@ -564,10 +564,10 @@ test('шрифты и скрипты берутся по правильному 
     // одиночный файл: всё внутри, кроме самой страницы ничего не грузится
     expect(loaded.filter((u) => !u.startsWith('data:') && !u.startsWith(base.href))).toEqual([])
   } else {
-    // сайт в подпапке: скрипт, стили и шрифты — из /TimeBox/assets/
+    // сайт в подпапке: скрипт, стили и шрифты — из /hitbox/assets/
     const assets = loaded.filter((u) => /\.(js|css|woff2)$/.test(u))
     expect(assets.length).toBeGreaterThan(3)
-    for (const u of assets) expect(u.startsWith(`${base.origin}/TimeBox/assets/`)).toBe(true)
+    for (const u of assets) expect(u.startsWith(`${base.origin}/hitbox/assets/`)).toBe(true)
   }
 })
 

@@ -29,7 +29,7 @@ npm run dev        # http://localhost:5173
 | `npm run build`        | проверка типов + сайт в `dist/` (Vercel, GitHub Pages)                  |
 | `npm run build:single` | один файл `dist-single/hitbox.html` для работы без интернета            |
 | `npm test`             | юнит-тесты (Vitest): склейка, синтаксис, переводы, логика игры          |
-| `npm run test:e2e`     | сквозные проверки (Playwright): файл через file:// и сайт в `/TimeBox/` |
+| `npm run test:e2e`     | сквозные проверки (Playwright): файл через file:// и сайт в `/hitbox/` |
 | `npm run check`        | линтер, сборка и юнит-тесты                                             |
 | `npm run lint`         | линтер (oxlint)                                                         |
 | `npm run preview`      | локальный просмотр собранного `dist/`                                   |
@@ -37,13 +37,13 @@ npm run dev        # http://localhost:5173
 ## Где открыть
 
 - **Vercel** — https://timeboxcl.vercel.app, собирается сам из основной ветки.
-- **GitHub Pages** — https://xrnskew.github.io/TimeBox/, запасной адрес (vercel.app из России
+- **GitHub Pages** — https://xrnskew.github.io/hitbox/, запасной адрес (vercel.app из России
   без VPN открывается плохо). Собирает `.github/workflows/pages.yml` при пуше в основную
-  ветку; сайт лежит в подпапке, поэтому сборке передаётся `BASE_PATH=/TimeBox/`
+  ветку; сайт лежит в подпапке, поэтому сборке передаётся `BASE_PATH=/hitbox/`
   (на Vercel и локально — `/`).
 - **Без интернета** — `dist-single/hitbox.html` (`npm run build:single`): один файл со всем
   внутри (код, стили, шрифты), открывается двойным кликом в Chrome с флешки, без сервера.
-  Готовый файл есть и на Pages: https://xrnskew.github.io/TimeBox/hitbox.html (сохранить
+  Готовый файл есть и на Pages: https://xrnskew.github.io/hitbox/hitbox.html (сохранить
   как…), и в артефакте `hitbox` у каждого запуска workflow в Actions.
 
 Роутинга нет: готовая игра — это тот же адрес с `?finished`, поэтому прямые ссылки и
