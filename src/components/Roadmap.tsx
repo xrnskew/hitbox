@@ -1,5 +1,6 @@
 import { type CSSProperties, useEffect, useRef } from 'react'
-import type { ExtraState, LevelState } from '@/core/levels.ts'
+import { useController } from '@/app/context.ts'
+import type { LevelState, Station, StationState } from '@/core/levels.ts'
 import { INK } from '@/core/pictures.ts'
 import type { Lesson } from '@/lessons/types.ts'
 import { CheckIcon, LockIcon } from './icons.tsx'
@@ -8,62 +9,13 @@ import styles from './Roadmap.module.css'
 
 // Карта игры над гайдом — как карта уровней в настоящих играх. Дорога петляет от станции к станции: шаги,
 // бонусные задания и финиш с подарком. Пройденный кусок дороги жёлтый, текущая станция пульсирует, над ней — стрелка.
-// Нажал станцию — гайд прокручивается к ней. Всё считается по тем же квестам, что и гайд.
+// Нажал станцию — под картой открывается она одна. Всё считается по тем же квестам, что и гайд.
 
-type State = 'done' | 'now' | 'open' | 'locked'
-
-interface Station {
-  key: string
-  kind: 'step' | 'extra' | 'finish'
-  /** Номер шага — только у шагов: это последовательность. */
-  n?: number
-  title: string
-  pic: string
-  state: State
-  /** id блока гайда, к которому прокрутить. */
-  target: string
-}
-
-const STATE_TEXT: Record<State, string> = {
+const STATE_TEXT: Record<StationState, string> = {
   done: 'пройдено',
   now: 'ты здесь',
   open: 'открыто',
   locked: 'закрыто',
-}
-
-function stations(lesson: Lesson, levels: LevelState[], extras: ExtraState[]): Station[] {
-  const list: Station[] = [
-    ...lesson.steps.map((s, i) => ({
-      key: `s${s.step}`,
-      kind: 'step' as const,
-      n: s.step,
-      title: s.title,
-      pic: s.pic,
-      state: (levels[i].done ? 'done' : levels[i].unlocked ? 'open' : 'locked') as State,
-      target: `guide-step-${s.step}`,
-    })),
-    ...lesson.extras.map((x, i) => ({
-      key: `x${x.n}`,
-      kind: 'extra' as const,
-      title: x.title,
-      pic: x.pic,
-      state: (extras[i].done ? 'done' : extras[i].unlocked ? 'open' : 'locked') as State,
-      target: `guide-task-${x.n}`,
-    })),
-  ]
-  const all = list.every((s) => s.state === 'done')
-  list.push({
-    key: 'finish',
-    kind: 'finish',
-    title: 'Финиш',
-    pic: 'подарок',
-    state: all ? 'done' : 'locked',
-    target: 'guide-finish',
-  })
-  // ты здесь — первая открытая станция; всё пройдено — финиш
-  const here = list.findIndex((s) => s.state === 'open')
-  list[here >= 0 ? here : list.length - 1].state = here >= 0 ? 'now' : 'done'
-  return list
 }
 
 /** Стрелка «ты здесь» по клеткам: k — контур, y — жёлтая. */
@@ -97,15 +49,25 @@ function road(points: { x: number; y: number }[]) {
     .join('')
 }
 
-export function Roadmap({ lesson, levels, extras }: { lesson: Lesson; levels: LevelState[]; extras: ExtraState[] }) {
-  const list = stations(lesson, levels, extras)
+export function Roadmap({
+  lesson,
+  levels,
+  list,
+  shown,
+}: {
+  lesson: Lesson
+  levels: LevelState[]
+  list: Station[]
+  /** Ключ станции, открытой под картой. */
+  shown: string
+}) {
+  const c = useController()
   const points = list.map((_, i) => spot(i, list.length))
-  const here = Math.max(
-    0,
-    list.findIndex((s) => s.state === 'now'),
-  )
   const atFinish = list.every((s) => s.state === 'done')
-  const at = atFinish ? list.length - 1 : here
+  const at = Math.max(
+    0,
+    list.findIndex((s) => s.state === 'now' || (atFinish && s.kind === 'finish')),
+  )
   // на узком экране карта шире окна и листается вбок: текущая станция — посередине
   const land = useRef<HTMLDivElement>(null)
   const atX = points[at].x
@@ -114,15 +76,8 @@ export function Roadmap({ lesson, levels, extras }: { lesson: Lesson; levels: Le
     if (el && el.scrollWidth > el.clientWidth) el.scrollLeft = (el.scrollWidth * atX) / 100 - el.clientWidth / 2
   }, [atX])
   const current = list[at]
-  const level = current.kind === 'step' ? levels[(current.n ?? 1) - 1] : null
-  const step = current.kind === 'step' ? lesson.steps[(current.n ?? 1) - 1] : null
-
-  const go = (target: string) => {
-    const el = document.getElementById(target)
-    if (!el) return
-    const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    el.scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'start' })
-  }
+  const level = current.kind === 'step' ? levels[current.n - 1] : null
+  const step = current.kind === 'step' ? lesson.steps[current.n - 1] : null
 
   return (
     <nav className={styles.map} aria-label="Карта игры">
@@ -161,13 +116,15 @@ export function Roadmap({ lesson, levels, extras }: { lesson: Lesson; levels: Le
                 data-kind={s.kind}
                 data-state={s.state}
                 data-row={i % 2 ? 'top' : 'bottom'}
+                data-shown={s.key === shown}
                 style={{ '--x': `${points[i].x}%`, '--y': `${points[i].y}%` } as CSSProperties}
               >
                 <button
                   type="button"
                   className={styles.pad}
-                  onClick={() => go(s.target)}
+                  onClick={() => c.showStation(s.key)}
                   aria-current={s.state === 'now' ? 'step' : undefined}
+                  aria-pressed={s.key === shown}
                   aria-label={`${s.kind === 'step' ? `Шаг ${s.n}: ` : s.kind === 'extra' ? 'Бонус: ' : ''}${s.title} — ${STATE_TEXT[s.state]}`}
                 >
                   <Pic name={s.pic} className={styles.padPic} />

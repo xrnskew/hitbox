@@ -1,6 +1,6 @@
 import { explainRuntimeError, formatError, isSyntaxMessage } from '@/core/errors.ts'
 import { planSettingInsert } from '@/core/insert.ts'
-import { currentQuest, type LevelState, lessonProgress, levelStates } from '@/core/levels.ts'
+import { currentQuest, hereStation, type LevelState, lessonProgress, levelStates, stationList } from '@/core/levels.ts'
 import { checkFinishedPassword } from '@/core/lock.ts'
 import { hasContent, stepDone } from '@/core/progress.ts'
 import { findSyntaxError, firstSyntaxError, type SyntaxIssue } from '@/core/syntax.ts'
@@ -74,6 +74,9 @@ export interface AppState {
   picker: Picker | null
   /** Подсветку «Собрать» закрыли — до следующего запуска. */
   spotOff: boolean
+  /** Станция карты, которую ученик открыл сам, и где он был в тот момент. Ученик ушёл дальше — выбор забыт,
+   *  под картой снова текущая станция. null — показываем текущую. */
+  station: { key: string; at: string } | null
 }
 
 export interface LogEntry {
@@ -130,6 +133,7 @@ export function createController(lesson: Lesson, variant: LessonVariant) {
     unreadLogs: 0,
     picker: null,
     spotOff: false,
+    station: null,
   })
   const logs = createStore<{ entries: LogEntry[] }>({ entries: [] })
   const inspector = createStore<{ values: Record<string, string> }>({ values: {} })
@@ -392,6 +396,14 @@ export function createController(lesson: Lesson, variant: LessonVariant) {
     const task = questAt(next.step, next.quest)
     if (task.kind === 'build' && task.tab === editors?.current) return ' Дальше — жми «Добавить» прямо в коде.'
     return ` Следующий квест «${task.title}» — в «Гайде».`
+  }
+
+  /** Показать под картой станцию (`step-2`, `extra-4`, `finish`) и открыть «Гайд». */
+  function showStation(key: string) {
+    const { codes, ran } = store.get()
+    const here = hereStation(stationList(lesson, lessonProgress(lesson, codes, ran))).key
+    store.set({ station: key === here ? null : { key, at: here } })
+    selectView('guide')
   }
 
   /** Открыть квест: «собери» — к всплывшему куску, «поправь» — выделить, что менять, «нажми» — собрать. */
@@ -696,6 +708,7 @@ export function createController(lesson: Lesson, variant: LessonVariant) {
     },
 
     openTask,
+    showStation,
     insertPiece,
     pick,
     closePicker,

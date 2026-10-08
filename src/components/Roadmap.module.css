@@ -227,6 +227,26 @@
   color: var(--ink-3);
 }
 
+/* станция, открытая под картой: подпись — светлая табличка, под ней уголок вниз, к открытому блоку */
+.station[data-shown='true'] .label {
+  position: relative;
+  max-width: none;
+  padding: 2px 8px 3px;
+  border-radius: 6px;
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.station[data-shown='true'] .label::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  border: 5px solid transparent;
+  border-top-color: var(--ink);
+  transform: translateX(-50%);
+}
+
 /* ===== Текущая станция: мягко пульсирует, над ней — пиксельная стрелка ===== */
 .station[data-state='now'] .pad::after {
   content: '';

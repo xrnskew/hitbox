@@ -39,8 +39,13 @@
 }
 
 /* ===== Шаги — дорожка уровней ===== */
+.stage {
+  scroll-margin-top: 12px;
+}
+
+/* ===== Станция под картой: шаг, бонус или финиш — по одному ===== */
 .track {
-  margin: 40px 0 0;
+  margin: 28px 0 0;
   padding: 0;
   list-style: none;
 }
@@ -50,27 +55,7 @@
   display: grid;
   grid-template-columns: 52px minmax(0, 1fr);
   gap: 20px;
-  padding-bottom: 40px;
   scroll-margin-top: 20px;
-}
-
-/* дорожка от узла к узлу */
-.step::before {
-  content: '';
-  position: absolute;
-  top: 60px;
-  bottom: 6px;
-  left: 25px;
-  width: 2px;
-  background: repeating-linear-gradient(to bottom, var(--rule-2) 0 6px, transparent 6px 12px);
-}
-
-.step:last-child::before {
-  display: none;
-}
-
-.step[data-state='done']::before {
-  background: var(--leaf-fill);
 }
 
 .node {
@@ -321,6 +306,10 @@
 }
 
 .unlocked {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
   margin-top: 12px !important;
   color: var(--leaf);
   font-size: 14px;
@@ -384,9 +373,7 @@
 
 /* ===== Дополнительные задания («Бомба и звезда», «Взрывы и волны»…) ===== */
 .section {
-  margin-top: 8px;
-  padding-top: 32px;
-  border-top: 2px dashed var(--rule);
+  margin-top: 28px;
 }
 
 .section h2 {
@@ -510,6 +497,46 @@
   color: var(--sun);
 }
 
+/* ===== Соседние станции ===== */
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 32px;
+}
+
+.near {
+  min-height: 60px;
+  max-width: 100%;
+  padding: 8px 16px;
+  text-align: left;
+}
+
+.near[data-dir='next'] {
+  margin-left: auto;
+  text-align: right;
+}
+
+.nearPic {
+  flex-shrink: 0;
+  font-size: 30px;
+}
+
+.nearText {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  color: var(--ink);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.nearDir {
+  color: var(--ink-3);
+  font-size: var(--text-s);
+  font-weight: 500;
+}
+
 .footer {
   display: flex;
   flex-wrap: wrap;
@@ -540,11 +567,6 @@
     width: 40px;
     height: 40px;
     font-size: 16px;
-  }
-
-  .step::before {
-    top: 48px;
-    left: 19px;
   }
 
   .pieces {

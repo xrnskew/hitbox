@@ -62,8 +62,16 @@ export async function savedCodes(page: Page): Promise<string[]> {
 export async function openQuest(page: Page, n: number, button: string | RegExp, quest?: string) {
   await tab(page, 'Гайд')
   const step = page.locator(`#guide-step-${n}`)
+  // под картой видна одна станция: если открыта другая — выбрать шаг на карте
+  if (await step.isHidden()) await showStation(page, new RegExp(`^Шаг ${n}:`))
   const scope = quest ? step.getByRole('region', { name: `Квест: ${quest}` }) : step
   await scope.getByRole('button', { name: button }).click()
+}
+
+/** Открыть станцию под картой в «Гайде»: шаг, бонус или финиш — по подписи кнопки на карте. */
+export async function showStation(page: Page, name: string | RegExp) {
+  await tab(page, 'Гайд')
+  await page.getByRole('navigation', { name: 'Карта игры' }).getByRole('button', { name }).click()
 }
 
 /** Нажать «Добавить» у всплывающих в коде кусков `count` раз подряд. */

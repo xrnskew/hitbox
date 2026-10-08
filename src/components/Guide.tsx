@@ -1,6 +1,13 @@
-import { memo, useMemo, useState } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { useApp, useController } from '@/app/context.ts'
-import { type ExtraState, type LevelState, lessonProgress } from '@/core/levels.ts'
+import {
+  type ExtraState,
+  hereStation,
+  type LevelState,
+  lessonProgress,
+  type Station,
+  stationList,
+} from '@/core/levels.ts'
 import { type FnState, stepStates } from '@/core/progress.ts'
 import type { BuildTask, EditTask, GuideExtra, GuideStep, RunTask, StepTask } from '@/lessons/types.ts'
 import { CodeBlock } from './CodeBlock.tsx'
@@ -14,6 +21,7 @@ import {
   PaletteIcon,
   PlayIcon,
   TargetIcon,
+  TriangleIcon,
   WarnIcon,
 } from './icons.tsx'
 import { Pic } from './Pic.tsx'
@@ -23,13 +31,36 @@ import styles from './Guide.module.css'
 
 // Гайд заменяет презентацию: ученик идёт в своём темпе. Шаг — цепочка квестов: код собирается
 // кнопками «Добавить» по кусочкам прямо во вкладке. Следующий шаг открывается, когда выполнены все
-// квесты. Не размонтируется, чтобы помнить прокрутку.
+// квесты. Под картой — одна станция: та, где ученик сейчас, или та, что он выбрал на карте; остальные
+// скрыты, но не размонтируются (помнят раскрытые «Готовый код» и подсказки). Гайд тоже не размонтируется.
 export function Guide() {
   const c = useController()
   const codes = useApp((s) => s.codes)
   const ran = useApp((s) => s.ran)
+  const picked = useApp((s) => s.station)
   const { lesson } = c
-  const { levels, extras, allDone } = useMemo(() => lessonProgress(lesson, codes, ran), [lesson, codes, ran])
+  const progress = useMemo(() => lessonProgress(lesson, codes, ran), [lesson, codes, ran])
+  const { levels, extras, allDone } = progress
+  const list = useMemo(() => stationList(lesson, progress), [lesson, progress])
+  const here = hereStation(list).key
+  // выбор живёт, пока ученик на той же станции; ушёл дальше — показываем, где он теперь
+  const choice = picked && picked.at === here ? list.findIndex((s) => s.key === picked.key) : -1
+  const index = choice >= 0 ? choice : list.findIndex((s) => s.key === here)
+  const station = list[index]
+
+  // сменилась станция, а начало гайда выше экрана (нажали «Дальше» внизу) — подняться к карте
+  const top = useRef<HTMLDivElement>(null)
+  const first = useRef(true)
+  useEffect(() => {
+    if (first.current) {
+      first.current = false
+      return
+    }
+    const el = top.current
+    if (!el || el.getBoundingClientRect().top >= 0) return
+    const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    el.scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'start' })
+  }, [station.key])
 
   return (
     <article className={styles.guide}>
@@ -47,15 +78,25 @@ export function Guide() {
         </ul>
       </header>
 
-      <Roadmap lesson={lesson} levels={levels} extras={extras} />
+      <div ref={top} className={styles.stage}>
+        <Roadmap lesson={lesson} levels={levels} list={list} shown={station.key} />
+      </div>
 
-      <ol className={styles.track} aria-label="Шаги">
+      <ol className={styles.track} aria-label="Шаги" hidden={station.kind !== 'step'}>
         {lesson.steps.map((step, i) => (
-          <StepItem key={step.step} index={i} step={step} total={lesson.steps.length} level={levels[i]} codes={codes} />
+          <StepItem
+            key={step.step}
+            index={i}
+            step={step}
+            total={lesson.steps.length}
+            level={levels[i]}
+            codes={codes}
+            hidden={station.key !== `step-${step.step}`}
+          />
         ))}
       </ol>
 
-      <section className={styles.section} aria-labelledby="guide-extras">
+      <section className={styles.section} aria-labelledby="guide-extras" hidden={station.kind !== 'extra'}>
         <h2 id="guide-extras">{lesson.extrasTitle}</h2>
         <p className={styles.sub}>
           {allDone
@@ -64,7 +105,7 @@ export function Guide() {
         </p>
         <div className={styles.extras}>
           {lesson.extras.map((x, i) => (
-            <Extra key={x.n} index={i} extra={x} state={extras[i]} />
+            <Extra key={x.n} index={i} extra={x} state={extras[i]} hidden={station.key !== `extra-${x.n}`} />
           ))}
         </div>
         <p className={styles.warn}>
@@ -75,6 +116,19 @@ export function Guide() {
         </p>
       </section>
 
+      {station.kind === 'finish' && (
+        <section className={styles.section} aria-labelledby="guide-finish-title">
+          <h2 id="guide-finish-title">Финиш</h2>
+          <p className={styles.sub}>
+            {station.state === 'done'
+              ? 'Игра собрана целиком, и все бонусы тоже. Поиграй сам — или открой готовую версию и сравни.'
+              : 'Финиш откроется, когда пройдёшь все шаги и бонусные задания.'}
+          </p>
+        </section>
+      )}
+
+      <StationNav prev={list[index - 1]} next={list[index + 1]} />
+
       <footer id="guide-finish" className={styles.footer}>
         <button type="button" className="key key--l" onClick={() => c.openDialog({ kind: 'unlock' })}>
           <LockIcon size={16} />
@@ -83,6 +137,35 @@ export function Guide() {
         <span>Под паролем.</span>
       </footer>
     </article>
+  )
+}
+
+/** Соседние станции внизу: дочитал шаг — не надо листать обратно к карте. */
+function StationNav({ prev, next }: { prev?: Station; next?: Station }) {
+  const c = useController()
+  const name = (s: Station) => (s.kind === 'step' ? `Шаг ${s.n}. ${s.title}` : s.title)
+  const key = (s: Station, dir: 'prev' | 'next') => (
+    <button
+      type="button"
+      className={`key key--l key--ghost ${styles.near}`}
+      data-dir={dir}
+      onClick={() => c.showStation(s.key)}
+    >
+      {dir === 'prev' && <TriangleIcon dir="left" size={12} />}
+      <Pic name={s.pic} className={styles.nearPic} />
+      <span className={styles.nearText}>
+        <span className={styles.nearDir}>{dir === 'prev' ? 'Назад' : 'Дальше'}</span>
+        <span>{name(s)}</span>
+      </span>
+      {s.state === 'locked' && <LockIcon size={13} />}
+      {dir === 'next' && <TriangleIcon dir="right" size={12} />}
+    </button>
+  )
+  return (
+    <nav className={styles.nav} aria-label="Соседние станции">
+      {prev && key(prev, 'prev')}
+      {next && key(next, 'next')}
+    </nav>
   )
 }
 
@@ -98,12 +181,14 @@ const StepItem = memo(function StepItem({
   total,
   level,
   codes,
+  hidden,
 }: {
   index: number
   step: GuideStep
   total: number
   level: LevelState
   codes: string[]
+  hidden: boolean
 }) {
   const c = useController()
   const [showCode, setShowCode] = useState(false)
@@ -114,7 +199,7 @@ const StepItem = memo(function StepItem({
   const state = !level.unlocked ? 'locked' : level.done ? 'done' : 'active'
 
   return (
-    <li id={id} className={styles.step} data-state={state}>
+    <li id={id} className={styles.step} data-state={state} hidden={hidden}>
       <span className={styles.node} aria-hidden="true">
         {state === 'done' ? <CheckIcon size={22} /> : state === 'locked' ? <LockIcon size={18} /> : step.step}
       </span>
@@ -284,8 +369,21 @@ function TaskBox({
       {task.kind === 'edit' && <EditTaskBody stepIndex={stepIndex} taskIndex={taskIndex} task={task} done={done} />}
       {task.kind === 'build' && <BuildTaskBody stepIndex={stepIndex} taskIndex={taskIndex} task={task} code={code} />}
       {task.kind === 'run' && <RunTaskBody task={task} done={done} />}
-      {next && <p className={styles.unlocked}>Шаг {next} открыт — листай ниже.</p>}
+      {next && <NextStep n={next} />}
     </section>
+  )
+}
+
+/** Шаг пройден, а ученик вернулся к нему на карте — кнопка к следующему. */
+function NextStep({ n }: { n: number }) {
+  const c = useController()
+  return (
+    <p className={styles.unlocked}>
+      Шаг {n} открыт.
+      <button type="button" className="key key--s" onClick={() => c.showStation(`step-${n}`)}>
+        Перейти к шагу {n}
+      </button>
+    </p>
   )
 }
 
@@ -402,7 +500,17 @@ function RunTaskBody({ task, done }: { task: RunTask; done: boolean }) {
   )
 }
 
-const Extra = memo(function Extra({ index, extra, state }: { index: number; extra: GuideExtra; state: ExtraState }) {
+const Extra = memo(function Extra({
+  index,
+  extra,
+  state,
+  hidden,
+}: {
+  index: number
+  extra: GuideExtra
+  state: ExtraState
+  hidden: boolean
+}) {
   const c = useController()
   const [open, setOpen] = useState(false)
   const settingTab = c.variant.tabs[extra.setting.tab].title
@@ -410,7 +518,13 @@ const Extra = memo(function Extra({ index, extra, state }: { index: number; extr
   const locked = !state.unlocked
 
   return (
-    <div className={styles.extra} id={`guide-task-${extra.n}`} data-locked={locked} data-done={state.done}>
+    <div
+      className={styles.extra}
+      id={`guide-task-${extra.n}`}
+      data-locked={locked}
+      data-done={state.done}
+      hidden={hidden}
+    >
       <div className={styles.extraHead}>
         <span className={styles.badge} aria-hidden="true">
           {locked ? <LockIcon size={22} /> : <Pic name={extra.pic} />}

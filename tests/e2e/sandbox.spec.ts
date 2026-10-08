@@ -12,6 +12,7 @@ import {
   openQuest,
   pick,
   run,
+  showStation,
   runButton,
   savedCodes,
   tab,
@@ -432,12 +433,17 @@ test('8. бомба и звезда: закрыты до сборки игры, 
   const star = page.locator('#guide-task-5')
   const setting = 'Добавить переменную в «Движок»'
   const code = 'Вставить код в «Яблоки» и «Поимка»'
+  // под картой одна станция: бомбу сначала открыть на карте
+  await expect(bomb).toBeHidden()
+  await showStation(page, /^Бонус: Бомба/)
   await expect(bomb.getByRole('button', { name: setting })).toBeDisabled()
 
+  // игра собрана — под картой сама открылась бомба: ученик теперь там
   await buildGame(page)
   await expect(bomb.getByRole('button', { name: setting })).toBeEnabled()
   await expect(bomb.getByRole('button', { name: code })).toBeDisabled()
-  await expect(star.getByRole('button', { name: setting })).toBeDisabled()
+  // звезда скрыта, пока под картой бомба, — и закрыта до бомбы
+  await expect(star).toHaveAttribute('data-locked', 'true')
 
   await bomb.getByRole('button', { name: setting }).click()
   let codes = await savedCodes(page)
@@ -621,7 +627,7 @@ test('лишних кнопок нет: «Поделиться», «Вид», п
     await expect(page.getByRole('button', { name, exact: true })).toHaveCount(0)
 })
 
-test('карта игры: текущая станция со стрелкой, станции ведут к шагам', async ({ page }) => {
+test('карта игры: текущая станция со стрелкой, под картой — одна станция', async ({ page }) => {
   await open(page)
   const map = page.getByRole('navigation', { name: 'Карта игры' })
   await expect(map).toContainText('Ты здесь: шаг 1 «Герой»')
@@ -629,16 +635,55 @@ test('карта игры: текущая станция со стрелкой, 
   await expect(map.getByRole('button', { name: 'Бонус: Бомба — закрыто' })).toBeVisible()
   await expect(map.getByRole('button', { name: 'Финиш — закрыто' })).toBeVisible()
 
+  // под картой только текущий шаг
+  const step1 = page.locator('#guide-step-1')
+  const step2 = page.locator('#guide-step-2')
+  await expect(step1).toBeVisible()
+  await expect(step2).toBeHidden()
+  await expect(map.getByRole('button', { name: /^Шаг 1:/ })).toHaveAttribute('aria-pressed', 'true')
+
+  // станция на карте открывает свой блок, даже закрытый
+  await map.getByRole('button', { name: /^Шаг 2:/ }).click()
+  await expect(step2).toBeVisible()
+  await expect(step2).toContainText('Откроется, когда выполнишь квесты шага 1.')
+  await expect(step1).toBeHidden()
+  await expect(map.getByRole('button', { name: /^Шаг 2:/ })).toHaveAttribute('aria-pressed', 'true')
+  await expect(map.getByRole('button', { name: /^Шаг 1:/ })).toHaveAttribute('aria-pressed', 'false')
+
+  // соседние станции — кнопками внизу
+  const near = page.getByRole('navigation', { name: 'Соседние станции' })
+  await near.getByRole('button', { name: /^Дальше/ }).click()
+  await expect(page.locator('#guide-step-3')).toBeVisible()
+  await near.getByRole('button', { name: /^Назад/ }).click()
+  await near.getByRole('button', { name: /^Назад/ }).click()
+  await expect(step1).toBeVisible()
+  await map.getByRole('button', { name: 'Финиш — закрыто' }).click()
+  await expect(page.getByRole('heading', { name: 'Финиш' })).toBeVisible()
+  await expect(near.getByRole('button', { name: /^Дальше/ })).toHaveCount(0)
+  await map.getByRole('button', { name: /^Шаг 2:/ }).click()
+
   // шаг 1 пройден: «ты здесь» переехало на шаг 2
   await buildHero(page)
   await tab(page, 'Гайд')
   await expect(map.locator('[aria-current="step"]')).toHaveAccessibleName('Шаг 2: Яблоки падают — ты здесь')
   await expect(map.getByRole('button', { name: 'Шаг 1: Герой — пройдено' })).toBeVisible()
   await expect(map).toContainText('квест 1 из 4')
+  // ученик ушёл дальше — выбор забыт, под картой новый текущий шаг
+  await expect(step2).toBeVisible()
+  await expect(step2).toHaveAttribute('data-state', 'active')
 
-  // станция прокручивает гайд к своему блоку
+  // вернулся к пройденному шагу — оттуда кнопка к следующему
+  await map.getByRole('button', { name: 'Шаг 1: Герой — пройдено' }).click()
+  await expect(step1).toBeVisible()
+  await step1.getByRole('button', { name: 'Перейти к шагу 2' }).click()
+  await expect(step2).toBeVisible()
+  await expect(step1).toBeHidden()
+
+  // бонусная станция — её задание сразу под картой
   await map.getByRole('button', { name: 'Бонус: Звезда — закрыто' }).click()
   await expect(page.locator('#guide-task-5')).toBeInViewport()
+  await expect(page.locator('#guide-task-4')).toBeHidden()
+  await expect(step2).toBeHidden()
 })
 
 test('гайд: код, объяснение и подсказка открываются кнопками', async ({ page }) => {

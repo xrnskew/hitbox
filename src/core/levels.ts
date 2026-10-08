@@ -79,3 +79,54 @@ export function lessonProgress(lesson: Pick<Lesson, 'steps' | 'extras'>, codes: 
   const allDone = levels.every((l) => l.done)
   return { levels, extras: extraStates(lesson.extras, allDone, codes), allDone }
 }
+
+// ===== Станции карты =====
+// Карта над гайдом — те же шаги и задания, что в гайде: станция на каждый шаг, на каждое бонусное задание и финиш.
+// Под картой показана одна станция: выбранная учеником или та, где он сейчас.
+
+export type StationState = 'done' | 'now' | 'open' | 'locked'
+
+export interface Station {
+  /** `step-1`, `extra-4`, `finish` — тот же ключ, что у чек-поинтов в шапке. */
+  key: string
+  kind: 'step' | 'extra' | 'finish'
+  /** Номер шага или задания; у финиша — 0. */
+  n: number
+  title: string
+  pic: string
+  state: StationState
+}
+
+export function stationList(lesson: Pick<Lesson, 'steps' | 'extras'>, progress: LessonProgress): Station[] {
+  const state = (s: { done: boolean; unlocked: boolean }): StationState =>
+    s.done ? 'done' : s.unlocked ? 'open' : 'locked'
+  const list: Station[] = [
+    ...lesson.steps.map((s, i) => ({
+      key: `step-${s.step}`,
+      kind: 'step' as const,
+      n: s.step,
+      title: s.title,
+      pic: s.pic,
+      state: state(progress.levels[i]),
+    })),
+    ...lesson.extras.map((x, i) => ({
+      key: `extra-${x.n}`,
+      kind: 'extra' as const,
+      n: x.n,
+      title: x.title,
+      pic: x.pic,
+      state: state(progress.extras[i]),
+    })),
+  ]
+  const all = list.every((s) => s.state === 'done')
+  list.push({ key: 'finish', kind: 'finish', n: 0, title: 'Финиш', pic: 'подарок', state: all ? 'done' : 'locked' })
+  // ты здесь — первая открытая станция; всё пройдено — финиш
+  const here = list.findIndex((s) => s.state === 'open')
+  if (here >= 0) list[here].state = 'now'
+  return list
+}
+
+/** Станция «ты здесь»: текущая, а когда всё пройдено — финиш. */
+export function hereStation(list: Station[]): Station {
+  return list.find((s) => s.state === 'now') ?? list[list.length - 1]
+}

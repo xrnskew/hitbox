@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { currentQuest, extraStates, levelStates } from '@/core/levels.ts'
+import { currentQuest, extraStates, hereStation, lessonProgress, levelStates, stationList } from '@/core/levels.ts'
 import { checkFinishedPassword } from '@/core/lock.ts'
 import { functionLines } from '@/core/progress.ts'
 import { pickKind } from '@/editor/pickers.ts'
@@ -214,6 +214,25 @@ describe('шаги открываются по очереди', () => {
   it('код бомбы и звезды сохраняет все квесты яблок и поимки', () => {
     const levels = levelStates(GUIDE_STEPS, [engineWith(3, 'пончик'), heroWith('кот'), GOLD_APPLES, GOLD_CATCH])
     expect(levels.every((l) => l.done)).toBe(true)
+  })
+})
+
+describe('станции карты', () => {
+  const lesson = { steps: GUIDE_STEPS, extras: GUIDE_EXTRAS }
+  const at = (codes: string[]) => stationList(lesson, lessonProgress(lesson, codes))
+
+  it('шаги, бонусы и финиш; ты здесь — первая открытая', () => {
+    const list = at(TUTORIAL_CODES)
+    expect(list.map((s) => s.key)).toEqual(['step-1', 'step-2', 'step-3', 'extra-4', 'extra-5', 'finish'])
+    expect(list.map((s) => s.state)).toEqual(['now', 'locked', 'locked', 'locked', 'locked', 'locked'])
+    expect(hereStation(list).key).toBe('step-1')
+  })
+
+  it('всё пройдено — ты на финише', () => {
+    const engine = `${engineWith(3)}\n${BOMB_LINE}\n${GOLD_LINE}`
+    const list = at([engine, heroWith('кот'), GOLD_APPLES, GOLD_CATCH])
+    expect(list.every((s) => s.state === 'done')).toBe(true)
+    expect(hereStation(list).key).toBe('finish')
   })
 })
 

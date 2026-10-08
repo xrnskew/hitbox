@@ -191,8 +191,9 @@ function Checkpoints() {
     if (any) counter.current?.classList.add(styles.pop)
   }, [doneKey])
 
-  const open = (id: string) => {
-    c.selectView('guide')
+  // под картой открывается эта станция, и гайд прокручивается к ней
+  const open = (key: string, id: string) => {
+    c.showStation(key)
     setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 30)
   }
 
@@ -206,7 +207,7 @@ function Checkpoints() {
               className={styles.point}
               data-kind={p.kind}
               data-done={p.done}
-              onClick={() => open(p.target)}
+              onClick={() => open(p.key, p.target)}
               aria-label={`${p.aria}: ${p.done ? 'сделано' : 'не сделано'}`}
             >
               <span
