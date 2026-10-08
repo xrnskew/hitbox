@@ -3,6 +3,7 @@
 .map {
   margin: 28px 0 0;
   container-type: inline-size;
+  scroll-margin-top: 12px;
 }
 
 .where {
@@ -67,6 +68,14 @@
   stroke-dasharray: 10 6;
 }
 
+.doneClip {
+  position: absolute;
+  inset: 0;
+  clip-path: inset(0 calc(100% - var(--to)) 0 0);
+  transition: clip-path 0.7s cubic-bezier(0.5, 0, 0.3, 1) 0.35s;
+  pointer-events: none;
+}
+
 .roadDone {
   stroke: var(--sun);
   stroke-width: 10px;
@@ -92,6 +101,7 @@
 
 .pad {
   position: relative;
+  z-index: 1;
   display: grid;
   place-items: center;
   width: 56px;
@@ -277,15 +287,94 @@
   height: 27px;
   transform: translate(-50%, -64px);
   transition:
-    left 0.7s cubic-bezier(0.5, 0, 0.3, 1),
-    top 0.7s cubic-bezier(0.5, 0, 0.3, 1);
+    left 0.7s cubic-bezier(0.5, 0, 0.3, 1) 0.35s,
+    top 0.7s cubic-bezier(0.5, 0, 0.3, 1) 0.35s;
   filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.45));
   pointer-events: none;
+}
+
+/* ===== Станция пройдена: вспышка — клавиша загорается жёлтым и остывает в зелёный, разлетаются пиксели ===== */
+.station[data-burst] .pad {
+  animation: lit 0.75s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+
+@keyframes lit {
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.2);
+    border-color: var(--sun);
+    background: var(--sun);
+    box-shadow:
+      0 4px 0 var(--keycap-edge),
+      0 0 0 8px rgba(255, 200, 58, 0.25);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.station[data-burst] .flag {
+  animation: flag 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) 0.2s both;
+}
+
+@keyframes flag {
+  from {
+    transform: scale(0);
+  }
+}
+
+/* пиксели — квадратики, как клетки рисунков: из-под клавиши по кругу наружу */
+.sparks {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.sparks i {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  width: 8px;
+  height: 8px;
+  background: var(--c);
+  box-shadow: 0 0 0 2px #0b0d13;
+  opacity: 0;
+  animation: spark 0.7s cubic-bezier(0.2, 0.7, 0.3, 1) 0.1s;
+}
+
+@keyframes spark {
+  from {
+    opacity: 1;
+    transform: rotate(var(--a)) translateY(-22px);
+  }
+  70% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: rotate(var(--a)) translateY(-58px) scale(0.5);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .station[data-state='now'] .pad::after {
     animation: none;
     box-shadow: 0 0 0 4px rgba(255, 200, 58, 0.3);
+  }
+
+  .station[data-burst] .pad,
+  .station[data-burst] .flag {
+    animation: none;
+  }
+
+  .sparks {
+    display: none;
+  }
+
+  .doneClip,
+  .arrow {
+    transition: none;
   }
 }

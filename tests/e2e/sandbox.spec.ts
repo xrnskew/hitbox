@@ -664,7 +664,13 @@ test('карта игры: текущая станция со стрелкой, 
 
   // шаг 1 пройден: «ты здесь» переехало на шаг 2
   await buildHero(page)
+  await page.waitForTimeout(400)
+  // шаг прошли в коде — вспышка ждёт возвращения в «Гайд» и гаснет сама
+  await expect(map.locator('li[data-burst]')).toHaveCount(0)
   await tab(page, 'Гайд')
+  await expect(map.locator('li[data-burst]')).toHaveCount(1)
+  await expect(map.locator('li[data-burst]').getByRole('button')).toHaveAccessibleName('Шаг 1: Герой — пройдено')
+  await expect(map.locator('li[data-burst]')).toHaveCount(0, { timeout: 3000 })
   await expect(map.locator('[aria-current="step"]')).toHaveAccessibleName('Шаг 2: Яблоки падают — ты здесь')
   await expect(map.getByRole('button', { name: 'Шаг 1: Герой — пройдено' })).toBeVisible()
   await expect(map).toContainText('квест 1 из 4')
