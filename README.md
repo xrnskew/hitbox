@@ -47,6 +47,9 @@ npm run dev        # http://localhost:5173
 Каждый пуш в `dev` и `main` проверяет `.github/workflows/pages.yml`: линтер, типы и сборка, юнит-тесты,
 сквозные проверки в Chromium и пробная сборка сайта. Красные проверки — сайт не меняется.
 
+`main` защищена: в неё попадает только коммит, уже прошедший проверки в `dev`; force-push и удаление
+запрещены (`docs/MAIN.md`, правила — `.github/rulesets/main.json`).
+
 ## Где открыть
 
 - **Сайт** — https://hitbox.space (GitHub Pages; пока домен не подключён — https://xrnskew.github.io/hitbox/).

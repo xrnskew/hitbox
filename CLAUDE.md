@@ -76,6 +76,9 @@ npm run test:e2e   # playwright: hitbox.html через file:// и сайт в /
   и не создавать на GitHub. После всех проверок — `git push origin dev`.
 - `dev` → `main`, когда пользователь просит выложить: fast-forward `git push origin dev:main`
   (если `main` ушла вперёд — сначала влить `main` в `dev`). Других веток не заводить.
+- `main` защищена (`docs/MAIN.md`): правила GitHub `.github/rulesets/main.json` пускают только коммит
+  с зелёными «Проверками» (то есть уже из `dev`), без force-push и удаления; в сборке шаг «Коммит есть в dev».
+  Пуш в `main` отклонён — дождаться зелёных проверок `dev` в Actions и повторить.
 
 Хостинг — только GitHub Pages (Vercel убран), домен `hitbox.space` (куплен на reg.ru, DNS —
 Yandex Cloud DNS, `docs/DOMAIN.md`).
