@@ -77,7 +77,8 @@ npm run test:e2e   # playwright: hitbox.html через file:// и сайт в /
 - `dev` → `main`, когда пользователь просит выложить: fast-forward `git push origin dev:main`
   (если `main` ушла вперёд — сначала влить `main` в `dev`). Других веток не заводить.
 
-Хостинг — только GitHub Pages (Vercel убран), домен `hitbox.space` (reg.ru, `docs/DOMAIN.md`).
+Хостинг — только GitHub Pages (Vercel убран), домен `hitbox.space` (куплен на reg.ru, DNS —
+Yandex Cloud DNS, `docs/DOMAIN.md`).
 `.github/workflows/pages.yml` на каждый пуш в `dev` и `main`: «Проверки» (линтер, сборка, юнит-тесты,
 сквозные в Chromium) → «Сборка» (`BASE_PATH` от `actions/configure-pages`: на github.io — `/hitbox/`, на своём
 домене — `/`; рядом `hitbox.html`) → «Выкладка» только для `main`. Красные проверки — сайт не меняется.
