@@ -1,6 +1,6 @@
 import { expect, type Page, test } from '@playwright/test'
 
-/** Адрес песочницы в текущем проекте проверок: файл через file:// или сайт в подпапке. */
+/** Адрес сайта в проверках: сборка для Pages в подпапке /hitbox/. */
 export const app = () => test.info().project.use.baseURL!
 export const KEY = 'catch-sandbox-v2'
 

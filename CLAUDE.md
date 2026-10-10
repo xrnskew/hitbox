@@ -13,8 +13,8 @@ HitBox — конструктор игр (веб-приложение). Назв
 ## Стек
 
 - React 19, TypeScript (strict-ish: `noUnusedLocals`, `noUnusedParameters`, `erasableSyntaxOnly`)
-- Vite 8, `@vitejs/plugin-react`; `npm run build` — сайт в `dist/` (base из `BASE_PATH`, по умолчанию `/`),
-  `npm run build:single` — один файл `dist-single/hitbox.html` через `vite-plugin-singlefile`
+- Vite 8, `@vitejs/plugin-react`; `npm run build` — сайт в `dist/` (base из `BASE_PATH`, по умолчанию `/`).
+  Версии одним файлом (`hitbox.html`) нет и не нужно — убрана по просьбе пользователя, не возвращать
 - CodeMirror 6, acorn
 - Стили — обычный CSS: токены в `src/styles/tokens.css`, компоненты на CSS-модулях. Tailwind нет.
 - Линтер: oxlint (`.oxlintrc.json`); формат — prettier `--print-width 120 --single-quote --no-semi`
@@ -65,7 +65,7 @@ HitBox — конструктор игр (веб-приложение). Назв
 npm run lint
 npm run build      # tsc -b + vite build
 npm test           # vitest: ядро и логика игры без браузера
-npm run test:e2e   # playwright: hitbox.html через file:// и сайт в /hitbox/ (Chromium уже установлен в облачном окружении)
+npm run test:e2e   # playwright: сайт в /hitbox/ (Chromium уже установлен в облачном окружении)
 ```
 
 ## Деплой
@@ -86,7 +86,7 @@ npm run test:e2e   # playwright: hitbox.html через file:// и сайт в /
 Yandex Cloud DNS, `docs/DOMAIN.md`).
 `.github/workflows/pages.yml` на каждый пуш в `dev` и `main`: «Проверки» (линтер, сборка, юнит-тесты,
 сквозные в Chromium) → «Сборка» (`BASE_PATH` от `actions/configure-pages`: на github.io — `/hitbox/`, на своём
-домене — `/`; рядом `hitbox.html`) → «Выкладка» только для `main`. Красные проверки — сайт не меняется.
+домене — `/`) → «Выкладка» только для `main`. Красные проверки — сайт не меняется.
 Вручную ничего не выкладывать без явной просьбы пользователя.
 
 ## Задачи в Notion

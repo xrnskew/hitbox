@@ -91,7 +91,6 @@ A-запись. Остальные записи из 2а (ещё три A и CNA
 - `https://hitbox.space` открывает главное меню, игры запускаются.
 - `https://www.hitbox.space` перекидывает на `https://hitbox.space` (для варианта 2а).
 - `https://xrnskew.github.io/hitbox/` перекидывает на новый домен.
-- `https://hitbox.space/hitbox.html` — офлайн-версия одним файлом.
 
 ## Если что-то не так
 

@@ -32,9 +32,8 @@ npm run dev        # http://localhost:5173
 | ---------------------- | ---------------------------------------------------------------------- |
 | `npm run dev`          | дев-сервер Vite                                                        |
 | `npm run build`        | проверка типов + сайт в `dist/` (GitHub Pages)                         |
-| `npm run build:single` | один файл `dist-single/hitbox.html` для работы без интернета           |
 | `npm test`             | юнит-тесты (Vitest): склейка, синтаксис, переводы, логика игры         |
-| `npm run test:e2e`     | сквозные проверки (Playwright): файл через file:// и сайт в `/hitbox/` |
+| `npm run test:e2e`     | сквозные проверки (Playwright): сайт в `/hitbox/`                      |
 | `npm run check`        | линтер, сборка и юнит-тесты                                            |
 | `npm run lint`         | линтер (oxlint)                                                        |
 | `npm run preview`      | локальный просмотр собранного `dist/`                                  |
@@ -56,10 +55,6 @@ npm run dev        # http://localhost:5173
   Собирает `.github/workflows/pages.yml` при пуше в `main`. Путь сайта сборка узнаёт у Pages сама: на github.io
   это подпапка `/hitbox/`, на своём домене — корень `/` (локально тоже `/`). Как подключить свой домен
   с reg.ru — `docs/DOMAIN.md`.
-- **Без интернета** — `dist-single/hitbox.html` (`npm run build:single`): один файл со всем
-  внутри (код, стили, шрифты), открывается двойным кликом в Chrome с флешки, без сервера.
-  Готовый файл есть и на сайте: https://hitbox.space/hitbox.html (сохранить как…), и в артефакте
-  `hitbox` у каждого запуска workflow в Actions.
 
 Роутинга нет: готовая игра — это тот же адрес с `?finished`, поэтому прямые ссылки и
 обновление страницы на Pages не дают 404.

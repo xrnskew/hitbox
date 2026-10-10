@@ -1,7 +1,6 @@
 # Проверки и сайт на GitHub Pages: https://hitbox.space (или https://xrnskew.github.io/hitbox/ без своего домена).
 # При пуше в dev — только проверки и пробная сборка. При пуше в main — проверки, сборка и выкладка;
 # если проверки красные, сайт не меняется.
-# Рядом с сайтом кладёт hitbox.html — версию одним файлом для работы без интернета.
 name: GitHub Pages
 
 on:
@@ -90,20 +89,9 @@ jobs:
         env:
           BASE_PATH: ${{ steps.pages.outputs.base_path }}/
 
-      - name: Версия одним файлом
-        run: |
-          npm run build:single
-          cp dist-single/hitbox.html dist/hitbox.html
-
       - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
-
-      # тот же файл — для скачивания со страницы запуска в Actions
-      - uses: actions/upload-artifact@v7
-        with:
-          name: hitbox
-          path: dist-single/hitbox.html
 
   deploy:
     name: Выкладка

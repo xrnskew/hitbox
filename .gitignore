@@ -28,5 +28,4 @@ test-results
 playwright-report
 
 # Сборки: одиночный файл и проверочная сборка для Pages (e2e)
-dist-single
 dist-pages
