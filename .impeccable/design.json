@@ -1,0 +1,838 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-10T14:38:15.131Z",
+  "title": "Design System: HitBox",
+  "extensions": {
+    "colorMeta": {
+      "sun": {
+        "role": "primary",
+        "displayName": "Солнце",
+        "canonical": "#ffc83a",
+        "tonalRamp": [
+          "#1c0300",
+          "#451400",
+          "#663500",
+          "#895600",
+          "#ac7800",
+          "#d19c00",
+          "#f7c02e",
+          "#ffeba3"
+        ]
+      },
+      "sun-deep": {
+        "role": "primary",
+        "displayName": "Солнце глубокое",
+        "canonical": "#c48a00",
+        "tonalRamp": [
+          "#1c0300",
+          "#461200",
+          "#683300",
+          "#8b5400",
+          "#af7600",
+          "#d49924",
+          "#fabd52",
+          "#ffe9af"
+        ]
+      },
+      "sun-soft": {
+        "role": "primary",
+        "displayName": "Солнечная тень",
+        "canonical": "#2c2512",
+        "tonalRamp": [
+          "#0e0b03",
+          "#2b2411",
+          "#49412e",
+          "#69614c",
+          "#8a826c",
+          "#ada58e",
+          "#d1c9b1",
+          "#f4eee0"
+        ]
+      },
+      "apple": {
+        "role": "secondary",
+        "displayName": "Яблоко",
+        "canonical": "#d42c24",
+        "tonalRamp": [
+          "#2e0000",
+          "#690000",
+          "#910000",
+          "#ba0003",
+          "#e33d32",
+          "#ff6556",
+          "#ff8c79",
+          "#ffcfc0"
+        ]
+      },
+      "apple-hi": {
+        "role": "secondary",
+        "displayName": "Яблоко спелое",
+        "canonical": "#ea4a3c",
+        "tonalRamp": [
+          "#2d0000",
+          "#670000",
+          "#8f0000",
+          "#b80707",
+          "#e04034",
+          "#ff6857",
+          "#ff8f7b",
+          "#ffd0c0"
+        ]
+      },
+      "apple-deep": {
+        "role": "secondary",
+        "displayName": "Яблоко тёмное",
+        "canonical": "#a11d17",
+        "tonalRamp": [
+          "#290000",
+          "#5f0000",
+          "#850000",
+          "#ac2a22",
+          "#d45144",
+          "#fd7666",
+          "#ff9a89",
+          "#ffd5c8"
+        ]
+      },
+      "leaf": {
+        "role": "tertiary",
+        "displayName": "Лист",
+        "canonical": "#6fd08f",
+        "tonalRamp": [
+          "#001300",
+          "#003400",
+          "#00541b",
+          "#00763b",
+          "#34985b",
+          "#5bbd7d",
+          "#81e2a0",
+          "#c7ffd6"
+        ]
+      },
+      "leaf-fill": {
+        "role": "tertiary",
+        "displayName": "Лист густой",
+        "canonical": "#2b9a59",
+        "tonalRamp": [
+          "#001300",
+          "#003500",
+          "#005518",
+          "#007738",
+          "#2a9959",
+          "#55be7a",
+          "#7be39d",
+          "#c4ffd4"
+        ]
+      },
+      "leaf-soft": {
+        "role": "tertiary",
+        "displayName": "Лист в тени",
+        "canonical": "#15301f",
+        "tonalRamp": [
+          "#030e06",
+          "#102c1b",
+          "#2e4937",
+          "#4d6956",
+          "#6d8b76",
+          "#8fae98",
+          "#b3d2bc",
+          "#e1f4e6"
+        ]
+      },
+      "danger": {
+        "role": "tertiary",
+        "displayName": "Ошибка",
+        "canonical": "#d93a42",
+        "tonalRamp": [
+          "#2d0000",
+          "#660000",
+          "#8e0000",
+          "#b60925",
+          "#df4047",
+          "#ff6869",
+          "#ff8e8c",
+          "#ffcfca"
+        ]
+      },
+      "danger-text": {
+        "role": "tertiary",
+        "displayName": "Ошибка, текст",
+        "canonical": "#ff9aa0",
+        "tonalRamp": [
+          "#220002",
+          "#51000f",
+          "#751d2b",
+          "#9a3f49",
+          "#c06169",
+          "#e7848b",
+          "#ffa8ae",
+          "#ffdcde"
+        ]
+      },
+      "danger-soft": {
+        "role": "tertiary",
+        "displayName": "Ошибка, фон",
+        "canonical": "#2d1c22",
+        "tonalRamp": [
+          "#11080b",
+          "#311f25",
+          "#4f3c42",
+          "#6f5b61",
+          "#917c83",
+          "#b59ea5",
+          "#dac2c9",
+          "#f9eaef"
+        ]
+      },
+      "desk": {
+        "role": "neutral",
+        "displayName": "Стол",
+        "canonical": "#0f1116",
+        "tonalRamp": [
+          "#0a0b0e",
+          "#23252a",
+          "#3f4248",
+          "#5e6168",
+          "#7f8289",
+          "#a2a5ac",
+          "#c6c9d0",
+          "#eceef3"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Бумага",
+        "canonical": "#181b22",
+        "tonalRamp": [
+          "#090b0f",
+          "#22252c",
+          "#3e424a",
+          "#5d616a",
+          "#7e828b",
+          "#a1a5ae",
+          "#c5c9d3",
+          "#eceef4"
+        ]
+      },
+      "paper-2": {
+        "role": "neutral",
+        "displayName": "Бумага 2",
+        "canonical": "#21252e",
+        "tonalRamp": [
+          "#090b10",
+          "#21252e",
+          "#3e424c",
+          "#5c616c",
+          "#7d828d",
+          "#a0a5b1",
+          "#c4c9d5",
+          "#ebeef6"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Линия",
+        "canonical": "#2a2f3a",
+        "tonalRamp": [
+          "#090b11",
+          "#202530",
+          "#3d424e",
+          "#5c616e",
+          "#7c828f",
+          "#9fa5b3",
+          "#c3c9d7",
+          "#eaeef7"
+        ]
+      },
+      "rule-2": {
+        "role": "neutral",
+        "displayName": "Линия заметная",
+        "canonical": "#3a404d",
+        "tonalRamp": [
+          "#080b11",
+          "#202531",
+          "#3c424f",
+          "#5b616f",
+          "#7b8291",
+          "#9ea5b5",
+          "#c2c9d9",
+          "#eaeff8"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Чернила",
+        "canonical": "#eceef2",
+        "tonalRamp": [
+          "#0a0b0d",
+          "#242528",
+          "#404245",
+          "#5f6165",
+          "#808286",
+          "#a3a5a9",
+          "#c7c9cd",
+          "#edeef1"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Чернила 2",
+        "canonical": "#a3aab7",
+        "tonalRamp": [
+          "#080b10",
+          "#20252f",
+          "#3c424d",
+          "#5b616d",
+          "#7c838f",
+          "#9ea5b2",
+          "#c2c9d7",
+          "#eaeff7"
+        ]
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Чернила 3 (декор)",
+        "canonical": "#6e7685",
+        "tonalRamp": [
+          "#080b12",
+          "#1f2531",
+          "#3b4250",
+          "#5a6170",
+          "#7a8392",
+          "#9da5b5",
+          "#c1cada",
+          "#e9eff9"
+        ]
+      },
+      "keycap": {
+        "role": "neutral",
+        "displayName": "Клавиша",
+        "canonical": "#262b35",
+        "tonalRamp": [
+          "#090b10",
+          "#20252f",
+          "#3d424d",
+          "#5c616d",
+          "#7c828f",
+          "#9fa5b2",
+          "#c3c9d6",
+          "#eaeff7"
+        ]
+      },
+      "keycap-hover": {
+        "role": "neutral",
+        "displayName": "Клавиша, наведение",
+        "canonical": "#2e3440",
+        "tonalRamp": [
+          "#080b11",
+          "#1f2530",
+          "#3c424f",
+          "#5b616f",
+          "#7b8391",
+          "#9ea5b4",
+          "#c2c9d9",
+          "#eaeff8"
+        ]
+      },
+      "keycap-line": {
+        "role": "neutral",
+        "displayName": "Клавиша, кайма",
+        "canonical": "#383e4a",
+        "tonalRamp": [
+          "#080b11",
+          "#202530",
+          "#3c424e",
+          "#5b616e",
+          "#7c8290",
+          "#9ea5b4",
+          "#c2c9d8",
+          "#eaeff8"
+        ]
+      },
+      "keycap-edge": {
+        "role": "neutral",
+        "displayName": "Клавиша, грань",
+        "canonical": "#07080b",
+        "tonalRamp": [
+          "#0a0b0d",
+          "#242529",
+          "#404246",
+          "#5f6165",
+          "#808287",
+          "#a3a5aa",
+          "#c7c9ce",
+          "#edeef1"
+        ]
+      },
+      "scr": {
+        "role": "neutral",
+        "displayName": "Экран",
+        "canonical": "#12151b",
+        "tonalRamp": [
+          "#090b0f",
+          "#22252c",
+          "#3e4249",
+          "#5d6169",
+          "#7e828a",
+          "#a1a5ad",
+          "#c5c9d2",
+          "#eceef4"
+        ]
+      },
+      "scr-2": {
+        "role": "neutral",
+        "displayName": "Экран 2",
+        "canonical": "#1a1e26",
+        "tonalRamp": [
+          "#090b0f",
+          "#21252d",
+          "#3e424b",
+          "#5c616b",
+          "#7d828d",
+          "#a0a5b0",
+          "#c4c9d4",
+          "#ebeff5"
+        ]
+      },
+      "scr-ink": {
+        "role": "neutral",
+        "displayName": "Экран, текст",
+        "canonical": "#e4e7ed",
+        "tonalRamp": [
+          "#0a0b0d",
+          "#232529",
+          "#404247",
+          "#5f6166",
+          "#808288",
+          "#a2a5ab",
+          "#c6c9cf",
+          "#edeef2"
+        ]
+      },
+      "scr-dim": {
+        "role": "neutral",
+        "displayName": "Экран, тихий текст",
+        "canonical": "#9ba3b1",
+        "tonalRamp": [
+          "#080b11",
+          "#1f2530",
+          "#3b424e",
+          "#5a626e",
+          "#7b8390",
+          "#9da5b3",
+          "#c1cad8",
+          "#eaeff8"
+        ]
+      },
+      "shell-white": {
+        "role": "shell",
+        "displayName": "Корпус белый (очень легко)",
+        "canonical": "#eceef2",
+        "tonalRamp": [
+          "#0a0b0d",
+          "#242528",
+          "#404245",
+          "#5f6165",
+          "#808286",
+          "#a3a5a9",
+          "#c7c9cd",
+          "#edeef1"
+        ]
+      },
+      "shell-green": {
+        "role": "shell",
+        "displayName": "Корпус зелёный (легко)",
+        "canonical": "#34b85a",
+        "tonalRamp": [
+          "#001400",
+          "#003700",
+          "#005800",
+          "#007a1b",
+          "#009d40",
+          "#41c263",
+          "#6be887",
+          "#bdffc8"
+        ]
+      },
+      "shell-red": {
+        "role": "shell",
+        "displayName": "Корпус красный (сложно)",
+        "canonical": "#d42c24",
+        "tonalRamp": [
+          "#2e0000",
+          "#690000",
+          "#910000",
+          "#ba0003",
+          "#e33d32",
+          "#ff6556",
+          "#ff8c79",
+          "#ffcfc0"
+        ]
+      },
+      "code-comment": {
+        "role": "code",
+        "displayName": "code-comment",
+        "canonical": "#7db365",
+        "tonalRamp": [
+          "#001100",
+          "#003000",
+          "#1d4f00",
+          "#3d7023",
+          "#5e9346",
+          "#80b768",
+          "#a4dc8c",
+          "#d8fbca"
+        ]
+      },
+      "code-string": {
+        "role": "code",
+        "displayName": "code-string",
+        "canonical": "#e0a07e",
+        "tonalRamp": [
+          "#1c0300",
+          "#451200",
+          "#67310f",
+          "#8a5030",
+          "#ae7251",
+          "#d39473",
+          "#fab896",
+          "#ffe5cf"
+        ]
+      },
+      "code-number": {
+        "role": "code",
+        "displayName": "code-number",
+        "canonical": "#b5cea8",
+        "tonalRamp": [
+          "#050e02",
+          "#182b0c",
+          "#344929",
+          "#536947",
+          "#738b67",
+          "#96ae89",
+          "#b9d2ac",
+          "#e5f4dd"
+        ]
+      },
+      "code-keyword": {
+        "role": "code",
+        "displayName": "code-keyword",
+        "canonical": "#6eb0f5",
+        "tonalRamp": [
+          "#000928",
+          "#00225c",
+          "#00427f",
+          "#2064a3",
+          "#4586c8",
+          "#68aaee",
+          "#8ccfff",
+          "#cbf3ff"
+        ]
+      },
+      "code-definition": {
+        "role": "code",
+        "displayName": "code-definition",
+        "canonical": "#e9da8e",
+        "tonalRamp": [
+          "#120a00",
+          "#322300",
+          "#504100",
+          "#70610d",
+          "#918338",
+          "#b5a65b",
+          "#d9ca7f",
+          "#f8f0c3"
+        ]
+      },
+      "code-variable": {
+        "role": "code",
+        "displayName": "code-variable",
+        "canonical": "#9cdcfe",
+        "tonalRamp": [
+          "#000e1c",
+          "#002a45",
+          "#004865",
+          "#296987",
+          "#4d8baa",
+          "#70aecf",
+          "#93d3f5",
+          "#cff5ff"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Заголовок главного меню и крупный заголовок гайда."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Название игры на карточке меню."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Заголовки диалогов и блоков гайда, имя HitBox в шапке."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Тексты гайда и диалогов."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Клавиши, вкладки, чипы, подписи."
+      },
+      "code": {
+        "displayName": "Code",
+        "purpose": "Редактор и куски кода; лигатуры выключены."
+      },
+      "display-guide": {
+        "displayName": "Display (гайд)",
+        "purpose": "Крупный заголовок гайда."
+      },
+      "title-s": {
+        "displayName": "Title S",
+        "purpose": "Имя HitBox в шапке, заголовки диалогов."
+      },
+      "lead": {
+        "displayName": "Lead",
+        "purpose": "Вводный текст меню и гайда."
+      },
+      "body-s": {
+        "displayName": "Body S",
+        "purpose": "Подсказки, заметка вкладки, чипы."
+      },
+      "label-l": {
+        "displayName": "Label L",
+        "purpose": "Текст большой клавиши."
+      }
+    },
+    "shadows": [
+      {
+        "name": "key-edge",
+        "value": "0 3px 0 var(--keycap-edge)",
+        "purpose": "Грань клавиши; 2px у маленькой, 4px у большой. При нажатии — 0."
+      },
+      {
+        "name": "station-edge",
+        "value": "0 4px 0 var(--keycap-edge)",
+        "purpose": "Станции карты."
+      },
+      {
+        "name": "console-button",
+        "value": "0 5px 0 #0b0d12, inset 0 1px 0 rgba(255,255,255,0.14)",
+        "purpose": "Крестовина и кнопки на корпусе приставки."
+      },
+      {
+        "name": "pop",
+        "value": "0 18px 40px rgba(0,0,0,0.55), 0 2px 6px rgba(0,0,0,0.35)",
+        "purpose": "Диалоги и окно выбора картинки."
+      },
+      {
+        "name": "shell",
+        "value": "inset 0 2px 0 rgba(255,255,255,0.35), inset 0 -5px 0 rgba(0,0,0,0.16), 0 24px 44px -16px var(--shell-glow)",
+        "purpose": "Корпус приставки."
+      }
+    ],
+    "motion": [
+      {
+        "name": "key-press",
+        "value": "0.07s ease-out",
+        "purpose": "Клавиша проседает при нажатии."
+      },
+      {
+        "name": "dialog-appear",
+        "value": "0.16s ease-out",
+        "purpose": "Появление диалога."
+      },
+      {
+        "name": "slot-rise",
+        "value": "0.28s cubic-bezier(0.2, 0.8, 0.3, 1)",
+        "purpose": "Кусок кода всплывает в редакторе."
+      },
+      {
+        "name": "road-travel",
+        "value": "0.7s cubic-bezier(0.5, 0, 0.3, 1) 0.35s",
+        "purpose": "Дорога дотягивается, стрелка переезжает к следующей станции."
+      },
+      {
+        "name": "station-pulse",
+        "value": "1.6s ease-out infinite",
+        "purpose": "Пульс текущей станции."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "@media (prefers-reduced-motion: reduce)",
+        "purpose": "Все анимации и переходы гасятся глобально (base.css)."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "stack",
+        "value": "1024px",
+        "purpose": "Окно и приставка складываются в одну колонку."
+      },
+      {
+        "name": "menu-one-column",
+        "value": "900px",
+        "purpose": "Карточки игр в меню — в одну колонку."
+      },
+      {
+        "name": "phone",
+        "value": "640px",
+        "purpose": "Узкие поля, карточка игры в столбик."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Клавиша",
+      "kind": "button",
+      "refersTo": "key",
+      "description": "Обычная клавиша: большинство действий.",
+      "html": "<button class=\"ds-key\">Сбросить</button>",
+      "css": ".ds-key { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 38px; margin-bottom: 3px; padding: 0 16px; border: 1px solid var(--keycap-line); border-radius: var(--radius-key); background: var(--keycap); color: var(--ink); font: 600 14px/1 var(--font-ui); box-shadow: 0 3px 0 var(--keycap-edge); transition: transform 0.07s ease-out, box-shadow 0.07s ease-out, background-color 0.12s; cursor: pointer; } .ds-key:hover { background: var(--keycap-hover); } .ds-key:active { box-shadow: 0 0 0 transparent; transform: translateY(3px); } .ds-key:focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; }"
+    },
+    {
+      "name": "Клавиша Яблоко",
+      "kind": "button",
+      "refersTo": "key-apple-l",
+      "description": "Запуск игры: «Собрать», «Играть». Одна главная на виду.",
+      "html": "<button class=\"ds-key-apple\">Собрать</button>",
+      "css": ".ds-key-apple { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 38px; margin-bottom: 3px; padding: 0 16px; border: 1px solid var(--keycap-line); border-radius: var(--radius-key); background: var(--keycap); color: var(--ink); font: 600 14px/1 var(--font-ui); box-shadow: 0 3px 0 var(--keycap-edge); transition: transform 0.07s ease-out, box-shadow 0.07s ease-out, background-color 0.12s; cursor: pointer; min-height: 48px; margin-bottom: 4px; padding: 0 22px; border-radius: 14px; font-size: 16px; border-color: var(--apple-deep); background: var(--apple); color: #fff; box-shadow: 0 4px 0 #5e0f0b; } .ds-key-apple:hover { background: #c9271f; } .ds-key-apple:active { box-shadow: 0 0 0 transparent; transform: translateY(4px); } .ds-key-apple:focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; }"
+    },
+    {
+      "name": "Клавиша Солнце",
+      "kind": "button",
+      "refersTo": "key-sun",
+      "description": "Следующий шаг: ведёт ученика по пути.",
+      "html": "<button class=\"ds-key-sun\">Дальше</button>",
+      "css": ".ds-key-sun { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 38px; margin-bottom: 3px; padding: 0 16px; border: 1px solid var(--keycap-line); border-radius: var(--radius-key); background: var(--keycap); color: var(--ink); font: 600 14px/1 var(--font-ui); box-shadow: 0 3px 0 var(--keycap-edge); transition: transform 0.07s ease-out, box-shadow 0.07s ease-out, background-color 0.12s; cursor: pointer; border-color: var(--sun-deep); background: var(--sun); color: #151a23; box-shadow: 0 3px 0 #6b4b00; } .ds-key-sun:hover { background: #ffd259; } .ds-key-sun:active { box-shadow: 0 0 0 transparent; transform: translateY(3px); } .ds-key-sun:focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; }"
+    },
+    {
+      "name": "Клавиша-призрак",
+      "kind": "button",
+      "refersTo": "key-ghost",
+      "description": "Второстепенное: «Назад», закрыть.",
+      "html": "<button class=\"ds-key-ghost\">Назад</button>",
+      "css": ".ds-key-ghost { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 38px; margin-bottom: 3px; padding: 0 16px; border: 1px solid var(--keycap-line); border-radius: var(--radius-key); background: var(--keycap); color: var(--ink); font: 600 14px/1 var(--font-ui); box-shadow: 0 3px 0 var(--keycap-edge); transition: transform 0.07s ease-out, box-shadow 0.07s ease-out, background-color 0.12s; cursor: pointer; margin-bottom: 0; border-color: transparent; background: transparent; color: var(--ink-2); box-shadow: none; } .ds-key-ghost:hover { background: rgba(255,255,255,0.06); } .ds-key-ghost:focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; }"
+    },
+    {
+      "name": "Вкладки",
+      "kind": "nav",
+      "refersTo": "tab-selected",
+      "description": "Ряд клавиш над редактором; открытая — светлая и нажатая.",
+      "html": "<div class=\"ds-tabs\"><button class=\"ds-tab\" aria-selected=\"true\">Гайд</button><button class=\"ds-tab\">1 Герой</button><button class=\"ds-tab\">2 Яблоки</button></div>",
+      "css": ".ds-tabs { display: flex; gap: 8px; padding: 12px; background: var(--paper); } .ds-tab { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 38px; margin-bottom: 3px; padding: 0 16px; border: 1px solid var(--keycap-line); border-radius: var(--radius-key); background: var(--keycap); color: var(--ink); font: 600 14px/1 var(--font-ui); box-shadow: 0 3px 0 var(--keycap-edge); transition: transform 0.07s ease-out, box-shadow 0.07s ease-out, background-color 0.12s; cursor: pointer; min-height: 40px; padding: 0 14px; color: var(--ink-2); } .ds-tab[aria-selected='true'] { background: var(--ink); border-color: var(--ink); color: #0f1116; box-shadow: 0 0 0 transparent; transform: translateY(3px); } .ds-tab:active { box-shadow: 0 0 0 transparent; transform: translateY(3px); } .ds-tab:focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; }"
+    },
+    {
+      "name": "Чипы",
+      "kind": "chip",
+      "refersTo": "chip-ok",
+      "description": "«Готово» зелёным, «Квест k из n» — серым.",
+      "html": "<span class=\"ds-chip ds-chip-ok\">Готово</span> <span class=\"ds-chip ds-chip-todo\">Квест 2 из 4</span>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font: 600 13px/1.4 var(--font-ui); } .ds-chip-ok { background: var(--leaf-soft); color: var(--leaf); } .ds-chip-todo { background: var(--paper-2); color: var(--ink-2); }"
+    },
+    {
+      "name": "Окно",
+      "kind": "card",
+      "refersTo": "window",
+      "description": "Плоское окно на столе: бумага, линия 1px, скругление 22px.",
+      "html": "<div class=\"ds-window\"><strong>Шаг 2. Яблоки</strong><p>Сверху падают яблоки. Собери их движение по кусочкам.</p></div>",
+      "css": ".ds-window { max-width: 360px; padding: 18px; border: 1px solid var(--rule); border-radius: var(--radius-card); background: var(--paper); color: var(--ink); font: 400 15px/1.5 var(--font-ui); } .ds-window strong { font: 700 21px/1.3 var(--font-display); } .ds-window p { margin: 8px 0 0; color: var(--ink-2); }"
+    },
+    {
+      "name": "Станция карты",
+      "kind": "custom",
+      "refersTo": "station-pad",
+      "description": "Клавиша 56px на карте; текущая пульсирует Солнцем.",
+      "html": "<div class=\"ds-land\"><button class=\"ds-pad\" aria-label=\"Шаг 1\"></button><button class=\"ds-pad ds-pad-now\" aria-label=\"Шаг 2\"></button></div>",
+      "css": ".ds-land { display: flex; gap: 40px; padding: 36px; border-radius: var(--radius-card); background: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.07) 1px, transparent 1.5px) 0 0 / 12px 12px, linear-gradient(180deg, #131824, #10141c); } .ds-pad { position: relative; width: 56px; height: 56px; border: 2px solid var(--keycap-line); border-radius: 14px; background: var(--keycap); box-shadow: 0 4px 0 var(--keycap-edge); cursor: pointer; } .ds-pad:first-child { background: var(--leaf-fill); } .ds-pad-now::after { content: ''; position: absolute; inset: -4px; border-radius: 17px; animation: ds-pulse 1.6s ease-out infinite; } @keyframes ds-pulse { 0% { box-shadow: 0 0 0 0 rgba(255,200,58,0.55); } 70%, 100% { box-shadow: 0 0 0 12px rgba(255,200,58,0); } } @media (prefers-reduced-motion: reduce) { .ds-pad-now::after { animation: none; box-shadow: 0 0 0 3px var(--sun); } }"
+    },
+    {
+      "name": "Кусок кода",
+      "kind": "custom",
+      "refersTo": "key-sun",
+      "description": "Всплывает в редакторе: пунктир Солнцем, номер, название и «Добавить».",
+      "html": "<div class=\"ds-slot\"><div class=\"ds-slot-head\"><span class=\"ds-slot-num\">1</span><span class=\"ds-slot-title\">Яблоко падает вниз</span><button class=\"ds-slot-add\">Добавить</button></div><pre class=\"ds-slot-code\">  items[i].y = items[i].y + fallSpeed;</pre></div>",
+      "css": ".ds-slot { max-width: 440px; padding: 7px 10px 8px 6px; border: 1.5px dashed rgba(255,200,58,0.55); border-left-width: 2px; border-radius: 0 12px 12px 0; background: rgba(255,200,58,0.07); font-family: var(--font-ui); } .ds-slot-head { display: flex; align-items: center; gap: 10px; } .ds-slot-num { padding: 1px 7px; border-radius: 6px; background: var(--sun); color: #151a23; font: 700 11px/1.6 var(--font-display); } .ds-slot-title { flex: 1; color: var(--scr-ink); font-size: 13px; font-weight: 600; } .ds-slot-add { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 38px; margin-bottom: 3px; padding: 0 16px; border: 1px solid var(--keycap-line); border-radius: var(--radius-key); background: var(--keycap); color: var(--ink); font: 600 14px/1 var(--font-ui); box-shadow: 0 3px 0 var(--keycap-edge); transition: transform 0.07s ease-out, box-shadow 0.07s ease-out, background-color 0.12s; cursor: pointer; min-height: 30px; padding: 0 11px; border-radius: 10px; font-size: 13px; border-color: var(--sun-deep); background: var(--sun); color: #151a23; box-shadow: 0 2px 0 #6b4b00; } .ds-slot-code { margin: 6px 0 0; color: rgba(255,214,112,0.62); font: 14px/1.5 var(--font-mono); font-variant-ligatures: none; }"
+    },
+    {
+      "name": "Приставка",
+      "kind": "custom",
+      "refersTo": "window",
+      "description": "Корпус цвета сложности, тёмная рамка и экран 380:470.",
+      "html": "<div class=\"ds-console\" data-shell=\"green\"><div class=\"ds-bezel\"><div class=\"ds-screen\"></div></div></div>",
+      "css": ".ds-console { width: 220px; padding: 14px 14px 22px; border-radius: 30px 30px 46px 46px; background: linear-gradient(165deg, #6fdc86, #34b85a 42%, #229345); box-shadow: inset 0 2px 0 rgba(255,255,255,0.35), inset 0 -5px 0 rgba(0,0,0,0.16), 0 24px 44px -16px rgba(22,112,48,0.55); } .ds-bezel { padding: 10px 10px 14px; border-radius: 18px 18px 30px 18px; background: #20232c; box-shadow: inset 0 2px 8px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.25); } .ds-screen { aspect-ratio: 380 / 470; border-radius: 8px; background: #141414; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Приставка на тёмном столе",
+    "overview": "**Creative North Star: \"Приставка на тёмном столе\"**\n\nИнтерфейс — набор физических предметов на чёрном столе. На столе лежат одно окно (вкладки, гайд, код) и карманная приставка, в которой идёт игра ученика. Всё, что нажимается, — настоящие клавиши: у них есть глубина, и при нажатии они проседают. Всё остальное лежит плоско и молчит.\n\nНастроение — тактильное, спокойное, игровое, но не детское. Яркое на экране только главное: приставка своего цвета, красная клавиша «Собрать» и жёлтое «ты здесь». Пиксели живут в рисунках, на карте и в стрелке; сам интерфейс современный — чистые шрифты, ровные отступы, без декоративного ретро. Восьмилетнему должно быть понятно, двадцатилетнему — не стыдно. Мультяшность и смайлики-эмодзи отвергнуты.\n\n- Тёмный стол (`desk`) и плоские окна (`paper`) с линией в 1px; объём только у нажимаемого. - Клавиши с твёрдой нижней гранью, которые проседают при нажатии; включённая вкладка остаётся нажатой. - Два акцента: Солнце ведёт по пути, Яблоко запускает игру. Зелёный Лист — «готово». - Цвет корпуса приставки — это сложность игры: белый, зелёный, красный. - Свои пиксельные рисунки 24×24 вместо эмодзи; заголовки — Unbounded, текст — Onest, код — JetBrains Mono.",
+    "keyCharacteristics": [
+      "Тёмный стол (`desk`) и плоские окна (`paper`) с линией в 1px; объём только у нажимаемого.",
+      "Клавиши с твёрдой нижней гранью, которые проседают при нажатии; включённая вкладка остаётся нажатой.",
+      "Два акцента: Солнце ведёт по пути, Яблоко запускает игру. Зелёный Лист — «готово».",
+      "Цвет корпуса приставки — это сложность игры: белый, зелёный, красный.",
+      "Свои пиксельные рисунки 24×24 вместо эмодзи; заголовки — Unbounded, текст — Onest, код — JetBrains Mono."
+    ],
+    "rules": [
+      {
+        "name": "The One Sun Rule",
+        "body": "Жёлтый значит «ты здесь» или «дальше сюда». Не красить им украшения, заголовки или второстепенные кнопки — иначе ученик перестанет понимать, куда идти.",
+        "section": "colors"
+      },
+      {
+        "name": "The Apple Is Action Rule",
+        "body": "Красная клавиша запускает игру. На виду одна главная красная клавиша; для остальных действий — обычные клавиши.",
+        "section": "colors"
+      },
+      {
+        "name": "The Shell Means Difficulty Rule",
+        "body": "Белый корпус — очень легко, зелёный — легко, красный — сложно. Цвет корпуса и подпись сложности в меню — один и тот же смысл; не использовать эти цвета для другого.",
+        "section": "colors"
+      },
+      {
+        "name": "The Readable Ink Rule",
+        "body": "Текст — только `ink`, `ink-2`, `scr-ink`, `scr-dim` или цвет акцента на тёмном фоне (не ниже 4.5:1). `ink-3` и `scr-faint` — для декора и зачёркнутого старого кода.",
+        "section": "colors"
+      },
+      {
+        "name": "The Unbounded For Names Rule",
+        "body": "Unbounded — только для имён, названий, заголовков и номеров. Абзацы, подсказки и кнопки — Onest.",
+        "section": "typography"
+      },
+      {
+        "name": "The No Ligatures Rule",
+        "body": "В коде лигатуры выключены: JetBrains Mono рисует `>=` как «≥», и ученик начинает печатать этот символ.",
+        "section": "typography"
+      },
+      {
+        "name": "The Pressable Has Depth Rule",
+        "body": "Глубина — признак того, что это можно нажать. Нажимаемое имеет нижнюю грань и проседает; ненажимаемое лежит плоско. Не давать плоским карточкам объём, а клавишам — плоский вид.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Flat Desk Rule",
+        "body": "Окна и карточки на столе плоские: фон `paper`, рамка 1px `rule`, без тени. Мягкая тень — только у всплывающих окон и приставки.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** держать всё на тёмном столе (`desk`), окна — плоские `paper` с линией 1px и скруглением 22px.",
+      "**Do** делать любое нажимаемое клавишей с нижней гранью (3px; 2px маленькая, 4px большая), которая проседает при нажатии.",
+      "**Do** вести ученика Солнцем: «ты здесь», следующий шаг, фокус — один жёлтый ориентир за раз.",
+      "**Do** запускать игру красной клавишей Яблоко — одной главной на виду.",
+      "**Do** брать картинки только из своего набора пиксельных рисунков (`Pic`, `pictureUrl`, `drawPic`).",
+      "**Do** держать контраст текста не ниже 4.5:1, а все анимации — под `prefers-reduced-motion`.",
+      "**Do** писать заголовки и номера Unbounded, текст и кнопки — Onest, код — JetBrains Mono без лигатур."
+    ],
+    "donts": [
+      "**Don't** ставить смайлики-эмодзи в интерфейс — только свои пиксельные рисунки.",
+      "**Don't** делать мультяшно: без скачущих и пружинящих анимаций, детских шрифтов и сюсюканья в текстах.",
+      "**Don't** красить жёлтым украшения и второстепенное (The One Sun Rule).",
+      "**Don't** использовать цвета корпусов (белый, зелёный, красный) для другого смысла, чем сложность.",
+      "**Don't** давать плоским карточкам тень и объём, а клавишам — плоский вид.",
+      "**Don't** писать важный текст цветом `ink-3` (3.8:1)."
+    ]
+  }
+}

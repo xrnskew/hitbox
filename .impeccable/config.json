@@ -1,0 +1,13 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [
+      "src/lessons/*/tabs.ts",
+      "src/lessons/*/tasks.ts",
+      "src/lessons/*/bonus.ts",
+      "src/lessons/engine.ts",
+      "src/sandbox/runtime.js"
+    ],
+    "ignoreValues": []
+  }
+}
