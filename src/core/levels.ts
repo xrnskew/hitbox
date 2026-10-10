@@ -1,8 +1,8 @@
-import type { GuideExtra, GuideStep, Lesson, StepTask } from '../lessons/types.ts'
-import { partDone, stepDone, varLine } from './progress.ts'
+import type { Lesson, StepTask } from '../lessons/types.ts'
+import { stepDone } from './progress.ts'
 
 // Уровни гайда: шаг — цепочка квестов (по одному, по порядку). Следующий шаг открывается,
-// когда пройден предыдущий уровень. Всё считается по коду, поэтому после перезагрузки прогресс тот же:
+// когда пройдены все уровни перед ним. Всё считается по коду, поэтому после перезагрузки прогресс тот же:
 // квест «нажми «Собрать»» смотрит на код последнего запуска, а при загрузке игра запускается сама.
 
 export interface LevelState {
@@ -25,21 +25,21 @@ export function questDone(task: StepTask, codes: string[], ran: string[]): boole
   return task.kind === 'edit' ? task.isDone(code) : task.pieces.every((p) => p.isDone(code))
 }
 
-export function levelStates(steps: GuideStep[], codes: string[], ran: string[] = codes): LevelState[] {
+export function levelStates(steps: QuestLevel[], codes: string[], ran: string[] = codes): LevelState[] {
   const out: LevelState[] = []
-  steps.forEach((step, i) => {
+  steps.forEach((step) => {
     const s = stepDone(codes[step.tab], step.fns)
     const questsDone = step.quests.map((q) => questDone(q, codes, ran))
     const current = questsDone.indexOf(false)
     // шаг, в котором что-то уже сделано, не прячем, даже если раньше что-то сломали
-    const unlocked = i === 0 || out[i - 1].done || questsDone.some(Boolean)
+    const unlocked = out.every((l) => l.done) || questsDone.some(Boolean)
     out.push({ stepDone: s, questsDone, current, done: s && current < 0, unlocked })
   })
   return out
 }
 
 /** Квест, который ученик делает сейчас: первый невыполненный в первом непройденном шаге. */
-export function currentQuest(steps: GuideStep[], levels: LevelState[]): { step: number; quest: number } | null {
+export function currentQuest(steps: QuestLevel[], levels: LevelState[]): { step: number; quest: number } | null {
   const i = levels.findIndex((l) => !l.done)
   if (i < 0 || !levels[i].unlocked) return null
   const quest = levels[i].current
@@ -47,24 +47,23 @@ export function currentQuest(steps: GuideStep[], levels: LevelState[]): { step: 
   return quest < 0 || !steps[i].quests[quest] ? null : { step: i, quest }
 }
 
-export interface ExtraState {
-  settingDone: boolean
-  codeDone: boolean
-  done: boolean
-  unlocked: boolean
+/** Уровень цепочки квестов: шаг игры или бонусное задание. У бонуса нет своих функций — только квесты. */
+export interface QuestLevel {
+  tab: number
+  fns: string[]
+  quests: StepTask[]
 }
 
-export function extraStates(extras: GuideExtra[], levelsDone: boolean, codes: string[]): ExtraState[] {
-  const out: ExtraState[] = []
-  extras.forEach((x, i) => {
-    const settingDone = varLine(codes[x.setting.tab], x.setting.name) > 0
-    const codeDone = x.codes.every((c) => partDone(codes[c.tab], c.marks))
-    const done = settingDone && codeDone
-    const unlocked = (i === 0 ? levelsDone : out[i - 1].done) || done
-    out.push({ settingDone, codeDone, done, unlocked })
-  })
-  return out
+/**
+ * Вся цепочка квестов урока: сначала шаги, за ними бонусы. Бонус открывается, когда пройден уровень перед ним, —
+ * первый бонус ждёт, пока собрана вся игра. Номер уровня в цепочке — тот же, что у квеста в контроллере.
+ */
+export function questChain(lesson: Pick<Lesson, 'steps' | 'extras'>): QuestLevel[] {
+  return [...lesson.steps, ...lesson.extras.map((x) => ({ tab: x.quests[0].tab, fns: [], quests: x.quests }))]
 }
+
+/** Состояние бонуса — то же, что у шага: квесты по порядку, открыт ли, пройден ли. */
+export type ExtraState = LevelState
 
 export interface LessonProgress {
   levels: LevelState[]
@@ -73,11 +72,11 @@ export interface LessonProgress {
   allDone: boolean
 }
 
-/** Весь прогресс урока по коду: шаги с квестами и дополнительные задания. `ran` — код последнего запуска. */
+/** Весь прогресс урока по коду: шаги с квестами и бонусы. `ran` — код последнего запуска. */
 export function lessonProgress(lesson: Pick<Lesson, 'steps' | 'extras'>, codes: string[], ran = codes): LessonProgress {
-  const levels = levelStates(lesson.steps, codes, ran)
-  const allDone = levels.every((l) => l.done)
-  return { levels, extras: extraStates(lesson.extras, allDone, codes), allDone }
+  const all = levelStates(questChain(lesson), codes, ran)
+  const levels = all.slice(0, lesson.steps.length)
+  return { levels, extras: all.slice(lesson.steps.length), allDone: levels.every((l) => l.done) }
 }
 
 // ===== Станции карты =====

@@ -1,5 +1,5 @@
 import type { Lesson } from '../types.ts'
-import { GUIDE_EXTRAS, GUIDE_EXTRAS_NOTE, GUIDE_INTRO, GUIDE_STEPS } from './guide.ts'
+import { GUIDE_EXTRAS, GUIDE_INTRO, GUIDE_STEPS } from './guide.ts'
 import { SPACE_HINTS } from './hints.ts'
 import { ENEMY_PIC, FINISHED, SHIP_PIC, TUTORIAL } from './tabs.ts'
 
@@ -33,6 +33,5 @@ export const SPACE_LESSON: Lesson = {
   steps: GUIDE_STEPS,
   extras: GUIDE_EXTRAS,
   extrasTitle: 'Взрывы и волны',
-  extrasNote: GUIDE_EXTRAS_NOTE,
   hints: SPACE_HINTS,
 }

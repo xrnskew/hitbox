@@ -76,8 +76,30 @@ export async function showStation(page: Page, name: string | RegExp) {
 
 /** Нажать «Добавить» у всплывающих в коде кусков `count` раз подряд. */
 export async function addPieces(page: Page, count: number) {
-  const add = page.locator('.cm-editor').getByRole('button', { name: /^Добавить:/ })
+  // кусок-вставка — «Добавить», кусок-замена — «Заменить»
+  const add = page.locator('.cm-editor').getByRole('button', { name: /^(Добавить|Заменить):/ })
   for (let i = 0; i < count; i++) await add.click()
+}
+
+/** Квест бонуса N: открыть бонус на карте (если под ней другой), нажать кнопку квеста. */
+export async function openBonusQuest(page: Page, n: number, button: string | RegExp, quest?: string) {
+  await tab(page, 'Гайд')
+  const box = page.locator(`#guide-task-${n}`)
+  if (await box.isHidden()) await showStation(page, new RegExp(`^Бонус: ${await bonusTitle(page, n)}`))
+  const scope = quest ? box.getByRole('region', { name: `Квест: ${quest}` }) : box
+  await scope.getByRole('button', { name: button }).click()
+}
+
+const bonusTitle = (page: Page, n: number) =>
+  page.locator(`#guide-task-${n} h3`).evaluate((h) => h.textContent!.replace(/^Задание \d+\.\s*/, ''))
+
+/** Пройти бонус целиком: [кнопка квеста, сколько кусков] по порядку; «Собрать» в конце — сам `run`. */
+export async function doBonus(page: Page, n: number, quests: [string, number][]) {
+  for (const [button, pieces] of quests) {
+    await openBonusQuest(page, n, button)
+    await addPieces(page, pieces)
+  }
+  await run(page)
 }
 
 /** Выбрать картинку в открытом окне выбора. */

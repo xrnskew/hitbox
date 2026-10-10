@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { currentQuest, extraStates, hereStation, lessonProgress, levelStates, stationList } from '@/core/levels.ts'
+import { currentQuest, hereStation, lessonProgress, levelStates, stationList } from '@/core/levels.ts'
 import { checkFinishedPassword } from '@/core/lock.ts'
 import { isPicture } from '@/core/pictures.ts'
 import { functionLines } from '@/core/progress.ts'
@@ -204,13 +204,17 @@ describe('шаги открываются по очереди', () => {
   })
 
   it('бомба и звезда закрыты, пока игра не собрана; звезда — ещё и до бомбы', () => {
-    expect(extraStates(GUIDE_EXTRAS, false, TUTORIAL_CODES).map((x) => x.unlocked)).toEqual([false, false])
-    expect(extraStates(GUIDE_EXTRAS, true, TUTORIAL_CODES).map((x) => x.unlocked)).toEqual([true, false])
+    const lesson = { steps: GUIDE_STEPS, extras: GUIDE_EXTRAS }
+    const extras = (codes: string[]) => lessonProgress(lesson, codes).extras
+    expect(extras(TUTORIAL_CODES).map((x) => x.unlocked)).toEqual([false, false])
     const engine = `${engineWith(3)}\n${BOMB_LINE}`
-    const withBomb = [engine, STEP_HERO, BOMB_APPLES, BOMB_CATCH]
-    expect(extraStates(GUIDE_EXTRAS, true, withBomb).map((x) => x.unlocked)).toEqual([true, true])
-    const withStar = [`${engine}\n${GOLD_LINE}`, STEP_HERO, GOLD_APPLES, GOLD_CATCH]
-    expect(extraStates(GUIDE_EXTRAS, true, withStar).map((x) => x.done)).toEqual([true, true])
+    const withBomb = [engine, heroWith('кот'), BOMB_APPLES, BOMB_CATCH]
+    expect(extras(withBomb).map((x) => x.unlocked)).toEqual([true, true])
+    expect(extras(withBomb).map((x) => x.done)).toEqual([true, false])
+    const withStar = [`${engine}\n${GOLD_LINE}`, heroWith('кот'), GOLD_APPLES, GOLD_CATCH]
+    expect(extras(withStar).map((x) => x.done)).toEqual([true, true])
+    // бонус засчитан, только когда его код собран: квест «Собери и проверь» смотрит на последний запуск
+    expect(lessonProgress(lesson, withStar, withBomb).extras.map((x) => x.done)).toEqual([true, false])
   })
 
   it('код бомбы и звезды сохраняет все квесты яблок и поимки', () => {

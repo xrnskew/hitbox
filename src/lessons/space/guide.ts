@@ -1,15 +1,6 @@
-import type { GuideExtra, GuideIntro, GuideStep, Rich } from '../types.ts'
-import {
-  BOOM_ENEMIES,
-  BOOM_HITS,
-  BOOM_LINE,
-  FAST_ENEMIES,
-  MAX_SPEED_LINE,
-  STEP_BULLETS,
-  STEP_ENEMIES,
-  STEP_HITS,
-  STEP_SHIP,
-} from './tabs.ts'
+import type { GuideExtra, GuideIntro, GuideStep } from '../types.ts'
+import { BOOM_QUESTS, WAVES_QUESTS } from './bonus.ts'
+import { STEP_BULLETS, STEP_ENEMIES, STEP_HITS, STEP_SHIP } from './tabs.ts'
 import {
   BEAM_RUN_TASK,
   BREACH_TASK,
@@ -133,21 +124,13 @@ export const GUIDE_EXTRAS: GuideExtra[] = [
     pic: 'взрыв',
     title: 'Взрывы',
     text: 'Сбил пришельца — на его месте 20 кадров горит взрыв. Взрывы — третий массив, `booms`.',
-    setting: { tab: 0, name: 'boomPic', line: BOOM_LINE },
-    codes: [
-      { tab: 3, code: BOOM_ENEMIES, marks: [/\bboomPic\b/] },
-      { tab: 4, code: BOOM_HITS, marks: [/\bbooms\.push\s*\(/] },
-    ],
+    quests: BOOM_QUESTS,
   },
   {
     n: 6,
     pic: 'пришелец',
     title: 'Волна за волной',
     text: 'Каждая новая волна на одного пришельца больше и быстрее прошлой, но не быстрее `maxSpeed`. Откроется после взрывов.',
-    setting: { tab: 0, name: 'maxSpeed', line: MAX_SPEED_LINE },
-    codes: [{ tab: 3, code: FAST_ENEMIES, marks: [/\bmaxSpeed\b/] }],
+    quests: WAVES_QUESTS,
   },
 ]
-
-export const GUIDE_EXTRAS_NOTE: Rich =
-  'Вторая кнопка заменяет «Пришельцев» и «Попадание» целиком — очки, прорыв и волны в новом коде уже есть. Передумал? [[Ctrl]] + [[Z]] в каждой вкладке.'

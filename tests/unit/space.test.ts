@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { currentQuest, extraStates, levelStates } from '@/core/levels.ts'
+import { currentQuest, lessonProgress, levelStates } from '@/core/levels.ts'
 import { findSyntaxError } from '@/core/syntax.ts'
 import { LESSONS, lessonById } from '@/lessons/index.ts'
 import { editTarget } from '@/lessons/kit.ts'
@@ -50,6 +50,9 @@ import {
 import type { BuildTask, EditTask } from '@/lessons/types.ts'
 import { apply, build, withSetting } from './build.ts'
 import { boot, type Sim } from './sim.ts'
+
+/** Бонусы по коду: открыты ли и пройдены ли — как их считает гайд. */
+const extras = (codes: string[]) => lessonProgress({ steps: GUIDE_STEPS, extras: GUIDE_EXTRAS }, codes).extras
 
 /** Движок со своими настройками: по умолчанию всё настроено, как в квестах. */
 const engineWith = (ship = 6, bullet = 9, reload = 15, enemy = 1) =>
@@ -653,21 +656,20 @@ describe('Космос: квесты идут по порядку', () => {
   })
 
   it('взрывы и волны закрыты до сборки игры; их код сохраняет все квесты', () => {
-    expect(extraStates(GUIDE_EXTRAS, false, TUTORIAL_CODES).map((x) => x.unlocked)).toEqual([false, false])
-    expect(extraStates(GUIDE_EXTRAS, true, TUTORIAL_CODES).map((x) => x.unlocked)).toEqual([true, false])
+    expect(extras(TUTORIAL_CODES).map((x) => x.unlocked)).toEqual([false, false])
     const base = engine(6, 9, 15, 1, '#ec407a', 'осьминог')
     const done = [base, STEP_SHIP.replace(SHIP_PIC, 'тарелка'), STEP_BULLETS, STEP_ENEMIES, STEP_HITS]
     expect(levelStates(GUIDE_STEPS, done).every((l) => l.done)).toBe(true)
-    expect(extraStates(GUIDE_EXTRAS, true, done).map((x) => x.done)).toEqual([false, false])
+    expect(extras(done).map((x) => x.done)).toEqual([false, false])
 
     const booms = boomGame(base)
     booms[1] = done[1]
-    expect(extraStates(GUIDE_EXTRAS, true, booms).map((x) => x.done)).toEqual([true, false])
+    expect(extras(booms).map((x) => x.done)).toEqual([true, false])
     expect(levelStates(GUIDE_STEPS, booms).every((l) => l.done)).toBe(true)
 
     const fast = fastGame(base)
     fast[1] = done[1]
-    expect(extraStates(GUIDE_EXTRAS, true, fast).map((x) => x.done)).toEqual([true, true])
+    expect(extras(fast).map((x) => x.done)).toEqual([true, true])
     expect(levelStates(GUIDE_STEPS, fast).every((l) => l.done)).toBe(true)
   })
 
@@ -676,6 +678,6 @@ describe('Космос: квесты идут по порядку', () => {
     finished[1] = finished[1].replace(SHIP_PIC, 'тарелка')
     finished[0] = finished[0].replace(`"${BULLET_COLOR}"`, '"#ec407a"').replace(`"${ENEMY_PIC}"`, '"👽"')
     expect(levelStates(GUIDE_STEPS, finished).every((l) => l.done)).toBe(true)
-    expect(extraStates(GUIDE_EXTRAS, true, FINISHED_CODES).map((x) => x.done)).toEqual([true, true])
+    expect(extras(finished).map((x) => x.done)).toEqual([true, true])
   })
 })

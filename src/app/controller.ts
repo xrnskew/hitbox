@@ -1,6 +1,13 @@
 import { explainRuntimeError, formatError, isSyntaxMessage } from '@/core/errors.ts'
-import { planSettingInsert } from '@/core/insert.ts'
-import { currentQuest, hereStation, type LevelState, lessonProgress, levelStates, stationList } from '@/core/levels.ts'
+import {
+  currentQuest,
+  hereStation,
+  type LevelState,
+  lessonProgress,
+  levelStates,
+  questChain,
+  stationList,
+} from '@/core/levels.ts'
 import { checkFinishedPassword } from '@/core/lock.ts'
 import { hasContent, stepDone } from '@/core/progress.ts'
 import { findSyntaxError, firstSyntaxError, type SyntaxIssue } from '@/core/syntax.ts'
@@ -367,12 +374,17 @@ export function createController(lesson: Lesson, variant: LessonVariant) {
   }
 
   // ===== Гайд: квесты =====
-  const levelsOf = (codes: string[], ran = store.get().ran): LevelState[] => levelStates(lesson.steps, codes, ran)
-  const questAt = (step: number, quest: number) => lesson.steps[step]?.quests[quest]
+  // Цепочка квестов: шаги, за ними бонусы. Номер уровня — в этой цепочке: бонус 1 идёт сразу за последним шагом.
+  const chain = questChain(lesson)
+  const levelsOf = (codes: string[], ran = store.get().ran): LevelState[] => levelStates(chain, codes, ran)
+  const questAt = (step: number, quest: number) => chain[step]?.quests[quest]
+  /** «Шаг 2» или «Бонус «Бомба»» — по номеру уровня в цепочке. */
+  const levelName = (i: number) =>
+    i < lesson.steps.length ? `Шаг ${i + 1}` : `Бонус «${lesson.extras[i - lesson.steps.length].title}»`
 
   /** Квест «поправь сам» выполнен (печатью или из окна выбора) — говорим, что дальше. */
   function announceEdit(before: LevelState[], after: LevelState[]) {
-    const cur = currentQuest(lesson.steps, before)
+    const cur = currentQuest(chain, before)
     if (!cur) return
     const task = questAt(cur.step, cur.quest)
     if (task.kind !== 'edit' || !after[cur.step].questsDone[cur.quest]) return
@@ -381,7 +393,7 @@ export function createController(lesson: Lesson, variant: LessonVariant) {
 
   /** Квест «нажми «Собрать»» выполнен запуском. */
   function announceRun(before: LevelState[], after: LevelState[]) {
-    const cur = currentQuest(lesson.steps, before)
+    const cur = currentQuest(chain, before)
     if (!cur) return
     const task = questAt(cur.step, cur.quest)
     if (task.kind !== 'run' || !after[cur.step].questsDone[cur.quest]) return
@@ -390,9 +402,11 @@ export function createController(lesson: Lesson, variant: LessonVariant) {
 
   /** Подсказка, где следующий квест. */
   function whatNext(levels: LevelState[], step: number): string {
-    const next = currentQuest(lesson.steps, levels)
-    if (!next) return levels.every((l) => l.done) ? ` Игра собрана! ${lesson.extrasTitle} — в «Гайде».` : ''
-    if (next.step !== step) return ` Шаг ${next.step + 1} открыт — он в «Гайде».`
+    const next = currentQuest(chain, levels)
+    if (!next) return levels.every((l) => l.done) ? ' Всё готово — загляни на финиш в «Гайде».' : ''
+    if (next.step !== step && next.step === lesson.steps.length)
+      return ` Игра собрана! ${levelName(next.step)} открыт — он в «Гайде».`
+    if (next.step !== step) return ` ${levelName(next.step)} открыт — он в «Гайде».`
     const task = questAt(next.step, next.quest)
     if (task.kind === 'build' && task.tab === editors?.current) return ' Дальше — жми «Добавить» прямо в коде.'
     return ` Следующий квест «${task.title}» — в «Гайде».`
@@ -452,7 +466,7 @@ export function createController(lesson: Lesson, variant: LessonVariant) {
 
   /** Текущий квест, если это сборка во вкладке `tab`. */
   function buildingIn(tab: number, codes: string[]) {
-    const cur = currentQuest(lesson.steps, levelsOf(codes))
+    const cur = currentQuest(chain, levelsOf(codes))
     const task = cur && questAt(cur.step, cur.quest)
     return cur && task?.kind === 'build' && task.tab === tab ? { ...cur, task } : null
   }
@@ -461,7 +475,7 @@ export function createController(lesson: Lesson, variant: LessonVariant) {
   function slotSources(): (SlotSource | null)[] {
     return variant.tabs.map((_, tab) => {
       if (!variant.hasGuide) return null
-      if (!lesson.steps.some((s) => s.quests.some((q) => q.kind === 'build' && q.tab === tab))) return null
+      if (!chain.some((s) => s.quests.some((q) => q.kind === 'build' && q.tab === tab))) return null
       return (code: string) => {
         const cur = buildingIn(tab, codesWith(tab, code))
         if (!cur) return null
@@ -470,6 +484,7 @@ export function createController(lesson: Lesson, variant: LessonVariant) {
         const piece = cur.task.pieces[next.index]
         return {
           after: next.plan.after,
+          replace: next.plan.replace,
           code: next.plan.text.replace(/^\n+/, ''),
           n: next.index + 1,
           total: cur.task.pieces.length,
@@ -496,7 +511,7 @@ export function createController(lesson: Lesson, variant: LessonVariant) {
       toast('Сначала добавь предыдущую часть.')
       return
     }
-    const line = editors.insertLine(task.tab, plan.after, plan.text)
+    const line = editors.insertLine(task.tab, plan.after, plan.text, plan.replace)
     editors.gotoLine(line)
     const ed = editors
     const codes = codesNow()
@@ -505,10 +520,11 @@ export function createController(lesson: Lesson, variant: LessonVariant) {
     const next = cur && nextPiece(cur.task, codes[task.tab])
     if (next) ed.reveal(next.plan.after)
     const done = task.pieces.every((p) => p.isDone(codes[task.tab]))
+    const verb = next?.plan.replace ? 'Заменить' : 'Добавить'
     toast(
       done
-        ? `${task.doneText}${cur && cur.task !== task ? ` Дальше — «${cur.task.title}»: жми «Добавить».` : ''}`
-        : `Часть ${pieceIndex + 1} из ${task.pieces.length} на месте. Жми «Добавить» у следующей.`,
+        ? `${task.doneText}${cur && cur.task !== task ? ` Дальше — «${cur.task.title}»: жми «${verb}».` : ''}`
+        : `Часть ${pieceIndex + 1} из ${task.pieces.length} на месте. Жми «${verb}» у следующей.`,
       () => ed.undo(task.tab),
     )
   }
@@ -538,55 +554,6 @@ export function createController(lesson: Lesson, variant: LessonVariant) {
     editors.focus()
     // что квест выполнен, скажет снимок кода — так же, как после печати
     snapshot()
-  }
-
-  /** Дополнительные задания открываются, только когда основная игра собрана: все шаги с квестами. */
-  function extraLocked(extraIndex: number): boolean {
-    const { extras, allDone } = lessonProgress(lesson, codesNow(), store.get().ran)
-    if (extras[extraIndex].unlocked) return false
-    toast(
-      allDone
-        ? `Сначала добавь «${lesson.extras[extraIndex - 1].title}».`
-        : 'Сначала собери игру: пройди все шаги вместе с квестами.',
-    )
-    return true
-  }
-
-  /** Дополнительное задание, кнопка 1: одна строка в «Движок». Целиком «Движок» не заменяем. */
-  function insertExtraSetting(extraIndex: number) {
-    const { setting } = lesson.extras[extraIndex]
-    if (!editors || extraLocked(extraIndex)) return
-    const plan = planSettingInsert(editors.getCode(setting.tab), setting.name, setting.line)
-    selectView(setting.tab)
-    if (plan.kind === 'exists') {
-      editors.gotoLine(plan.line)
-      toast(`${setting.name} уже есть в «${title(setting.tab)}», строка ${plan.line}. Ничего не добавил.`)
-      return
-    }
-    const line = editors.insertLine(setting.tab, plan.after, plan.text)
-    editors.gotoLine(line)
-    const ed = editors
-    toast(`Добавил в «${title(setting.tab)}» строку ${line} с ${setting.name}. Остальные настройки на месте.`, () =>
-      ed.undo(setting.tab),
-    )
-  }
-
-  /** Дополнительное задание, кнопка 2: код сразу в несколько вкладок — одной правкой в каждой. */
-  function insertExtraCode(extraIndex: number) {
-    const extra = lesson.extras[extraIndex]
-    if (!editors || extraLocked(extraIndex)) return
-    const ed = editors
-    const changed = extra.codes.filter((c) => ed.getCode(c.tab) !== c.code)
-    selectView(extra.codes[0].tab)
-    const where = extra.codes.map((c) => `«${title(c.tab)}»`).join(' и ')
-    if (!changed.length) {
-      toast(`Этот код уже во вкладках ${where}. Нажми «Собрать».`)
-      return
-    }
-    for (const c of changed) ed.replace(c.tab, c.code)
-    toast(`${extra.title} — во вкладках ${where}. Теперь нажми «Собрать».`, () => {
-      for (const c of changed) ed.undo(c.tab)
-    })
   }
 
   /** Готовая игра под паролем: true — пароль подошёл. */
@@ -715,8 +682,6 @@ export function createController(lesson: Lesson, variant: LessonVariant) {
     dismissSpot() {
       store.set({ spotOff: true })
     },
-    insertExtraSetting,
-    insertExtraCode,
     unlockFinished,
 
     toast,
@@ -752,7 +717,8 @@ export function tabBadges(c: Controller, s: Pick<AppState, 'codes' | 'syntax' | 
 /** Квест «нажми «Собрать»», если он сейчас текущий: тогда кнопка подсвечивается поверх затемнения. */
 export function runQuestNow(c: Controller, codes: string[], ran: string[]): RunTask | null {
   if (!c.variant.hasGuide) return null
-  const cur = currentQuest(c.lesson.steps, levelStates(c.lesson.steps, codes, ran))
-  const task = cur && c.lesson.steps[cur.step].quests[cur.quest]
+  const chain = questChain(c.lesson)
+  const cur = currentQuest(chain, levelStates(chain, codes, ran))
+  const task = cur && chain[cur.step].quests[cur.quest]
   return task?.kind === 'run' ? task : null
 }

@@ -1,4 +1,5 @@
-import { functionLines, stripComments } from '../core/progress.ts'
+import { planSettingInsert } from '../core/insert.ts'
+import { functionLines, stripComments, varLine } from '../core/progress.ts'
 import type { BuildPiece, BuildTask, EditTask, InsertPlan, Rich, RunTask } from './types.ts'
 
 // Общие помощники для квестов любой игры. Чистые функции: проверяют код и говорят, куда вставить кусок.
@@ -17,6 +18,43 @@ export const has = (code: string, re: RegExp) => re.test(stripComments(code))
 export function after(code: string, re: RegExp, text: string): InsertPlan | null {
   const line = lineOf(code, re)
   return line ? { after: line, text } : null
+}
+
+/** Кусок — над строкой, где совпало `re`; null — такой строки ещё нет. */
+export function before(code: string, re: RegExp, text: string): InsertPlan | null {
+  const line = lineOf(code, re)
+  return line ? { after: line - 1, text } : null
+}
+
+/** Кусок — под блоком `{ … }`, который начинается со строки, где совпало `re`. */
+export function afterBlock(code: string, re: RegExp, text: string): InsertPlan | null {
+  const start = lineOf(code, re)
+  if (!start) return null
+  const lines = linesOf(code)
+  let depth = 0
+  for (let i = start - 1; i < lines.length; i++) {
+    for (const ch of lines[i]) depth += ch === '{' ? 1 : ch === '}' ? -1 : 0
+    if (depth <= 0 && i >= start - 1 && lines[i].includes('}')) return { after: i + 1, text }
+  }
+  return null
+}
+
+/** Кусок вместо строки, где совпало `re`, и ещё `count - 1` строк под ней; null — такой строки нет. */
+export function swap(code: string, re: RegExp, text: string, count = 1): InsertPlan | null {
+  const line = lineOf(code, re)
+  return line ? { after: line - 1, text, replace: count } : null
+}
+
+/** Строка настройки `var name = …;` в «Движок»: под строками с рисунками, иначе под заголовком настроек. */
+export function settingPiece(title: string, name: string, line: string): BuildPiece {
+  return {
+    title,
+    plan: (code) => {
+      const p = planSettingInsert(code, name, line)
+      return p.kind === 'insert' ? { after: p.after, text: line } : null
+    },
+    isDone: (code) => varLine(code, name) > 0,
+  }
 }
 
 /** Новая функция или переменная — в конец вкладки, через пустую строку. */
@@ -222,4 +260,23 @@ export function numberQuest(o: { title: string; text: Rich; tab: number; name: s
     hint: [o.hint],
     isDone: numberAbove0(o.name),
   }
+}
+
+/** Применить кусок к тексту — так же, как редактор: вставить после строки или заменить строки. Для проверок. */
+export function applyPlan(code: string, plan: InsertPlan): string {
+  const lines = code.split('\n')
+  lines.splice(plan.after, plan.replace ?? 0, ...plan.text.split('\n'))
+  return lines.join('\n')
+}
+
+/** Собрать квест «по кусочкам» целиком: все куски по порядку. Для проверок. */
+export function buildAll(task: BuildTask, code: string): string {
+  for (const piece of task.pieces) {
+    if (piece.isDone(code)) continue
+    const plan = piece.plan(code)
+    if (!plan) throw new Error(`«${task.title}»: нет места для «${piece.title}»`)
+    code = applyPlan(code, plan)
+    if (!piece.isDone(code)) throw new Error(`«${task.title}»: «${piece.title}» не засчитан после вставки`)
+  }
+  return code
 }

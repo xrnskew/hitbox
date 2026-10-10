@@ -95,8 +95,11 @@ export interface TabEditors {
   getCodes(): string[]
   /** Заменить вкладку целиком — одной отдельной записью в истории. */
   replace(tab: number, code: string): void
-  /** Вставить строку после строки `after` (0 — в начало). Возвращает номер новой строки. */
-  insertLine(tab: number, after: number, text: string): number
+  /**
+   * Вставить строку после строки `after` (0 — в начало), а с `replace` — вместо стольких строк после неё.
+   * Возвращает номер первой новой строки с кодом.
+   */
+  insertLine(tab: number, after: number, text: string, replace?: number): number
   undo(tab: number): boolean
   markError(tab: number, line: number | null): void
   clearErrors(): void
@@ -232,14 +235,21 @@ export function createTabEditors(o: TabEditorsOptions): TabEditors {
         annotations: [isolateHistory.of('full'), programmatic.of(true)],
       })
     },
-    insertLine(tab, after, text) {
+    insertLine(tab, after, text, replace = 0) {
       const doc = stateOf(tab).doc
       const n = Math.min(after, doc.lines)
-      const changes = n === 0 ? { from: 0, insert: `${text}\n` } : { from: doc.line(n).to, insert: `\n${text}` }
+      const last = Math.min(n + replace, doc.lines)
+      // замена: строки n+1…last уходят, на их место встаёт кусок
+      const changes =
+        replace > 0 && last > n
+          ? { from: doc.line(n + 1).from, to: doc.line(last).to, insert: text }
+          : n === 0
+            ? { from: 0, insert: `${text}\n` }
+            : { from: doc.line(n).to, insert: `\n${text}` }
       const lineNo = n + 1
       // подсвечиваем только строки с кодом: пустая строка-отступ перед куском не в счёт
       const lead = /^\n*/.exec(text)?.[0].length ?? 0
-      const at = n === 0 ? 0 : changes.from + 1
+      const at = n === 0 || (replace > 0 && last > n) ? changes.from : changes.from + 1
       const typing = tab === current && !calm()
       if (typing) finishTyping()
       apply(tab, {

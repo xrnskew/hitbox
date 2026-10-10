@@ -87,3 +87,15 @@
     animation: none;
   }
 }
+
+/* Кусок-замена: строки, которые уйдут, зачёркнуты и приглушены; рамка — та же, что у вставки */
+.cm-slotOld {
+  background: rgba(255, 120, 120, 0.07);
+  color: var(--scr-faint);
+  text-decoration: line-through;
+  text-decoration-color: rgba(255, 138, 143, 0.7);
+}
+
+.cm-slotOld span {
+  color: inherit !important;
+}

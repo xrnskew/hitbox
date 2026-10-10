@@ -5,9 +5,13 @@ import { applySettingInsert, planSettingInsert } from '@/core/insert.ts'
 import { functionState, hasContent, partDone, stepDone, stripComments } from '@/core/progress.ts'
 import { createRunner } from '@/core/runner.ts'
 import { findSyntaxError, firstSyntaxError, scanBrackets } from '@/core/syntax.ts'
-import { GUIDE_EXTRAS, GUIDE_STEPS } from '@/lessons/catch/guide.ts'
+import { GUIDE_STEPS } from '@/lessons/catch/guide.ts'
 import {
+  BOMB_APPLES,
+  BOMB_CATCH,
   BOMB_LINE,
+  GOLD_APPLES,
+  GOLD_CATCH,
   FINISHED_CODES,
   STEP_CATCH,
   STEP_HERO,
@@ -21,7 +25,11 @@ describe('синтаксис', () => {
     ...TUTORIAL_CODES,
     ...FINISHED_CODES,
     ...GUIDE_STEPS.map((s) => s.code),
-    ...GUIDE_EXTRAS.flatMap((x) => [x.setting.line, ...x.codes.map((c) => c.code)]),
+    BOMB_LINE,
+    BOMB_APPLES,
+    BOMB_CATCH,
+    GOLD_APPLES,
+    GOLD_CATCH,
   ]
 
   it('весь готовый код без ошибок', () => {
@@ -162,10 +170,8 @@ describe('прогресс', () => {
     expect(stepDone(TUTORIAL_ENGINE, ['movePlayer'])).toBe(false)
   })
 
-  it('код бомбы и звезды узнаётся по своим признакам', () => {
-    for (const extra of GUIDE_EXTRAS) {
-      for (const c of extra.codes) expect(partDone(c.code, c.marks)).toBe(true)
-    }
+  it('бомбу узнаём по признакам: в коде шага их нет', () => {
+    expect(partDone(BOMB_CATCH, [/["']bomb["']/])).toBe(true)
     expect(partDone(STEP_CATCH, [/["']bomb["']/])).toBe(false)
   })
 })

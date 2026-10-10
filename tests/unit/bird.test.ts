@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { currentQuest, extraStates, levelStates } from '@/core/levels.ts'
+import { currentQuest, lessonProgress, levelStates } from '@/core/levels.ts'
 import { isPicture } from '@/core/pictures.ts'
 import { findSyntaxError } from '@/core/syntax.ts'
 import { GUIDE_EXTRAS, GUIDE_STEPS } from '@/lessons/bird/guide.ts'
@@ -39,6 +39,9 @@ import { editTarget } from '@/lessons/kit.ts'
 import { LESSONS, lessonById } from '@/lessons/index.ts'
 import { build, withSetting } from './build.ts'
 import { boot } from './sim.ts'
+
+/** Бонусы по коду: открыты ли и пройдены ли — как их считает гайд. */
+const extras = (codes: string[]) => lessonProgress({ steps: GUIDE_STEPS, extras: GUIDE_EXTRAS }, codes).extras
 
 /** Движок со своими настройками: по умолчанию всё настроено, как в квестах. */
 const engineWith = (gravity = 0.4, flap = 7, pipes = 2, color = '#e53935') =>
@@ -162,15 +165,14 @@ describe('Птичка: квесты идут по порядку', () => {
   })
 
   it('монетки и скорость закрыты до сборки игры; их код сохраняет все квесты', () => {
-    expect(extraStates(GUIDE_EXTRAS, false, TUTORIAL_CODES).map((x) => x.unlocked)).toEqual([false, false])
-    expect(extraStates(GUIDE_EXTRAS, true, TUTORIAL_CODES).map((x) => x.unlocked)).toEqual([true, false])
+    expect(extras(TUTORIAL_CODES).map((x) => x.unlocked)).toEqual([false, false])
     let engine = withSetting(engineWith(), 'coinPic', COIN_LINE)
     const coins = [engine, birdWith('сова'), STEP_FLAP, COIN_PIPES, COIN_HIT]
-    expect(extraStates(GUIDE_EXTRAS, true, coins).map((x) => x.done)).toEqual([true, false])
+    expect(extras(coins).map((x) => x.done)).toEqual([true, false])
     expect(levelStates(GUIDE_STEPS, coins).every((l) => l.done)).toBe(true)
     engine = withSetting(engine, 'maxSpeed', MAX_SPEED_LINE)
     const fast = [engine, birdWith('сова'), STEP_FLAP, FAST_PIPES, COIN_HIT]
-    expect(extraStates(GUIDE_EXTRAS, true, fast).map((x) => x.done)).toEqual([true, true])
+    expect(extras(fast).map((x) => x.done)).toEqual([true, true])
     expect(levelStates(GUIDE_STEPS, fast).every((l) => l.done)).toBe(true)
   })
 })

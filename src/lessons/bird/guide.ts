@@ -1,15 +1,6 @@
-import type { GuideExtra, GuideIntro, GuideStep, Rich } from '../types.ts'
-import {
-  COIN_HIT,
-  COIN_LINE,
-  COIN_PIPES,
-  FAST_PIPES,
-  MAX_SPEED_LINE,
-  STEP_BIRD,
-  STEP_FLAP,
-  STEP_HIT,
-  STEP_PIPES,
-} from './tabs.ts'
+import type { GuideExtra, GuideIntro, GuideStep } from '../types.ts'
+import { COIN_QUESTS, SPEEDUP_QUESTS } from './bonus.ts'
+import { STEP_BIRD, STEP_FLAP, STEP_HIT, STEP_PIPES } from './tabs.ts'
 import {
   BIRD_CREATE_TASK,
   BIRD_DRAW_TASK,
@@ -110,21 +101,13 @@ export const GUIDE_EXTRAS: GuideExtra[] = [
     pic: 'монетка',
     title: 'Монетки',
     text: 'В половине дырок висит монетка. Схватил — плюс 5 очков.',
-    setting: { tab: 0, name: 'coinPic', line: COIN_LINE },
-    codes: [
-      { tab: 3, code: COIN_PIPES, marks: [/\bcoinPic\b/, /\bcoin\s*:/] },
-      { tab: 4, code: COIN_HIT, marks: [/\bp\.coin\b/] },
-    ],
+    quests: COIN_QUESTS,
   },
   {
     n: 6,
     pic: 'молния',
     title: 'Всё быстрее',
     text: 'Каждые 10 секунд трубы едут быстрее, но не быстрее `maxSpeed`. Откроется после монеток.',
-    setting: { tab: 0, name: 'maxSpeed', line: MAX_SPEED_LINE },
-    codes: [{ tab: 3, code: FAST_PIPES, marks: [/\bfunction\s+speedUp\b/, /(^|[^\w.$])speedUp\s*\(\s*\)\s*;/m] }],
+    quests: SPEEDUP_QUESTS,
   },
 ]
-
-export const GUIDE_EXTRAS_NOTE: Rich =
-  'Вторая кнопка заменяет вкладки целиком — счёт и столкновения в новом коде уже есть. Передумал? [[Ctrl]] + [[Z]] в каждой вкладке.'

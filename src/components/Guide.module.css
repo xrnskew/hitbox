@@ -448,55 +448,6 @@
   margin-left: auto;
 }
 
-.extraButtons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 10px;
-  margin-top: 16px;
-}
-
-.keyNum {
-  display: inline-grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 7px;
-  background: rgba(0, 0, 0, 0.18);
-  font-family: var(--font-display);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.extraCode {
-  display: grid;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.codeLabel {
-  margin-top: 4px !important;
-  color: var(--ink-2);
-  font-size: var(--text-s);
-  font-weight: 600;
-}
-
-.warn {
-  display: flex;
-  gap: 10px;
-  margin-top: 16px !important;
-  padding: 12px 14px;
-  border-radius: 14px;
-  background: var(--sun-soft);
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.warnIcon {
-  flex-shrink: 0;
-  margin-top: 3px;
-  color: var(--sun);
-}
-
 /* ===== Соседние станции ===== */
 .nav {
   display: flex;

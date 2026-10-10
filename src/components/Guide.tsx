@@ -24,7 +24,6 @@ import {
   PlayIcon,
   TargetIcon,
   TriangleIcon,
-  WarnIcon,
 } from './icons.tsx'
 import { Pic } from './Pic.tsx'
 import { Rich } from './Rich.tsx'
@@ -49,6 +48,16 @@ export function Guide() {
   const choice = picked && picked.at === here ? list.findIndex((s) => s.key === picked.key) : -1
   const index = choice >= 0 ? choice : list.findIndex((s) => s.key === here)
   const station = list[index]
+  /** Уровень цепочки пройден, а ученик вернулся к нему — кнопка к следующей станции. */
+  const nextAfter = (i: number): Next | null => {
+    const all = [...levels, ...extras]
+    if (!all[i]?.done) return null
+    const s = list[i + 1]
+    if (!s) return null
+    if (s.kind === 'step') return { key: s.key, open: `Шаг ${s.n} открыт.`, go: `Перейти к шагу ${s.n}` }
+    if (s.kind === 'extra') return { key: s.key, open: `Бонус «${s.title}» открыт.`, go: 'Перейти к бонусу' }
+    return all.every((l) => l.done) ? { key: s.key, open: 'Финиш открыт.', go: 'Перейти к финишу' } : null
+  }
 
   // сменилась станция, а начало гайда выше экрана (нажали «Дальше» внизу) — подняться к карте
   const top = useRef<HTMLDivElement>(null)
@@ -93,6 +102,7 @@ export function Guide() {
             total={lesson.steps.length}
             level={levels[i]}
             codes={codes}
+            next={nextAfter(i)}
             hidden={station.key !== `step-${step.step}`}
           />
         ))}
@@ -102,20 +112,23 @@ export function Guide() {
         <h2 id="guide-extras">{lesson.extrasTitle}</h2>
         <p className={styles.sub}>
           {allDone
-            ? 'Две кнопки на каждое: сначала переменная, потом код.'
+            ? 'Квесты по одному, как в шагах: код встаёт кусочками прямо во вкладках.'
             : 'Сначала собери игру: пройди все шаги вместе с квестами — тогда откроются.'}
         </p>
         <div className={styles.extras}>
           {lesson.extras.map((x, i) => (
-            <Extra key={x.n} index={i} extra={x} state={extras[i]} hidden={station.key !== `extra-${x.n}`} />
+            <Extra
+              key={x.n}
+              index={i}
+              chainIndex={lesson.steps.length + i}
+              extra={x}
+              state={extras[i]}
+              codes={codes}
+              next={nextAfter(lesson.steps.length + i)}
+              hidden={station.key !== `extra-${x.n}`}
+            />
           ))}
         </div>
-        <p className={styles.warn}>
-          <WarnIcon size={15} className={styles.warnIcon} />
-          <span>
-            <Rich text={lesson.extrasNote} />
-          </span>
-        </p>
       </section>
 
       {station.kind === 'finish' && <Finish list={list} done={station.state === 'done'} />}
@@ -274,6 +287,7 @@ const StepItem = memo(function StepItem({
   total,
   level,
   codes,
+  next,
   hidden,
 }: {
   index: number
@@ -281,6 +295,7 @@ const StepItem = memo(function StepItem({
   total: number
   level: LevelState
   codes: string[]
+  next: Next | null
   hidden: boolean
 }) {
   const c = useController()
@@ -340,32 +355,7 @@ const StepItem = memo(function StepItem({
               ))}
             </ul>
 
-            {/* квесты по одному: выполненные свёрнуты в строку, текущий раскрыт, следующие скрыты */}
-            <ol className={styles.quests} aria-label="Квесты">
-              {step.quests.map((task, j) =>
-                level.questsDone.slice(0, j).every(Boolean) ? (
-                  level.questsDone[j] && j !== step.quests.length - 1 ? (
-                    <li key={j} className={styles.questDone}>
-                      <CheckIcon size={13} />
-                      <span>{task.title}</span>
-                      <span className="visually-hidden"> — выполнено</span>
-                    </li>
-                  ) : (
-                    <li key={j}>
-                      <TaskBox
-                        stepIndex={index}
-                        taskIndex={j}
-                        task={task}
-                        count={step.quests.length}
-                        done={level.questsDone[j]}
-                        code={codes[task.tab]}
-                        next={level.done && step.step < total ? step.step + 1 : null}
-                      />
-                    </li>
-                  )
-                ) : null,
-              )}
-            </ol>
+            <QuestList chainIndex={index} quests={step.quests} level={level} codes={codes} next={next} />
 
             <div className={styles.actions}>
               <button
@@ -439,8 +429,8 @@ function TaskBox({
   count: number
   done: boolean
   code: string
-  /** Номер шага, который открылся после этого задания. */
-  next: number | null
+  /** Станция, которая открылась после этого квеста. */
+  next: Next | null
 }) {
   return (
     <section className={styles.task} data-done={done} aria-label={`Квест: ${task.title}`}>
@@ -462,19 +452,74 @@ function TaskBox({
       {task.kind === 'edit' && <EditTaskBody stepIndex={stepIndex} taskIndex={taskIndex} task={task} done={done} />}
       {task.kind === 'build' && <BuildTaskBody stepIndex={stepIndex} taskIndex={taskIndex} task={task} code={code} />}
       {task.kind === 'run' && <RunTaskBody task={task} done={done} />}
-      {next && <NextStep n={next} />}
+      {next && <NextStep next={next} />}
     </section>
   )
 }
 
-/** Шаг пройден, а ученик вернулся к нему на карте — кнопка к следующему. */
-function NextStep({ n }: { n: number }) {
+/** Станция после пройденного уровня: шаг, бонус или финиш. */
+interface Next {
+  key: string
+  /** «Шаг 2 открыт.», «Бонус «Бомба» открыт.» */
+  open: string
+  /** Подпись кнопки: «Перейти к шагу 2». */
+  go: string
+}
+
+/**
+ * Квесты уровня по одному: выполненные свёрнуты в строку, текущий раскрыт, следующие скрыты.
+ * `chainIndex` — номер уровня в цепочке квестов: шаги, за ними бонусы.
+ */
+function QuestList({
+  chainIndex,
+  quests,
+  level,
+  codes,
+  next,
+}: {
+  chainIndex: number
+  quests: StepTask[]
+  level: LevelState
+  codes: string[]
+  next: Next | null
+}) {
+  return (
+    <ol className={styles.quests} aria-label="Квесты">
+      {quests.map((task, j) =>
+        level.questsDone.slice(0, j).every(Boolean) ? (
+          level.questsDone[j] && j !== quests.length - 1 ? (
+            <li key={j} className={styles.questDone}>
+              <CheckIcon size={13} />
+              <span>{task.title}</span>
+              <span className="visually-hidden"> — выполнено</span>
+            </li>
+          ) : (
+            <li key={j}>
+              <TaskBox
+                stepIndex={chainIndex}
+                taskIndex={j}
+                task={task}
+                count={quests.length}
+                done={level.questsDone[j]}
+                code={codes[task.tab]}
+                next={level.done ? next : null}
+              />
+            </li>
+          )
+        ) : null,
+      )}
+    </ol>
+  )
+}
+
+/** Уровень пройден, а ученик вернулся к нему на карте — кнопка к следующей станции. */
+function NextStep({ next }: { next: Next }) {
   const c = useController()
   return (
     <p className={styles.unlocked}>
-      Шаг {n} открыт.
-      <button type="button" className="key key--s" onClick={() => c.showStation(`step-${n}`)}>
-        Перейти к шагу {n}
+      {next.open}
+      <button type="button" className="key key--s" onClick={() => c.showStation(next.key)}>
+        {next.go}
       </button>
     </p>
   )
@@ -593,22 +638,27 @@ function RunTaskBody({ task, done }: { task: RunTask; done: boolean }) {
   )
 }
 
+/** Бонус: как шаг — квесты по одному, код встаёт кусочками прямо во вкладках. */
 const Extra = memo(function Extra({
   index,
+  chainIndex,
   extra,
   state,
+  codes,
+  next,
   hidden,
 }: {
   index: number
+  chainIndex: number
   extra: GuideExtra
   state: ExtraState
+  codes: string[]
+  next: Next | null
   hidden: boolean
 }) {
   const c = useController()
-  const [open, setOpen] = useState(false)
-  const settingTab = c.variant.tabs[extra.setting.tab].title
-  const where = extra.codes.map((x) => `«${c.variant.tabs[x.tab].title}»`).join(' и ')
   const locked = !state.unlocked
+  const prev = c.lesson.extras[index - 1]
 
   return (
     <div
@@ -631,56 +681,31 @@ const Extra = memo(function Extra({
             <Rich text={extra.text} />
           </p>
         </div>
-        {state.done && (
+        {state.done ? (
           <span className={`chip chip--ok ${styles.extraChip}`}>
             <CheckIcon size={12} />
             Готово
           </span>
+        ) : locked ? (
+          <span className={`chip chip--todo ${styles.extraChip}`}>
+            <LockIcon size={11} />
+            Закрыто
+          </span>
+        ) : (
+          state.current >= 0 && (
+            <span className={`chip chip--todo ${styles.extraChip}`}>
+              Квест {state.current + 1} из {extra.quests.length}
+            </span>
+          )
         )}
       </div>
 
-      <div className={styles.extraButtons}>
-        <button
-          type="button"
-          className={state.settingDone ? 'key key--l' : 'key key--sun key--l'}
-          disabled={locked}
-          onClick={() => c.insertExtraSetting(index)}
-        >
-          {state.settingDone ? <CheckIcon size={15} /> : <span className={styles.keyNum}>1</span>}
-          Добавить переменную в «{settingTab}»
-        </button>
-        <button
-          type="button"
-          className={state.codeDone ? 'key key--l' : 'key key--apple key--l'}
-          disabled={locked || !state.settingDone}
-          onClick={() => c.insertExtraCode(index)}
-        >
-          {state.codeDone ? <CheckIcon size={15} /> : <span className={styles.keyNum}>2</span>}
-          Вставить код в {where}
-        </button>
-        <button
-          type="button"
-          className="key key--l key--ghost"
-          aria-expanded={open}
-          disabled={locked}
-          onClick={() => setOpen(!open)}
-        >
-          <CodeIcon size={15} />
-          {open ? 'Скрыть код' : 'Показать код'}
-        </button>
-      </div>
-
-      {open && !locked && (
-        <div className={styles.extraCode}>
-          <p className={styles.codeLabel}>«{settingTab}» — одна строка</p>
-          <CodeBlock code={extra.setting.line} />
-          {extra.codes.map((x) => (
-            <div key={x.tab}>
-              <p className={styles.codeLabel}>«{c.variant.tabs[x.tab].title}»</p>
-              <CodeBlock code={x.code} />
-            </div>
-          ))}
-        </div>
+      {locked ? (
+        <p className={styles.lockedText}>
+          {prev ? `Откроется после «${prev.title}».` : 'Откроется, когда соберёшь игру: все шаги вместе с квестами.'}
+        </p>
+      ) : (
+        <QuestList chainIndex={chainIndex} quests={extra.quests} level={state} codes={codes} next={next} />
       )}
     </div>
   )

@@ -1,5 +1,5 @@
 import { expect, type Page, test } from '@playwright/test'
-import { addPieces, app, game, open, openQuest, pick, run, tab, waitGame } from './helpers.ts'
+import { addPieces, app, doBonus, game, open, openQuest, pick, run, tab, waitGame } from './helpers.ts'
 
 // Птичка: вторая игра конструктора. Всё то же ядро, что у Корзинки, — проверяем, что урок собирается
 // квестами от начала до конца и что у приставки своя кнопка «Взмах».
@@ -101,18 +101,18 @@ test('Птичка: вся игра по квестам, взмах, удар и
   await hitboxes.click()
   await expect(hitboxes).toHaveAttribute('aria-checked', 'true')
 
-  // монетки и скорость — после сборки игры, по две кнопки
+  // монетки и скорость — после сборки игры: квесты по одному, код — кусочками, как в шагах
   await tab(page, 'Гайд')
   await expect(page.getByRole('heading', { name: 'Монетки и скорость' })).toBeVisible()
-  const coins = page.locator('#guide-task-5')
-  await coins.getByRole('button', { name: 'Добавить переменную в «Движок»' }).click()
-  await tab(page, 'Гайд')
-  await coins.getByRole('button', { name: 'Вставить код в «Трубы» и «Удар»' }).click()
-  await tab(page, 'Гайд')
-  const fast = page.locator('#guide-task-6')
-  await fast.getByRole('button', { name: 'Добавить переменную в «Движок»' }).click()
-  await tab(page, 'Гайд')
-  await fast.getByRole('button', { name: 'Вставить код в «Трубы»' }).click()
+  await doBonus(page, 5, [
+    ['Открыть «Движок»', 1],
+    ['Открыть «Трубы»', 2],
+    ['Открыть «Удар»', 1],
+  ])
+  await doBonus(page, 6, [
+    ['Открыть «Движок»', 1],
+    ['Открыть «Трубы»', 4],
+  ])
   await expect(progress(page)).toContainText('6/6')
   await run(page)
   expect(await game(page, '[coinPic, maxSpeed, typeof speedUp]')).toEqual(['монетка', 5, 'function'])

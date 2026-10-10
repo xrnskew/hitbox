@@ -107,17 +107,18 @@ describe('бомба и звезда', () => {
     expect(sim.drawn).toContain('звезда')
   })
 
-  it('makeItem делит случайное число на бомбу, звезду и яблоко', () => {
+  it('makeItem: сначала «бомба?» (1 из 5), иначе «звезда?» (1 из 10), иначе яблоко', () => {
     let engine = withSetting(TUTORIAL_ENGINE, 'bombPic', BOMB_LINE)
     engine = withSetting(engine, 'goldPic', GOLD_LINE)
     const sim = boot([engine, STEP_HERO, GOLD_APPLES, GOLD_CATCH])
-    const kindAt = (r: number) =>
+    // случайные числа по очереди из списка, потом — 0.5
+    const kindAt = (...rs: number[]) =>
       sim.peek(
-        `(function () { var m = Math.random; Math.random = function () { return ${r}; }; var k = makeItem().kind; Math.random = m; return k; })()`,
+        `(function () { var rs = [${rs}], m = Math.random; Math.random = function () { return rs.length ? rs.shift() : 0.5; }; var k = makeItem().kind; Math.random = m; return k; })()`,
       )
     expect(kindAt(0.1)).toBe('bomb')
-    expect(kindAt(0.2)).toBe('gold')
-    expect(kindAt(0.5)).toBe('apple')
+    expect(kindAt(0.5, 0.05)).toBe('gold')
+    expect(kindAt(0.5, 0.5)).toBe('apple')
   })
 })
 

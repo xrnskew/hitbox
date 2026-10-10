@@ -1,5 +1,5 @@
 import { expect, type Page, test } from '@playwright/test'
-import { addPieces, app, game, open, openQuest, pick, run, tab, waitGame } from './helpers.ts'
+import { addPieces, app, doBonus, game, open, openQuest, pick, run, tab, waitGame } from './helpers.ts'
 
 // Космос: третья игра конструктора, уровень «Сложно». Проверяем, что урок собирается квестами от начала
 // до конца — с лучом, перезарядкой, зигзагом и вложенным циклом, — что у приставки ← → и «Огонь», а заодно
@@ -140,18 +140,18 @@ test('Космос: вся игра по квестам — луч, переза
   await hitboxes.click()
   await expect(hitboxes).toHaveAttribute('aria-checked', 'true')
 
-  // взрывы и волны — после сборки игры, по две кнопки
+  // взрывы и волны — после сборки игры: квесты по одному, код — кусочками, как в шагах
   await tab(page, 'Гайд')
   await expect(page.getByRole('heading', { name: 'Взрывы и волны' })).toBeVisible()
-  const booms = page.locator('#guide-task-5')
-  await booms.getByRole('button', { name: 'Добавить переменную в «Движок»' }).click()
-  await tab(page, 'Гайд')
-  await booms.getByRole('button', { name: 'Вставить код в «Пришельцы» и «Попадание»' }).click()
-  await tab(page, 'Гайд')
-  const waves = page.locator('#guide-task-6')
-  await waves.getByRole('button', { name: 'Добавить переменную в «Движок»' }).click()
-  await tab(page, 'Гайд')
-  await waves.getByRole('button', { name: 'Вставить код в «Пришельцы»' }).click()
+  await doBonus(page, 5, [
+    ['Открыть «Движок»', 1],
+    ['Открыть «Попадание»', 1],
+    ['Открыть «Пришельцы»', 2],
+  ])
+  await doBonus(page, 6, [
+    ['Открыть «Движок»', 1],
+    ['Открыть «Пришельцы»', 3],
+  ])
   await expect(progress(page)).toContainText('6/6')
   await run(page)
   expect(await game(page, '[boomPic, maxSpeed, enemyPic]')).toEqual(['взрыв', 2, 'осьминог'])

@@ -47,10 +47,12 @@ export interface GuideStep {
   quests: StepTask[]
 }
 
-/** Куда вставить кусок кода: после строки `after` (с 1). */
+/** Куда вставить кусок кода: после строки `after` (с 1). С `replace` — вместо стольких строк после неё. */
 export interface InsertPlan {
   after: number
   text: string
+  /** Сколько строк после `after` кусок заменяет: в коде они зачёркнуты, на кнопке — «Заменить». */
+  replace?: number
 }
 
 /** Задание «поправь сам»: кнопка открывает вкладку и выделяет, что менять. */
@@ -102,16 +104,16 @@ export interface RunTask {
 
 export type StepTask = EditTask | BuildTask | RunTask
 
+/** Бонусное задание: открывается, когда игра собрана; квесты — как у шагов, по одному. */
 export interface GuideExtra {
   n: number
-  /** Картинка задания из набора HitBox (на значке в гайде). */
+  /** Картинка задания из набора HitBox (на значке в гайде и на карте). */
   pic: string
   title: string
+  /** Одна строка: что получится. */
   text: Rich
-  /** Одна строка в «Движок». */
-  setting: { tab: number; name: string; line: string }
-  /** Код для нескольких вкладок — вставляется одной кнопкой. */
-  codes: { tab: number; code: string; marks: RegExp[] }[]
+  /** Квесты по порядку: код встаёт кусочками прямо во вкладках, как в шагах. */
+  quests: StepTask[]
 }
 
 export interface GuideIntro {
@@ -179,7 +181,5 @@ export interface Lesson {
   extras: GuideExtra[]
   /** Заголовок раздела дополнительных заданий в гайде: «Бомба и звезда», «Взрывы и волны». */
   extrasTitle: string
-  /** Предупреждение под дополнительными заданиями. */
-  extrasNote: Rich
   hints: HintSet
 }

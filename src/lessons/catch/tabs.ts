@@ -131,43 +131,51 @@ function speedUp() {
   }
 }`
 
-// ===== Бомба и звезда: основа — код после всех заданий (ускорение и 10 очков) =====
+// ===== Бомба и звезда: так выглядит код, когда собраны квесты бонусов (bonus.ts) =====
+// Основа — код после всех шагов: ускорение и 10 очков.
 
-const moveItemsWith = (spawn: string) => `function moveItems() {
+const moveItemsWith = (push: string) => `function moveItems() {
   frame = frame + 1;
   speedUp();
 
-  // раз в spawnEvery кадров — новый предмет в случайном месте сверху
+  // раз в spawnEvery кадров — новое яблоко в случайном месте сверху
   if (frame % spawnEvery === 0) {
-    items.push(${spawn});
+    items.push(${push});
   }
 
-  // все предметы опускаются вниз
+  // все яблоки опускаются вниз
   for (var i = 0; i < items.length; i++) {
     items[i].y = items[i].y + fallSpeed;
   }
 }`
 
-export const BOMB_APPLES = `// новый предмет: обычно яблоко, иногда бомба
-function makeItem() {
-  var kind = "apple";
-  if (Math.random() < 0.2) kind = "bomb";
-  return { x: Math.random() * 340, y: 0, kind: kind };
-}
-
-${moveItemsWith('makeItem()')}
-
-function drawItems() {
+const drawItemsWith = (pics: string) => `function drawItems() {
   for (var i = 0; i < items.length; i++) {
     var pic = itemPic;
-    if (items[i].kind === "bomb") pic = bombPic;
+${pics}
     drawPic(pic, items[i].x, items[i].y);
   }
-}
+}`
 
-${SPEEDUP_FN}`
+const makeItemWith = (kinds: string) => `// новый предмет: обычно яблоко, иногда бомба
+function makeItem() {
+  var kind = "apple";
+${kinds}
+  return { x: Math.random() * 340, y: 0, kind: kind };
+}`
 
-export const BOMB_CATCH = `function checkCatch() {
+const BOMB_KINDS = '  if (Math.random() < 0.2) kind = "bomb";'
+const BOMB_PICS = '    if (items[i].kind === "bomb") pic = bombPic;'
+
+export const BOMB_APPLES = `${moveItemsWith('makeItem()')}
+
+${drawItemsWith(BOMB_PICS)}
+
+${SPEEDUP_FN}
+
+${makeItemWith(BOMB_KINDS)}`
+
+const catchWith = (caught: string) => `function checkCatch() {
   for (var i = items.length - 1; i >= 0; i--) {
     var blizko = Math.abs(items[i].x - playerX) < 34;
 
@@ -175,7 +183,7 @@ export const BOMB_CATCH = `function checkCatch() {
       if (items[i].kind === "bomb") {
         // поймал бомбу — минус жизнь
         lives = lives - 1;
-      } else {
+${caught}      } else {
         // поймал яблоко — десять очков
         score = score + 10;
       }
@@ -189,52 +197,20 @@ export const BOMB_CATCH = `function checkCatch() {
   }
 }`
 
-export const GOLD_APPLES = `// новый предмет: обычно яблоко, иногда бомба или звезда
-function makeItem() {
-  var r = Math.random();
-  var kind = "apple";
-  if (r < 0.18) kind = "bomb";
-  else if (r < 0.26) kind = "gold";
-  return { x: Math.random() * 340, y: 0, kind: kind };
-}
+export const BOMB_CATCH = catchWith('')
 
-${moveItemsWith('makeItem()')}
+export const GOLD_APPLES = `${moveItemsWith('makeItem()')}
 
-function drawItems() {
-  for (var i = 0; i < items.length; i++) {
-    var pic = itemPic;
-    if (items[i].kind === "bomb") pic = bombPic;
-    if (items[i].kind === "gold") pic = goldPic;
-    drawPic(pic, items[i].x, items[i].y);
-  }
-}
+${drawItemsWith(`${BOMB_PICS}\n    if (items[i].kind === "gold") pic = goldPic;`)}
 
-${SPEEDUP_FN}`
+${SPEEDUP_FN}
 
-export const GOLD_CATCH = `function checkCatch() {
-  for (var i = items.length - 1; i >= 0; i--) {
-    var blizko = Math.abs(items[i].x - playerX) < 34;
+${makeItemWith(`${BOMB_KINDS}\n  else if (Math.random() < 0.1) kind = "gold";`)}`
 
-    if (blizko && items[i].y > playerY - 34) {
-      if (items[i].kind === "bomb") {
-        // поймал бомбу — минус жизнь
-        lives = lives - 1;
-      } else if (items[i].kind === "gold") {
+export const GOLD_CATCH = catchWith(`      } else if (items[i].kind === "gold") {
         // поймал звезду — плюс жизнь
         lives = lives + 1;
-      } else {
-        // поймал яблоко — десять очков
-        score = score + 10;
-      }
-      items.splice(i, 1);
-
-    } else if (items[i].y > 500) {
-      // уронил яблоко — минус жизнь, а бомбу и звезду упустить не страшно
-      if (items[i].kind === "apple") lives = lives - 1;
-      items.splice(i, 1);
-    }
-  }
-}`
+`)
 
 // ===== Готовая версия (?finished): бомба, звезда, +10 очков, ускорение каждые 15 секунд до 8 =====
 

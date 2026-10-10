@@ -202,9 +202,9 @@ export const STEP_HIT = CHECK_HIT()
 
 // ===== Монетки и «Всё быстрее»: основа — код после всех шагов =====
 
-const COIN_PUSH = '{ x: 380, top: 60 + Math.random() * 200, passed: false, coin: Math.random() < 0.5 }'
+export const COIN_PUSH = '{ x: 380, top: 60 + Math.random() * 200, passed: false, coin: Math.random() < 0.5 }'
 
-const COIN_DRAW = `
+export const COIN_DRAW = `
 
     // монетка — посередине дырки
     if (p.coin) {
@@ -215,13 +215,14 @@ export const COIN_PIPES = `${MOVE_PIPES(COIN_PUSH)}
 
 ${DRAW_PIPES(COIN_DRAW)}`
 
-export const COIN_HIT = CHECK_HIT(`
+export const COIN_GRAB = `
     // схватил монетку — плюс 5 очков
     if (p.coin && Math.abs(birdX - (p.x + 9)) < 30 && Math.abs(birdY - (p.top + pipeGap / 2 + 12)) < 30) {
       p.coin = false;
       score = score + 5;
-    }
-`)
+    }`
+
+export const COIN_HIT = CHECK_HIT(`${COIN_GRAB}\n`)
 
 export const SPEEDUP_FN = `// каждые 10 секунд трубы едут быстрее, но не быстрее maxSpeed
 function speedUp() {

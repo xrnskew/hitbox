@@ -2,6 +2,8 @@ import { expect, test } from '@playwright/test'
 import {
   addPieces,
   app,
+  doBonus,
+  openBonusQuest,
   buildApples,
   buildGame,
   buildHero,
@@ -427,63 +429,92 @@ test('сброс движка: отдельное предупреждение, 
   await expect(dialog).toBeHidden()
 })
 
-test('8. бомба и звезда: закрыты до сборки игры, две кнопки, логика', async ({ page }) => {
+/** Квесты бонусов Корзинки: [кнопка квеста, сколько кусков]; «Собери и проверь» — запуск в `doBonus`. */
+const BOMB: [string, number][] = [
+  ['Открыть «Движок»', 1],
+  ['Открыть «Яблоки»', 3],
+  ['Открыть «Яблоки»', 2],
+  ['Открыть «Поимка»', 2],
+]
+const STAR: [string, number][] = [
+  ['Открыть «Движок»', 1],
+  ['Открыть «Яблоки»', 1],
+  ['Открыть «Яблоки»', 1],
+  ['Открыть «Поимка»', 1],
+]
+
+test('8. бомба и звезда: закрыты до сборки игры, квесты по одному, кусочки и замены, логика', async ({ page }) => {
+  test.setTimeout(60_000)
   await open(page)
   const bomb = page.locator('#guide-task-4')
   const star = page.locator('#guide-task-5')
-  const setting = 'Добавить переменную в «Движок»'
-  const code = 'Вставить код в «Яблоки» и «Поимка»'
   // под картой одна станция: бомбу сначала открыть на карте
   await expect(bomb).toBeHidden()
   await showStation(page, /^Бонус: Бомба/)
-  await expect(bomb.getByRole('button', { name: setting })).toBeDisabled()
+  await expect(bomb).toHaveAttribute('data-locked', 'true')
+  await expect(bomb).toContainText('Откроется, когда соберёшь игру')
 
-  // игра собрана — под картой сама открылась бомба: ученик теперь там
+  // игра собрана — под картой сама открылась бомба: ученик теперь там, на первом квесте
   await buildGame(page)
-  await expect(bomb.getByRole('button', { name: setting })).toBeEnabled()
-  await expect(bomb.getByRole('button', { name: code })).toBeDisabled()
+  await expect(bomb).toBeVisible()
+  await expect(bomb).toHaveAttribute('data-locked', 'false')
+  await expect(bomb.getByRole('region', { name: 'Квест: Картинка бомбы' })).toBeVisible()
   // звезда скрыта, пока под картой бомба, — и закрыта до бомбы
   await expect(star).toHaveAttribute('data-locked', 'true')
 
-  await bomb.getByRole('button', { name: setting }).click()
+  // 1. картинка бомбы — одна строка в «Движок», остальные настройки на месте
+  await openBonusQuest(page, 4, 'Открыть «Движок»')
+  await addPieces(page, 1)
   let codes = await savedCodes(page)
   const lines = codes[0].split('\n')
   expect(lines[5]).toBe('var bombPic     = "бомба";')
   expect(lines[4]).toBe('var itemPic     = "яблоко";')
-  await expect(page.getByRole('status')).toContainText('Остальные настройки на месте')
 
-  // повторно — «уже есть», без кнопки отмены
-  await tab(page, 'Гайд')
-  await bomb.getByRole('button', { name: setting }).click()
-  await expect(page.getByRole('status')).toContainText('уже есть')
-  await expect(page.getByRole('status').getByRole('button', { name: 'Вернуть как было' })).toHaveCount(0)
+  // 2. яблоко или бомба: makeItem кусочками, а старую строку с items.push — заменить
+  await openBonusQuest(page, 4, 'Открыть «Яблоки»')
+  await addPieces(page, 2)
+  const editor = page.locator('.cm-editor')
+  const swap = editor.getByRole('button', { name: 'Заменить: Новый предмет — из makeItem' })
+  await expect(swap).toBeVisible()
+  await expect(editor.locator('.cm-slotOld')).toHaveCount(1)
+  await expect(editor.locator('.cm-slotOld')).toContainText('items.push({ x: Math.random() * 340, y: 0 });')
+  await swap.click()
+  codes = await savedCodes(page)
+  expect(codes[2]).toContain('items.push(makeItem());')
+  expect(codes[2]).not.toContain('items.push({ x: Math.random() * 340, y: 0 });')
+  // замену можно вернуть, как любой кусок
+  await page.getByRole('status').getByRole('button', { name: 'Вернуть как было' }).click()
+  codes = await savedCodes(page)
+  expect(codes[2]).toContain('items.push({ x: Math.random() * 340, y: 0 });')
+  await swap.click()
 
-  await tab(page, 'Гайд')
-  await bomb.getByRole('button', { name: code }).click()
+  // 3–5. нарисовать, поимка (обе строки — заменой), собрать
+  for (const [button, pieces] of BOMB.slice(2)) {
+    await openBonusQuest(page, 4, button)
+    await addPieces(page, pieces)
+  }
   codes = await savedCodes(page)
   expect(codes[2]).toContain('if (Math.random() < 0.2) kind = "bomb";')
-  expect(codes[3]).toContain('items[i].kind === "bomb"')
+  expect(codes[2]).toContain('drawPic(pic, items[i].x, items[i].y);')
+  expect(codes[3]).toContain('if (items[i].kind === "bomb") {')
+  expect(codes[3]).toContain('if (items[i].kind === "apple") lives = lives - 1;')
+  // ускорение и 10 очков на месте
   expect(codes[2]).toContain('speedUp();')
   expect(codes[3]).toContain('score = score + 10;')
+  // последний квест — «Собери и проверь»: как в шагах, всё темнеет, «Собрать» светится поверх
+  await expect(runButton(page)).toHaveAttribute('data-spot', 'true')
+  await run(page)
+  await tab(page, 'Гайд')
+  await expect(bomb).toHaveAttribute('data-done', 'true')
 
-  await tab(page, 'Гайд')
-  await star.getByRole('button', { name: setting }).click()
-  await tab(page, 'Гайд')
-  await star.getByRole('button', { name: code }).click()
+  await doBonus(page, 5, STAR)
   await tab(page, 'Гайд')
   await expect(star).toHaveAttribute('data-done', 'true')
-  // уровни не сломались: ускорение и 10 очков на месте; все пять чек-поинтов пройдены
+  // все пять чек-поинтов пройдены, под картой — финиш
   await expect(page.getByRole('navigation', { name: 'Прогресс' })).toContainText('5/5')
   await expect(page.getByRole('button', { name: 'Дополнительно: «Звезда»: сделано' })).toBeVisible()
-
-  // всё пройдено — под картой финиш: герой ученика, полка пройденного, кнопки; «Открыть готовую игру» одна
   await expect(page.getByRole('heading', { name: 'Игра собрана' })).toBeVisible()
-  await expect(page.getByRole('list', { name: 'Пройдено' }).getByRole('listitem')).toHaveCount(5)
-  await expect(page.getByRole('button', { name: 'Открыть готовую игру' })).toHaveCount(1)
-  await expect(page.getByRole('link', { name: 'Другие игры' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Собрать и играть' })).toBeVisible()
 
-  await run(page)
   await game(page, 'items = [{ x: playerX, y: playerY, kind: "bomb" }]; checkCatch()')
   expect(await game(page, 'lives')).toBe(2)
   await game(page, 'items = [{ x: playerX, y: playerY, kind: "gold" }]; checkCatch()')
@@ -804,14 +835,8 @@ test('основные сценарии подряд — без единой о�
   await page.getByRole('button', { name: 'Начать заново' }).click()
   await waitGame(page)
 
-  const setting = 'Добавить переменную в «Движок»'
-  const code = 'Вставить код в «Яблоки» и «Поимка»'
-  for (const n of [4, 5]) {
-    await tab(page, 'Гайд')
-    await page.locator(`#guide-task-${n}`).getByRole('button', { name: setting }).click()
-    await tab(page, 'Гайд')
-    await page.locator(`#guide-task-${n}`).getByRole('button', { name: code }).click()
-  }
+  await doBonus(page, 4, BOMB)
+  await doBonus(page, 5, STAR)
   await run(page)
   await game(page, 'items = [{ x: playerX, y: playerY, kind: "gold" }]; checkCatch()')
   expect(await game(page, 'lives')).toBe(4)

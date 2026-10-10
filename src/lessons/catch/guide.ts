@@ -1,15 +1,6 @@
-import type { GuideExtra, GuideIntro, GuideStep, Rich } from '../types.ts'
-import {
-  BOMB_APPLES,
-  BOMB_CATCH,
-  BOMB_LINE,
-  GOLD_APPLES,
-  GOLD_CATCH,
-  GOLD_LINE,
-  STEP_APPLES,
-  STEP_CATCH,
-  STEP_HERO,
-} from './tabs.ts'
+import type { GuideExtra, GuideIntro, GuideStep } from '../types.ts'
+import { BOMB_QUESTS, GOLD_QUESTS } from './bonus.ts'
+import { STEP_APPLES, STEP_CATCH, STEP_HERO } from './tabs.ts'
 import {
   CATCH_TASK,
   FALL_SPEED_TASK,
@@ -93,24 +84,13 @@ export const GUIDE_EXTRAS: GuideExtra[] = [
     pic: 'бомба',
     title: 'Бомба',
     text: 'Поймал бомбу — минус жизнь. Упустить не страшно.',
-    setting: { tab: 0, name: 'bombPic', line: BOMB_LINE },
-    codes: [
-      { tab: 2, code: BOMB_APPLES, marks: [/\bfunction\s+makeItem\b/, /\bbombPic\b/] },
-      { tab: 3, code: BOMB_CATCH, marks: [/["']bomb["']/] },
-    ],
+    quests: BOMB_QUESTS,
   },
   {
     n: 5,
     pic: 'звезда',
     title: 'Звезда',
     text: 'Поймал звезду — плюс жизнь. Откроется после бомбы.',
-    setting: { tab: 0, name: 'goldPic', line: GOLD_LINE },
-    codes: [
-      { tab: 2, code: GOLD_APPLES, marks: [/\bgoldPic\b/, /["']gold["']/] },
-      { tab: 3, code: GOLD_CATCH, marks: [/["']gold["']/] },
-    ],
+    quests: GOLD_QUESTS,
   },
 ]
-
-export const GUIDE_EXTRAS_NOTE: Rich =
-  'Вторая кнопка заменяет «Яблоки» и «Поимку» целиком — ускорение и 10 очков в новом коде уже есть. Передумал? [[Ctrl]] + [[Z]] в каждой вкладке.'
