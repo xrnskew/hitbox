@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   INK,
   isPicture,
+  PICTURE_ALIASES,
   PICTURE_GROUPS,
   PICTURE_NAMES,
   PICTURE_SIZE,
@@ -12,10 +13,20 @@ import {
 } from '@/core/pictures.ts'
 
 describe('Рисунки', () => {
-  it('53 рисунка в пяти группах, имена не повторяются; «?» — не в окне выбора', () => {
-    expect(PICTURE_GROUPS.map((g) => g.title)).toEqual(['Герои', 'Еда', 'Вещи', 'Летают', 'Космос'])
-    expect(PICTURE_NAMES).toHaveLength(53)
-    expect(new Set(PICTURE_NAMES).size).toBe(53)
+  it('126 рисунков в девяти группах, имена не повторяются; «?» — не в окне выбора', () => {
+    expect(PICTURE_GROUPS.map((g) => g.title)).toEqual([
+      'Смайлы',
+      'Животные',
+      'Сказка',
+      'Еда',
+      'Сокровища',
+      'Вещи',
+      'Природа',
+      'Транспорт',
+      'Космос',
+    ])
+    expect(PICTURE_NAMES).toHaveLength(126)
+    expect(new Set(PICTURE_NAMES).size).toBe(126)
     for (const name of PICTURE_NAMES) expect(isPicture(name), name).toBe(true)
     expect(isPicture(UNKNOWN_PICTURE)).toBe(false)
     expect(PICTURE_NAMES).not.toContain(UNKNOWN_PICTURE)
@@ -64,6 +75,16 @@ describe('Рисунки', () => {
 
   it('рисунок как адрес картинки: data:image/svg+xml', () => {
     expect(pictureUrl('ракета')).toBe(`data:image/svg+xml,${encodeURIComponent(pictureSvg('ракета'))}`)
+  })
+
+  it('прежние имена рисуются как их замены и в окне выбора не показываются', () => {
+    expect(PICTURE_ALIASES).toEqual({ колобок: 'улыбка', мышь: 'летучая мышь' })
+    for (const [old, now] of Object.entries(PICTURE_ALIASES)) {
+      expect(PICTURE_NAMES).not.toContain(old)
+      expect(PICTURE_NAMES).toContain(now)
+      expect(isPicture(old)).toBe(true)
+      expect(pictureSvg(old)).toBe(pictureSvg(now))
+    }
   })
 
   it('неизвестное имя — знак вопроса', () => {

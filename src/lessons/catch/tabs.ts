@@ -67,7 +67,7 @@ export const GOLD_LINE = 'var goldPic     = "звезда";'
 // Каждый шаг собирается кнопками по кусочкам (tasks.ts) и в итоге совпадает с этим кодом.
 
 /** Картинка героя, с которой начинают. Квест «Выбери героя» — поменять её на свою. */
-export const HERO_PIC = 'колобок'
+export const HERO_PIC = 'улыбка'
 
 export const STEP_HERO = `// герой — любая картинка
 var playerPic = "${HERO_PIC}";

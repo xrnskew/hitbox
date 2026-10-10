@@ -39,7 +39,7 @@ export const GUIDE_INTRO: GuideIntro = {
 export const GUIDE_STEPS: GuideStep[] = [
   {
     step: 1,
-    pic: 'колобок',
+    pic: 'улыбка',
     tab: 1,
     title: 'Герой',
     lead: 'Создай героя-картинку, нарисуй его и научи ездить стрелками.',

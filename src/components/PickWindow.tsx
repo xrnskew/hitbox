@@ -91,6 +91,16 @@ function PickerBody({ picker }: { picker: Picker }) {
     }
   }, [c])
 
+  // к группе — прокруткой самого списка: прокрутка страницы закрыла бы окно
+  const list = useRef<HTMLDivElement>(null)
+  const jumpTo = (title: string) => {
+    const el = list.current
+    const section = el?.querySelector<HTMLElement>(`[data-group="${title}"]`)
+    if (!el || !section) return
+    const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    el.scrollTo({ top: section.offsetTop - 4, behavior: calm ? 'auto' : 'smooth' })
+  }
+
   const current = picker.was.trim().toLowerCase()
   const color = picker.kind === 'color'
   const heading = color ? 'Выбери цвет' : 'Выбери картинку'
@@ -114,7 +124,23 @@ function PickerBody({ picker }: { picker: Picker }) {
           <CloseIcon size={12} />
         </button>
       </div>
-      <div className={styles.groups}>
+      {!color && (
+        <nav className={styles.jump} aria-label="Группы">
+          {PICTURE_GROUPS.map((g) => (
+            <button
+              key={g.title}
+              type="button"
+              className={styles.jumpKey}
+              title={g.title}
+              aria-label={g.title}
+              onClick={() => jumpTo(g.title)}
+            >
+              <img src={pictureUrl(g.names[0])} alt="" width={22} height={22} />
+            </button>
+          ))}
+        </nav>
+      )}
+      <div className={styles.groups} ref={list}>
         {color &&
           COLORS.map((g) => (
             <section key={g.title} aria-label={g.title}>
@@ -137,7 +163,7 @@ function PickerBody({ picker }: { picker: Picker }) {
           ))}
         {!color &&
           PICTURE_GROUPS.map((g) => (
-            <section key={g.title} aria-label={g.title}>
+            <section key={g.title} aria-label={g.title} data-group={g.title}>
               <h3>{g.title}</h3>
               <div className={styles.grid}>
                 {g.names.map((name) => (

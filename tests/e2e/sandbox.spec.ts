@@ -138,14 +138,14 @@ test('шаг 1 по квестам: картинка из окна, подсве
   await openQuest(page, 1, 'Выбрать картинку в «Герой»')
   const picker = page.getByRole('dialog', { name: 'Выбери картинку' })
   await expect(picker).toBeVisible()
-  // колобок, с которого начинают, в окне отмечен
-  await expect(picker.getByRole('button', { pressed: true })).toHaveAccessibleName('колобок')
+  // улыбка, с которой начинают, в окне отмечена
+  await expect(picker.getByRole('button', { pressed: true })).toHaveAccessibleName('улыбка')
   // все рисунки в окне — настоящие картинки: SVG разобрался и загрузился
-  const pics = picker.locator('img')
-  await expect(pics).toHaveCount(53)
+  const pics = picker.locator('section img')
+  await expect(pics).toHaveCount(126)
   await expect
     .poll(() => pics.evaluateAll((imgs) => imgs.filter((i) => (i as HTMLImageElement).naturalWidth > 0).length))
-    .toBe(53)
+    .toBe(126)
   await pick(page, 'лиса')
   await expect(picker).toHaveCount(0)
   expect((await savedCodes(page))[1]).toContain('var playerPic = "лиса";')
@@ -210,7 +210,7 @@ test('кусок кода печатается на глазах, следующ
   // код уже во вкладке целиком, но ещё «не напечатан»: прозрачный, с курсором
   await expect(page.locator('.cm-typingCaret')).toHaveCount(1)
   await expect(page.locator('.cm-typingHidden').first()).toBeAttached()
-  expect((await savedCodes(page))[1]).toContain('var playerPic = "колобок";')
+  expect((await savedCodes(page))[1]).toContain('var playerPic = "улыбка";')
   await expect(page.locator('.cm-typingCaret')).toHaveCount(0, { timeout: 3000 })
   await expect(page.locator('.cm-typingHidden')).toHaveCount(0)
   // выбрали картинку — следующий кусок; пока он печатается, кнопки «Добавить» нет
@@ -714,7 +714,7 @@ test('гайд: код, объяснение и подсказка открыв�
   await addPieces(page, 1)
   await tab(page, 'Гайд')
   await step.getByRole('button', { name: 'Подсказка' }).click()
-  await expect(step).toContainText('var playerPic = "колобок";')
+  await expect(step).toContainText('var playerPic = "улыбка";')
 })
 
 test('готовая игра под паролем: из гайда и по прямой ссылке', async ({ page, context }) => {
