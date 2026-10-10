@@ -128,7 +128,7 @@ export function Roadmap({
     <nav className={styles.map} aria-label="Карта игры" ref={map}>
       <p className={styles.where} aria-live="polite">
         {atFinish ? (
-          <>Игра собрана целиком! Поиграй сам или открой готовую версию внизу.</>
+          <>Игра собрана целиком! Ты на финише.</>
         ) : current.kind === 'step' && step && level ? (
           <>
             Ты здесь: шаг {current.n} «{current.title}»

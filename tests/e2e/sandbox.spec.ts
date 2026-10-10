@@ -476,6 +476,13 @@ test('8. бомба и звезда: закрыты до сборки игры, 
   await expect(page.getByRole('navigation', { name: 'Прогресс' })).toContainText('5/5')
   await expect(page.getByRole('button', { name: 'Дополнительно: «Звезда»: сделано' })).toBeVisible()
 
+  // всё пройдено — под картой финиш: герой ученика, полка пройденного, кнопки; «Открыть готовую игру» одна
+  await expect(page.getByRole('heading', { name: 'Игра собрана' })).toBeVisible()
+  await expect(page.getByRole('list', { name: 'Пройдено' }).getByRole('listitem')).toHaveCount(5)
+  await expect(page.getByRole('button', { name: 'Открыть готовую игру' })).toHaveCount(1)
+  await expect(page.getByRole('link', { name: 'Другие игры' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Собрать и играть' })).toBeVisible()
+
   await run(page)
   await game(page, 'items = [{ x: playerX, y: playerY, kind: "bomb" }]; checkCatch()')
   expect(await game(page, 'lives')).toBe(2)
@@ -660,6 +667,12 @@ test('карта игры: текущая станция со стрелкой, 
   await map.getByRole('button', { name: 'Финиш — закрыто' }).click()
   await expect(page.getByRole('heading', { name: 'Финиш' })).toBeVisible()
   await expect(near.getByRole('button', { name: /^Дальше/ })).toHaveCount(0)
+  // закрытый финиш — что осталось: все станции; кнопка ведёт на станцию
+  const left = page.getByRole('list', { name: 'Что осталось' })
+  await expect(left.getByRole('button')).toHaveCount(5)
+  await expect(left.getByRole('button').first()).toContainText('ты здесь')
+  await left.getByRole('button', { name: /Шаг 2\./ }).click()
+  await expect(page.locator('#guide-step-2')).toBeVisible()
   await map.getByRole('button', { name: /^Шаг 2:/ }).click()
 
   // шаг 1 пройден: «ты здесь» переехало на шаг 2

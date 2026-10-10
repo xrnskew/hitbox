@@ -1,5 +1,6 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { useApp, useController } from '@/app/context.ts'
+import { homeHref } from '@/app/routes.ts'
 import {
   type ExtraState,
   hereStation,
@@ -9,6 +10,7 @@ import {
   stationList,
 } from '@/core/levels.ts'
 import { type FnState, stepStates } from '@/core/progress.ts'
+import { chosenPic } from '@/lessons/kit.ts'
 import type { BuildTask, EditTask, GuideExtra, GuideStep, RunTask, StepTask } from '@/lessons/types.ts'
 import { CodeBlock } from './CodeBlock.tsx'
 import {
@@ -116,20 +118,16 @@ export function Guide() {
         </p>
       </section>
 
-      {station.kind === 'finish' && (
-        <section className={styles.section} aria-labelledby="guide-finish-title">
-          <h2 id="guide-finish-title">Финиш</h2>
-          <p className={styles.sub}>
-            {station.state === 'done'
-              ? 'Игра собрана целиком, и все бонусы тоже. Поиграй сам — или открой готовую версию и сравни.'
-              : 'Финиш откроется, когда пройдёшь все шаги и бонусные задания.'}
-          </p>
-        </section>
-      )}
+      {station.kind === 'finish' && <Finish list={list} done={station.state === 'done'} />}
 
       <StationNav prev={list[index - 1]} next={list[index + 1]} />
 
-      <footer id="guide-finish" className={styles.footer}>
+      {/* на открытом финише эта кнопка — на самом экране финиша */}
+      <footer
+        id="guide-finish"
+        className={styles.footer}
+        hidden={station.kind === 'finish' && station.state === 'done'}
+      >
         <button type="button" className="key key--l" onClick={() => c.openDialog({ kind: 'unlock' })}>
           <LockIcon size={16} />
           Открыть готовую игру
@@ -137,6 +135,101 @@ export function Guide() {
         <span>Под паролем.</span>
       </footer>
     </article>
+  )
+}
+
+/** Числительное: 1 шаг, 3 шага, 5 шагов. */
+function plural(n: number, one: string, few: string, many: string) {
+  const d = n % 10
+  const dd = n % 100
+  if (d === 1 && dd !== 11) return one
+  if (d >= 2 && d <= 4 && (dd < 12 || dd > 14)) return few
+  return many
+}
+
+/**
+ * Финиш. Открыт — герой ученика на пьедестале, полка с пройденными станциями и что дальше:
+ * собрать и играть, сравнить с готовой версией, выбрать другую игру. Закрыт — что ещё осталось пройти.
+ */
+function Finish({ list, done }: { list: Station[]; done: boolean }) {
+  const c = useController()
+  const codes = useApp((s) => s.codes)
+  const { lesson } = c
+  const earned = list.filter((s) => s.kind !== 'finish')
+  const left = earned.filter((s) => s.state !== 'done')
+  const steps = lesson.steps.length
+  const extras = lesson.extras.length
+  const hero = chosenPic(codes, lesson.card.heroVar) ?? lesson.card.hero
+  const name = (s: Station) => (s.kind === 'step' ? `Шаг ${s.n}. ${s.title}` : `Бонус: ${s.title}`)
+
+  if (!done)
+    return (
+      <section className={styles.section} aria-labelledby="guide-finish-title">
+        <h2 id="guide-finish-title">Финиш</h2>
+        <p className={styles.sub}>Откроется, когда пройдёшь все шаги и бонусы. Осталось:</p>
+        <ul className={styles.left} aria-label="Что осталось">
+          {left.map((s) => (
+            <li key={s.key}>
+              <button
+                type="button"
+                className={`key key--l key--ghost ${styles.leftKey}`}
+                data-state={s.state}
+                onClick={() => c.showStation(s.key)}
+              >
+                <Pic name={s.pic} className={styles.leftPic} />
+                <span>{name(s)}</span>
+                {s.state === 'locked' ? (
+                  <LockIcon size={13} />
+                ) : (
+                  <span className={styles.leftNow}>{s.state === 'now' ? 'ты здесь' : 'открыто'}</span>
+                )}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+
+  return (
+    <section className={styles.finish} aria-labelledby="guide-finish-title">
+      <div className={styles.podium}>
+        <span className={styles.plinth} aria-hidden="true">
+          <Pic name={hero} className={styles.heroPic} />
+        </span>
+        <div className={styles.finishText}>
+          <h2 id="guide-finish-title">Игра собрана</h2>
+          <p>
+            «{lesson.title}» готова целиком: {steps} {plural(steps, 'шаг', 'шага', 'шагов')} и {extras}{' '}
+            {plural(extras, 'бонус', 'бонуса', 'бонусов')}. Собери и сыграй — это твоя версия.
+          </p>
+        </div>
+      </div>
+
+      <ul className={styles.shelf} aria-label="Пройдено">
+        {earned.map((s) => (
+          <li key={s.key} className={styles.medal} data-kind={s.kind} title={name(s)}>
+            <Pic name={s.pic} className={styles.medalPic} />
+            <span className="visually-hidden">{name(s)} — пройдено</span>
+            <CheckIcon size={11} className={styles.medalCheck} />
+          </li>
+        ))}
+      </ul>
+
+      <div className={styles.finishKeys}>
+        <button type="button" className="key key--apple key--l" onClick={c.run}>
+          <PlayIcon size={15} />
+          Собрать и играть
+        </button>
+        <button type="button" className="key key--l" onClick={() => c.openDialog({ kind: 'unlock' })}>
+          <LockIcon size={16} />
+          Открыть готовую игру
+        </button>
+        <a className="key key--l key--ghost" href={homeHref()}>
+          Другие игры
+        </a>
+      </div>
+      <p className={styles.finishNote}>Готовая версия — под паролем: сравни её со своей.</p>
+    </section>
   )
 }
 
