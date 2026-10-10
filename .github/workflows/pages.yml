@@ -25,14 +25,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-        with:
-          # для main нужна история dev — проверить, что коммит пришёл оттуда
-          fetch-depth: ${{ github.ref == 'refs/heads/main' && 0 || 1 }}
 
       # в main попадает только то, что уже есть в dev (docs/MAIN.md)
       - name: Коммит есть в dev
         if: github.ref == 'refs/heads/main'
         run: |
+          git fetch --quiet --no-tags origin +refs/heads/dev:refs/remotes/origin/dev
           git merge-base --is-ancestor HEAD origin/dev || {
             echo "::error::Коммита $GITHUB_SHA нет в dev. Сначала git push origin dev, потом git push origin dev:main."
             exit 1
