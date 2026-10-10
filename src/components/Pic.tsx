@@ -1,6 +1,6 @@
 import { pictureUrl } from '@/core/pictures.ts'
 
-/** Рисунок из набора TimeBox размером 1em — как смайлик, подстраивается под font-size родителя. */
+/** Рисунок из набора HitBox размером 1em — как смайлик, подстраивается под font-size родителя. */
 export function Pic({ name, className }: { name: string; className?: string }) {
   return (
     <img

@@ -37,7 +37,7 @@ export default defineConfig(({ mode }) => {
 function renameHtml(name: string): Plugin {
   let outDir = ''
   return {
-    name: 'timebox:rename-html',
+    name: 'hitbox:rename-html',
     apply: 'build',
     configResolved(config) {
       outDir = resolve(config.root, config.build.outDir)

@@ -15,9 +15,9 @@ export function Header() {
   return (
     <header ref={header} className={styles.header} data-squeeze={squeeze}>
       <div className={styles.brand}>
-        <a className={styles.home} href={homeHref()} title="В главное меню" aria-label="TimeBox — в главное меню">
+        <a className={styles.home} href={homeHref()} title="В главное меню" aria-label="HitBox — в главное меню">
           <LogoCube className={styles.logo} />
-          <span className={styles.name}>TimeBox</span>
+          <span className={styles.name}>HitBox</span>
         </a>
         {tutorial ? (
           <span className={styles.tagline}>конструктор игр</span>

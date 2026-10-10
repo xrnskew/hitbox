@@ -31,8 +31,8 @@ test('1. игра уже крутится, вкладки шагов пусты�
   expect(await game(page, 'lives')).toBe(3)
   expect(await game(page, 'typeof playSound')).toBe('undefined')
   // сверху и во вкладке браузера — название конструктора, в гайде — название игры
-  await expect(page).toHaveTitle('TimeBox — Корзинка')
-  await expect(page.getByRole('banner')).toContainText('TimeBox')
+  await expect(page).toHaveTitle('HitBox — Корзинка')
+  await expect(page.getByRole('banner')).toContainText('HitBox')
   await expect(page.getByRole('banner')).toContainText('конструктор игр')
   await expect(page.getByRole('heading', { level: 1, name: 'Корзинка' })).toBeVisible()
   await expect(runButton(page)).toBeVisible()
@@ -48,7 +48,7 @@ test('главное меню: выбор игры, прогресс и возв
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(e.message))
   await page.goto(app())
-  await expect(page).toHaveTitle('TimeBox — конструктор игр')
+  await expect(page).toHaveTitle('HitBox — конструктор игр')
   await expect(page.getByRole('heading', { level: 1, name: 'Выбери игру' })).toBeVisible()
   await expect(page.locator('iframe')).toHaveCount(0)
   const card = page.getByRole('article', { name: 'Корзинка' })
@@ -66,7 +66,7 @@ test('главное меню: выбор игры, прогресс и возв
   await savedCodes(page)
 
   // логотип в шапке ведёт в меню; карточка помнит прогресс и героя
-  await page.getByRole('link', { name: 'TimeBox — в главное меню' }).click()
+  await page.getByRole('link', { name: 'HitBox — в главное меню' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Выбери игру' })).toBeVisible()
   await expect(card).toContainText('Пройдено 1 из 5')
   await expect(card.locator('[data-pic="лиса"]')).not.toHaveCount(0)
@@ -736,7 +736,7 @@ test('готовая игра под паролем: из гайда и по п�
   const finished = await popup
   await expect(finished.getByRole('heading', { name: 'Что тут есть' })).toBeVisible()
   expect(finished.url()).toMatch(/\?game=catch&finished$/)
-  await expect(finished).toHaveTitle('TimeBox — готовая игра Корзинка')
+  await expect(finished).toHaveTitle('HitBox — готовая игра Корзинка')
   await expect(finished.getByRole('tab', { name: 'Гайд' })).toHaveCount(0)
 
   // по прямой ссылке без пароля — экран блокировки

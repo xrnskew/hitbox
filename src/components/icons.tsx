@@ -122,7 +122,7 @@ export function BadgeIcon({ kind }: { kind: 'empty' | 'code' | 'done' | 'error' 
   )
 }
 
-/** Логотип TimeBox: белый кубик — три грани разной яркости, тёмные рёбра. */
+/** Логотип HitBox: белый кубик — три грани разной яркости, тёмные рёбра. */
 export function LogoCube({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false" className={className}>

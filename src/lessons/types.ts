@@ -29,7 +29,7 @@ export type Rich = string
 
 export interface GuideStep {
   step: number
-  /** Картинка станции на карте гайда — из набора TimeBox. */
+  /** Картинка станции на карте гайда — из набора HitBox. */
   pic: string
   /** Индекс вкладки, куда вставляется код. */
   tab: number
@@ -104,7 +104,7 @@ export type StepTask = EditTask | BuildTask | RunTask
 
 export interface GuideExtra {
   n: number
-  /** Картинка задания из набора TimeBox (на значке в гайде). */
+  /** Картинка задания из набора HitBox (на значке в гайде). */
   pic: string
   title: string
   text: Rich

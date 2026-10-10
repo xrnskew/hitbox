@@ -208,7 +208,7 @@ kbd {
   --shell-text: var(--sun);
 }
 
-/* Рисунок из набора TimeBox (компонент Pic): размером со строку текста */
+/* Рисунок из набора HitBox (компонент Pic): размером со строку текста */
 .pic {
   display: inline-block;
   width: 1em;

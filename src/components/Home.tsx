@@ -17,7 +17,7 @@ export function Home() {
     <div className={styles.home}>
       <header className={styles.header}>
         <LogoCube className={styles.logo} />
-        <span className={styles.name}>TimeBox</span>
+        <span className={styles.name}>HitBox</span>
         <span className={styles.tagline}>конструктор игр</span>
       </header>
 

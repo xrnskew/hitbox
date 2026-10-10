@@ -34,14 +34,14 @@ function start() {
 
 if (!lesson) {
   // меню; неизвестная игра в адресе — тоже меню
-  document.title = 'TimeBox — конструктор игр'
+  document.title = 'HitBox — конструктор игр'
   root.render(
     <StrictMode>
       <Home />
     </StrictMode>,
   )
 } else {
-  document.title = finished ? `TimeBox — готовая игра ${lesson.title}` : `TimeBox — ${lesson.title}`
+  document.title = finished ? `HitBox — готовая игра ${lesson.title}` : `HitBox — ${lesson.title}`
   if (finished && !isFinishedUnlocked()) {
     root.render(
       <StrictMode>
