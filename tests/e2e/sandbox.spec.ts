@@ -572,16 +572,11 @@ test('шрифты и скрипты берутся по правильному 
   })
   expect(fonts).toEqual([true, true, true])
   expect(failed).toEqual([])
+  // сайт в подпапке: скрипты, стили и шрифты — из /hitbox/assets/
   const base = new URL(app())
-  if (base.protocol === 'file:') {
-    // одиночный файл: всё внутри, кроме самой страницы ничего не грузится
-    expect(loaded.filter((u) => !u.startsWith('data:') && !u.startsWith(base.href))).toEqual([])
-  } else {
-    // сайт в подпапке: скрипт, стили и шрифты — из /hitbox/assets/
-    const assets = loaded.filter((u) => /\.(js|css|woff2)$/.test(u))
-    expect(assets.length).toBeGreaterThan(3)
-    for (const u of assets) expect(u.startsWith(`${base.origin}/hitbox/assets/`)).toBe(true)
-  }
+  const assets = loaded.filter((u) => /\.(js|css|woff2)$/.test(u))
+  expect(assets.length).toBeGreaterThan(3)
+  for (const u of assets) expect(u.startsWith(`${base.origin}/hitbox/assets/`)).toBe(true)
 })
 
 test('живая проверка синтаксиса: значок и подчёркивание до запуска', async ({ page }) => {

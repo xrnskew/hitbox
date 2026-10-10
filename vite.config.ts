@@ -15,8 +15,9 @@ export default defineConfig({
   },
   build: {
     target: 'es2022',
-    // редактор (CodeMirror), разбор кода (acorn) и React — около 900 кБ, всё нужно сразу
-    chunkSizeWarningLimit: 1000,
+    // меню — React и уроки (около 360 кБ); игра — отдельный кусок (src/app/game.tsx): редактор CodeMirror,
+    // разбор кода acorn, обвязка — около 680 кБ, меню подгружает его заранее
+    chunkSizeWarningLimit: 800,
   },
   test: {
     include: ['tests/unit/**/*.test.ts'],

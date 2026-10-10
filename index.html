@@ -3,7 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="HitBox — конструктор игр: собери свою игру на JavaScript по шагам, прямо в браузере." />
+    <meta
+      name="description"
+      content="HitBox — конструктор игр: собери свою игру на JavaScript по шагам, прямо в браузере."
+    />
     <meta property="og:title" content="HitBox — конструктор игр" />
     <meta property="og:description" content="Собери свою игру на JavaScript по шагам, прямо в браузере." />
     <meta property="og:type" content="website" />
@@ -13,9 +16,127 @@
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cg stroke='%230f1116' stroke-width='1.3' stroke-linejoin='round'%3E%3Cpath d='M16 2.8 28.2 9.8 16 16.8 3.8 9.8Z' fill='%23fff'/%3E%3Cpath d='M3.8 9.8 16 16.8v13.4L3.8 23.2Z' fill='%23dfe3ea'/%3E%3Cpath d='M28.2 9.8v13.4L16 30.2V16.8Z' fill='%23b4bbc8'/%3E%3C/g%3E%3C/svg%3E"
     />
     <title>HitBox — конструктор игр</title>
+    <style>
+      /* Экран загрузки: виден с первого кадра, пока не пришли скрипты; React заменяет его меню или игрой.
+         Появляется не сразу (через 0.3 с) — на быстрой загрузке его не видно вовсе. Цвета — из tokens.css. */
+      html,
+      body {
+        margin: 0;
+        background: #0f1116;
+      }
+      .boot {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-content: center;
+        justify-items: center;
+        gap: 22px;
+        padding: 16px;
+        background: #0f1116;
+        color: #a3aab7;
+        font:
+          500 15px/1.45 'Onest',
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+        text-align: center;
+        animation: boot-in 0.2s 0.3s both;
+      }
+      .boot[data-failed] {
+        animation: none;
+        color: #eceef2;
+      }
+      .boot-cube {
+        width: 56px;
+        height: 56px;
+      }
+      /* дорожка из плиток заполняется жёлтым, как пройденная дорога на карте гайда */
+      .boot-road {
+        display: flex;
+        gap: 6px;
+      }
+      .boot-road i {
+        width: 14px;
+        height: 14px;
+        border-radius: 3px;
+        background: #262b35;
+        box-shadow: 0 3px 0 #07080b;
+        animation: boot-tile 1.8s infinite;
+      }
+      .boot-road i:nth-child(2) {
+        animation-delay: 0.12s;
+      }
+      .boot-road i:nth-child(3) {
+        animation-delay: 0.24s;
+      }
+      .boot-road i:nth-child(4) {
+        animation-delay: 0.36s;
+      }
+      .boot-road i:nth-child(5) {
+        animation-delay: 0.48s;
+      }
+      .boot-road i:nth-child(6) {
+        animation-delay: 0.6s;
+      }
+      .boot-road i:nth-child(7) {
+        animation-delay: 0.72s;
+      }
+      .boot-road i:nth-child(8) {
+        animation-delay: 0.84s;
+      }
+      .boot-text {
+        margin: 0;
+        max-width: 32ch;
+      }
+      @keyframes boot-in {
+        from {
+          opacity: 0;
+        }
+      }
+      @keyframes boot-tile {
+        0%,
+        14% {
+          background: #262b35;
+        }
+        15%,
+        62% {
+          background: #ffc83a;
+        }
+        63%,
+        100% {
+          background: #262b35;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .boot-road i {
+          animation: none;
+        }
+        .boot-road i:nth-child(-n + 3) {
+          background: #ffc83a;
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="boot" role="status">
+        <svg class="boot-cube" viewBox="0 0 32 32" aria-hidden="true">
+          <g stroke="#0f1116" stroke-width="1.3" stroke-linejoin="round">
+            <path d="M16 2.8 28.2 9.8 16 16.8 3.8 9.8Z" fill="#ffffff" />
+            <path d="M3.8 9.8 16 16.8v13.4L3.8 23.2Z" fill="#dfe3ea" />
+            <path d="M28.2 9.8v13.4L16 30.2V16.8Z" fill="#b4bbc8" />
+          </g>
+        </svg>
+        <div class="boot-road" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <p class="boot-text">Загружаем…</p>
+      </div>
+    </div>
+    <script>
+      // в игру — «Загружаем игру…», в меню — просто «Загружаем…»
+      if (/[?&](game|finished)\b/.test(location.search))
+        document.querySelector('.boot-text').textContent = 'Загружаем игру…'
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
