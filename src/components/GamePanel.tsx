@@ -39,6 +39,7 @@ function GameScreen() {
   const doc = useApp((s) => s.doc)
   const focused = useApp((s) => s.gameFocused)
   const game = useApp((s) => s.game)
+  const gap = useApp((s) => !!s.error?.gap)
   const { setFrame, onFrameLoad } = c
 
   return (
@@ -60,9 +61,11 @@ function GameScreen() {
       {game === 'blocked' && (
         <div className={styles.card}>
           <strong>Игра не запустилась</strong>
-          <p>В коде ошибка. Исправь её и нажми «Собрать».</p>
+          <p>
+            {gap ? 'В коде пропуск. Выбери вариант и нажми «Собрать».' : 'В коде ошибка. Исправь её и нажми «Собрать».'}
+          </p>
           <button type="button" className="key key--sun key--s" onClick={c.showError}>
-            Показать ошибку
+            {gap ? 'Показать пропуск' : 'Показать ошибку'}
           </button>
         </div>
       )}

@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { currentQuest, hereStation, lessonProgress, levelStates, stationList } from '@/core/levels.ts'
+import { findGaps } from '@/core/gaps.ts'
 import { checkFinishedPassword } from '@/core/lock.ts'
 import { isPicture } from '@/core/pictures.ts'
 import { functionLines } from '@/core/progress.ts'
+import { findSyntaxError } from '@/core/syntax.ts'
 import { pickKind } from '@/editor/pickers.ts'
 import { GUIDE_EXTRAS, GUIDE_STEPS } from '@/lessons/catch/guide.ts'
 import { LESSONS } from '@/lessons/index.ts'
@@ -22,6 +24,8 @@ import {
 } from '@/lessons/catch/tabs.ts'
 import {
   CATCH_TASK,
+  EDGE_PIECE,
+  HERO_CHECK_TASK,
   HERO_CREATE_TASK,
   HERO_DRAW_TASK,
   HERO_MOVE_TASK,
@@ -30,11 +34,12 @@ import {
   FALL_SPEED_TASK,
   ITEMS_DRAW_TASK,
   ITEMS_MOVE_TASK,
+  LEFT_PIECE,
   SPEED_TASK,
   SPEEDUP_TASK,
   TEN_POINTS_TASK,
 } from '@/lessons/catch/tasks.ts'
-import { editTarget } from '@/lessons/kit.ts'
+import { choose, editTarget, rightChoice } from '@/lessons/kit.ts'
 import { apply, build } from './build.ts'
 import { boot } from './sim.ts'
 
@@ -284,5 +289,92 @@ describe('пароль готовой игры', () => {
     expect(checkFinishedPassword('000110')).toBe(true)
     expect(checkFinishedPassword(' 000110 ')).toBe(true)
     for (const wrong of ['', '000111', '00011', '0001100', '110000']) expect(checkFinishedPassword(wrong)).toBe(false)
+  })
+})
+
+describe('развилки в «Герое»: знак движения и край поля', () => {
+  const start = build(TUTORIAL_CODES[1], HERO_CREATE_TASK, HERO_DRAW_TASK)
+  const [shellPiece, right] = HERO_MOVE_TASK.pieces
+  const withRight = apply(apply(start, shellPiece.plan(start)!), right.plan(apply(start, shellPiece.plan(start)!))!)
+
+  it('строка влево встаёт над строкой вправо, с пропуском — и игра с ним не собирается', () => {
+    const code = apply(withRight, LEFT_PIECE.plan(withRight)!)
+    const lines = code.split('\n')
+    const left = lines.findIndex((l) => l.includes('ArrowLeft'))
+    expect(lines[left]).toBe('  if (keys["ArrowLeft"])  playerX = playerX [?] playerSpeed;')
+    expect(lines[left + 1]).toContain('ArrowRight')
+    expect(findGaps(code)).toEqual([{ line: left + 1, column: lines[left].indexOf('[?]') }])
+    expect(findSyntaxError(code)).toMatchObject({ line: left + 1, message: expect.stringContaining('пропуск [?]') })
+    // кусок стоит, но вариант не выбран: не засчитан и второй раз не всплывает
+    expect(LEFT_PIECE.isDone(code)).toBe(false)
+    expect(LEFT_PIECE.plan(code)).toBeNull()
+  })
+
+  it('засчитан любой вариант — верный ли он, покажет игра', () => {
+    const code = apply(withRight, LEFT_PIECE.plan(withRight)!)
+    for (const v of LEFT_PIECE.choice!.options) {
+      const chosen = choose(LEFT_PIECE, code, v)
+      expect(LEFT_PIECE.isDone(chosen), v).toBe(true)
+      expect(findSyntaxError(chosen), v).toBeNull()
+      expect(rightChoice(LEFT_PIECE, chosen), v).toBe(v === '-')
+    }
+    // сменить вариант можно и потом: развилка узнаётся с любым вариантом
+    expect(LEFT_PIECE.choice!.find(choose(LEFT_PIECE, code, '+'))).toMatchObject({ value: '+' })
+    // ученик напечатал по-своему: пробелы и кавычки не важны
+    expect(LEFT_PIECE.isDone("if (keys['ArrowLeft']) playerX=playerX-playerSpeed;")).toBe(true)
+  })
+
+  it('в каждой развилке есть верный вариант, и варианты не повторяются', () => {
+    for (const p of [LEFT_PIECE, EDGE_PIECE]) {
+      expect(p.choice!.options, p.title).toContain(p.choice!.answer)
+      expect(new Set(p.choice!.options).size, p.title).toBe(p.choice!.options.length)
+    }
+  })
+
+  it('пропуск в строке в кавычках или в комментарии — не пропуск', () => {
+    expect(findGaps('var s = "[?]"; // [?]\n/* [?] */')).toEqual([])
+  })
+
+  const engine = engineWith(6)
+  const hero = (left: string, edge: string) => choose(EDGE_PIECE, choose(LEFT_PIECE, heroWith('кот'), left), edge)
+
+  it('неверный знак виден в игре: ← везёт вправо, с «>» герой прилипает к левому краю', () => {
+    const wrongSign = boot([engine, hero('+', '<'), TUTORIAL_CODES[2], TUTORIAL_CODES[3]])
+    wrongSign.key('ArrowLeft', true)
+    wrongSign.tick(5)
+    expect(wrongSign.peek('playerX')).toBe(170 + 6 * 5)
+    const wrongEdge = boot([engine, hero('-', '>'), TUTORIAL_CODES[2], TUTORIAL_CODES[3]])
+    wrongEdge.tick(1)
+    expect(wrongEdge.peek('playerX')).toBe(0)
+  })
+
+  it('«Проверь стрелки» засчитан по запуску со скоростью и верными вариантами', () => {
+    expect(HERO_CHECK_TASK.isDone([engine, hero('-', '<')])).toBe(true)
+    expect(HERO_CHECK_TASK.isDone([TUTORIAL_ENGINE, hero('-', '<')])).toBe(false)
+    expect(HERO_CHECK_TASK.isDone([engine, hero('+', '<')])).toBe(false)
+    expect(HERO_CHECK_TASK.isDone([engine, hero('-', '>')])).toBe(false)
+    // кнопка «Собрать» не светится поверх затемнения: ученику надо смотреть на игру
+    expect(HERO_CHECK_TASK.wrong).toBeDefined()
+  })
+
+  it('неверная сборка: сначала «так и задумано?», подсказка говорит, что проверить, но не ответ', () => {
+    const wrong = HERO_CHECK_TASK.wrong!
+    expect(wrong.check([engine, hero('-', '<')])).toBe(false)
+    // без скорости игра стоит — не в счёт
+    expect(wrong.check([TUTORIAL_ENGINE, hero('+', '<')])).toBe(false)
+    expect(wrong.check([engine, hero('+', '<')])).toBe(true)
+    expect(wrong.check([engine, hero('-', '>')])).toBe(true)
+    expect(wrong.say).toContain('так и задумано')
+    expect(wrong.hint([engine, hero('+', '<')])).toContain('ArrowLeft')
+    expect(wrong.hint([engine, hero('-', '>')])).toContain('if (playerX … 0)')
+    for (const h of [wrong.hint([engine, hero('+', '<')]), wrong.hint([engine, hero('-', '>')])])
+      expect(h).not.toMatch(/playerX\s*-\s*playerSpeed|playerX\s*<\s*0/)
+  })
+
+  it('квест-проверка — последний в шаге 1: шаг 2 откроется после верной сборки', () => {
+    const codes = [engine, hero('+', '<'), TUTORIAL_CODES[2], TUTORIAL_CODES[3]]
+    expect(currentQuest(GUIDE_STEPS, levelStates(GUIDE_STEPS, codes))).toEqual({ step: 0, quest: 6 })
+    codes[1] = hero('-', '<')
+    expect(currentQuest(GUIDE_STEPS, levelStates(GUIDE_STEPS, codes))).toEqual({ step: 1, quest: 0 })
   })
 })

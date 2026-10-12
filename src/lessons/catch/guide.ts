@@ -4,6 +4,7 @@ import { STEP_APPLES, STEP_CATCH, STEP_HERO } from './tabs.ts'
 import {
   CATCH_TASK,
   FALL_SPEED_TASK,
+  HERO_CHECK_TASK,
   HERO_CREATE_TASK,
   HERO_DRAW_TASK,
   HERO_MOVE_TASK,
@@ -42,7 +43,15 @@ export const GUIDE_STEPS: GuideStep[] = [
     code: STEP_HERO,
     checks: ['Герой ездит от [[←]] и [[→]]', 'И не уезжает за край'],
     fns: ['drawPlayer', 'movePlayer'],
-    quests: [HERO_CREATE_TASK, HERO_PICK_TASK, HERO_DRAW_TASK, HERO_RUN_TASK, HERO_MOVE_TASK, SPEED_TASK],
+    quests: [
+      HERO_CREATE_TASK,
+      HERO_PICK_TASK,
+      HERO_DRAW_TASK,
+      HERO_RUN_TASK,
+      HERO_MOVE_TASK,
+      SPEED_TASK,
+      HERO_CHECK_TASK,
+    ],
   },
   {
     step: 2,

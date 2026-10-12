@@ -8,16 +8,26 @@ import { pictureUrl } from '@/core/pictures.ts'
 // цвета новичку не придумать, а тут он выбирает глазами. Окно рисует приложение, редактор только говорит,
 // какие символы заменить.
 
-/** Что выбирают в окне: рисунок или цвет. */
-export type PickKind = 'pic' | 'color'
+/** Что выбирают в окне: рисунок, цвет или вариант развилки. */
+export type PickKind = 'pic' | 'color' | 'choice'
 
 export interface PickSpot {
-  /** Что заменить: содержимое кавычек, [from, to). */
+  /** Что заменить: содержимое кавычек или пропуск развилки, [from, to). */
   from: number
   to: number
   kind: PickKind
   /** Куда прикрепить окно выбора. */
   rect: { left: number; top: number; bottom: number }
+  /** У развилки: вопрос, варианты и её строка — окно показывает строку с каждым вариантом. */
+  choice?: ChoiceView
+}
+
+/** Развилка в окне выбора: строка кода до и после пропуска. */
+export interface ChoiceView {
+  question: string
+  options: string[]
+  head: string
+  tail: string
 }
 
 /** Строка объявляет рисунок: `var shipPic = `. Кнопка есть, даже если в кавычках пусто или опечатка. */
@@ -26,13 +36,13 @@ const PIC_VAR = /\b\w*Pic\s*=\s*$/
 const COLOR_VAR = /\b\w*Color\s*=\s*$/
 
 /** Какая кнопка нужна строке в кавычках, если перед ней `before` (начало строки до кавычки). */
-export function pickKind(before: string): PickKind | null {
+export function pickKind(before: string): 'pic' | 'color' | null {
   if (PIC_VAR.test(before)) return 'pic'
   if (COLOR_VAR.test(before)) return 'color'
   return null
 }
 
-type Spot = { from: number; to: number; kind: PickKind }
+type Spot = { from: number; to: number; kind: 'pic' | 'color' }
 
 /** Значения переменных …Pic и …Color в диапазоне [from, to): позиции содержимого кавычек. */
 export function pickSpots(state: EditorState, from = 0, to = state.doc.length): Spot[] {
@@ -56,10 +66,10 @@ export function pickSpots(state: EditorState, from = 0, to = state.doc.length): 
 
 class PickWidget extends WidgetType {
   readonly onPick: (view: EditorView, spot: PickSpot) => void
-  readonly kind: PickKind
+  readonly kind: 'pic' | 'color'
   /** Что сейчас в кавычках: рисунок для миниатюры или цвет для квадратика. */
   readonly value: string
-  constructor(onPick: (view: EditorView, spot: PickSpot) => void, kind: PickKind, value: string) {
+  constructor(onPick: (view: EditorView, spot: PickSpot) => void, kind: 'pic' | 'color', value: string) {
     super()
     this.onPick = onPick
     this.kind = kind

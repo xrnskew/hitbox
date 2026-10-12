@@ -12,10 +12,12 @@ import { checkFinishedPassword } from '@/core/lock.ts'
 import { hasContent, stepDone } from '@/core/progress.ts'
 import { findSyntaxError, firstSyntaxError, type SyntaxIssue } from '@/core/syntax.ts'
 import { createTabEditors, type TabEditors } from '@/editor/createTabEditors.ts'
+import { typingDuration } from '@/editor/typing.ts'
+import type { ChoiceSource } from '@/editor/choices.ts'
 import type { PickSpot } from '@/editor/pickers.ts'
 import type { SlotSource } from '@/editor/slots.ts'
 import { editTarget } from '@/lessons/kit.ts'
-import type { BuildTask, Lesson, LessonVariant, RunTask } from '@/lessons/types.ts'
+import type { BuildPiece, BuildTask, Lesson, LessonVariant, RunTask } from '@/lessons/types.ts'
 import { runner } from '@/sandbox/harness.ts'
 import {
   loadActive,
@@ -38,6 +40,8 @@ export interface ShownError {
   text: string
   tab: number | null
   line: number | null
+  /** Не ошибка, а пропуск развилки: вариант не выбран. */
+  gap?: boolean
 }
 
 export interface Toast {
@@ -84,6 +88,8 @@ export interface AppState {
   /** Станция карты, которую ученик открыл сам, и где он был в тот момент. Ученик ушёл дальше — выбор забыт,
    *  под картой снова текущая станция. null — показываем текущую. */
   station: { key: string; at: string } | null
+  /** Сколько раз собрали игру с неверным выбором в развилке — по квесту-проверке (`шаг:квест`). */
+  misses: Record<string, number>
 }
 
 export interface LogEntry {
@@ -141,6 +147,7 @@ export function createController(lesson: Lesson, variant: LessonVariant) {
     picker: null,
     spotOff: false,
     station: null,
+    misses: {},
   })
   const logs = createStore<{ entries: LogEntry[] }>({ entries: [] })
   const inspector = createStore<{ values: Record<string, string> }>({ values: {} })
@@ -224,9 +231,16 @@ export function createController(lesson: Lesson, variant: LessonVariant) {
     preRunSyntax = bad !== null
     let error: ShownError | null = null
     if (bad) {
-      const { line, message } = bad.issue
-      error = { text: formatError({ title: title(bad.tab), line }, message), tab: bad.tab, line }
-      editors?.markError(bad.tab, line)
+      const { line, message, gap } = bad.issue
+      error = gap
+        ? {
+            text: `Во вкладке «${title(bad.tab)}», строка ${line} — пропуск. Нажми «?» и выбери вариант.`,
+            tab: bad.tab,
+            line,
+            gap,
+          }
+        : { text: formatError({ title: title(bad.tab), line }, message), tab: bad.tab, line }
+      if (!gap) editors?.markError(bad.tab, line)
     }
     const s = store.get()
     store.set({
@@ -247,6 +261,7 @@ export function createController(lesson: Lesson, variant: LessonVariant) {
     if (before) {
       editors?.refreshSlots()
       announceRun(before, levelsOf(codes))
+      countMiss(before, levelsOf(codes), codes)
     }
   }
 
@@ -273,7 +288,12 @@ export function createController(lesson: Lesson, variant: LessonVariant) {
     const err = store.get().error
     if (!err || err.tab === null) return
     selectView(err.tab)
-    if (err.line) editors?.gotoLine(err.line)
+    if (!err.line) return
+    // пропуск — сразу с окном вариантов
+    const code = editors?.getCode(err.tab) ?? ''
+    const piece = err.gap && choicePieces(err.tab).find((p) => p.choice!.find(code)?.line === err.line)
+    if (piece) openChoiceOf(err.tab, piece)
+    else editors?.gotoLine(err.line)
   }
 
   // ===== Игра =====
@@ -400,6 +420,17 @@ export function createController(lesson: Lesson, variant: LessonVariant) {
     toast(`${task.doneText}${whatNext(after, cur.step)}`)
   }
 
+  /** Собрали игру в квесте-проверке развилок, а выбор неверный: под квестом появится «так и задумано?». */
+  function countMiss(before: LevelState[], after: LevelState[], ran: string[]) {
+    const cur = currentQuest(chain, before)
+    const task = cur && questAt(cur.step, cur.quest)
+    if (!cur || task?.kind !== 'run' || !task.wrong || after[cur.step].questsDone[cur.quest]) return
+    if (!task.wrong.check(ran)) return
+    const key = `${cur.step}:${cur.quest}`
+    const misses = store.get().misses
+    store.set({ misses: { ...misses, [key]: (misses[key] ?? 0) + 1 } })
+  }
+
   /** Подсказка, где следующий квест. */
   function whatNext(levels: LevelState[], step: number): string {
     const next = currentQuest(chain, levels)
@@ -430,7 +461,14 @@ export function createController(lesson: Lesson, variant: LessonVariant) {
     }
     selectView(task.tab)
     if (task.kind === 'build') {
-      const next = nextPiece(task, editors.getCode(task.tab))
+      const code = editors.getCode(task.tab)
+      // кусок с развилкой уже стоит, а вариант не выбран — сразу к пропуску, с окном вариантов
+      const open = task.pieces.find((p) => !p.isDone(code))
+      if (open?.choice && open.choice.find(code)) {
+        openChoiceOf(task.tab, open)
+        return
+      }
+      const next = nextPiece(task, code)
       if (next) editors.gotoLine(next.plan.after)
       else editors.focus()
       return
@@ -471,6 +509,60 @@ export function createController(lesson: Lesson, variant: LessonVariant) {
     return cur && task?.kind === 'build' && task.tab === tab ? { ...cur, task } : null
   }
 
+  /** Развилки вкладки: из всех кусков с развилкой, которые собираются в этой вкладке. */
+  const choicePieces = (tab: number): BuildPiece[] =>
+    chain
+      .flatMap((s) => s.quests.flatMap((q) => (q.kind === 'build' && q.tab === tab ? q.pieces : [])))
+      .filter((p) => p.choice)
+
+  /** Источник развилок для редактора: узнаёт строку развилки с пропуском или с выбранным вариантом. */
+  function choiceSources(): (ChoiceSource | null)[] {
+    return variant.tabs.map((_, tab) => {
+      const pieces = variant.hasGuide ? choicePieces(tab) : []
+      if (!pieces.length) return null
+      return (text: string, line: number) => {
+        for (const p of pieces) {
+          const spot = p.choice!.inLine(text, line)
+          if (spot) return { spot, choice: p.choice! }
+        }
+        return null
+      }
+    })
+  }
+
+  /** Открыть окно вариантов у развилки куска: прокрутить к ней и показать окно под пропуском. */
+  function openChoiceOf(tab: number, piece: BuildPiece) {
+    const ed = editors
+    const spot = ed && piece.choice?.find(ed.getCode(tab))
+    if (!ed || !spot || !piece.choice) return
+    ed.select(spot.line, spot.from, spot.to)
+    const from = ed.posOf(spot.line, spot.from)
+    const to = ed.posOf(spot.line, spot.to)
+    const text = ed.getCode(tab).split('\n')[spot.line - 1]
+    const choice = {
+      question: piece.choice.question,
+      options: piece.choice.options,
+      head: text.slice(0, spot.from),
+      tail: text.slice(spot.to),
+    }
+    // окно — после прокрутки к строке, иначе оно встанет по старым координатам
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        const rect = ed.coordsAt(to) ?? ed.coordsAt(from)
+        if (rect && ed.current === tab) openPicker(tab, { from, to, rect, kind: 'choice', choice })
+      }),
+    )
+  }
+
+  /** Показать развилку куска: открыть её вкладку и окно вариантов. */
+  function showChoice(piece: BuildPiece) {
+    const task = chain.flatMap((s) => s.quests).find((q) => q.kind === 'build' && q.pieces.includes(piece))
+    if (!task || !editors) return
+    selectView(task.tab)
+    if (piece.choice?.find(editors.getCode(task.tab))) openChoiceOf(task.tab, piece)
+    else editors.focus()
+  }
+
   /** Источник кусков для редактора: во вкладке, где сейчас идёт сборка по кусочкам. */
   function slotSources(): (SlotSource | null)[] {
     return variant.tabs.map((_, tab) => {
@@ -488,7 +580,7 @@ export function createController(lesson: Lesson, variant: LessonVariant) {
           code: next.plan.text.replace(/^\n+/, ''),
           n: next.index + 1,
           total: cur.task.pieces.length,
-          title: piece.title,
+          title: piece.choice ? `${piece.title} · реши сам` : piece.title,
           onAdd: () => insertPiece(cur.step, cur.quest, next.index),
         }
       }
@@ -521,6 +613,22 @@ export function createController(lesson: Lesson, variant: LessonVariant) {
     if (next) ed.reveal(next.plan.after)
     const done = task.pieces.every((p) => p.isDone(codes[task.tab]))
     const verb = next?.plan.replace ? 'Заменить' : 'Добавить'
+    if (piece.choice) {
+      toast(
+        `Часть ${pieceIndex + 1} из ${task.pieces.length} на месте. Теперь реши сам — выбери вариант на месте «?».`,
+        () => ed.undo(task.tab),
+      )
+      // окно вариантов — само, когда кусок допечатан (как окно рисунков в квесте «Выбери героя»)
+      const calm = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+      window.setTimeout(
+        () => {
+          if (ed === editors && ed.current === task.tab && !piece.isDone(ed.getCode(task.tab)))
+            openChoiceOf(task.tab, piece)
+        },
+        calm ? 0 : typingDuration(plan.text.length) + 120,
+      )
+      return
+    }
     toast(
       done
         ? `${task.doneText}${cur && cur.task !== task ? ` Дальше — «${cur.task.title}»: жми «${verb}».` : ''}`
@@ -550,10 +658,25 @@ export function createController(lesson: Lesson, variant: LessonVariant) {
       toast('Код уже поменялся — нажми «Сменить» ещё раз.')
       return
     }
+    const building = p.kind === 'choice' ? buildingIn(p.tab, codesNow()) : null
     editors.replaceRange(p.from, p.to, value)
     editors.focus()
     // что квест выполнен, скажет снимок кода — так же, как после печати
     snapshot()
+    if (p.kind === 'choice') afterChoice(p.tab, building?.task ?? null)
+  }
+
+  /** Выбрали вариант развилки: что дальше — следующий кусок, конец сборки или «Собрать». */
+  function afterChoice(tab: number, was: BuildTask | null) {
+    if (!editors) return
+    const codes = codesNow()
+    const cur = buildingIn(tab, codes)
+    const next = cur && nextPiece(cur.task, codes[tab])
+    if (next) {
+      editors.reveal(next.plan.after)
+      toast(`Вариант выбран. Жми «${next.plan.replace ? 'Заменить' : 'Добавить'}» у следующей части.`)
+    } else if (was && was.pieces.every((piece) => piece.isDone(codes[tab]))) toast(was.doneText)
+    else toast('Вариант выбран. Верный ли он, покажет игра — нажми «Собрать».')
   }
 
   /** Готовая игра под паролем: true — пароль подошёл. */
@@ -635,11 +758,12 @@ export function createController(lesson: Lesson, variant: LessonVariant) {
         onChange,
         onRun: run,
         slots: slotSources(),
+        choices: choiceSources(),
         onPick: openPicker,
       })
       editors.setVisible(view !== 'guide')
       const err = store.get().error
-      if (err && err.tab !== null && err.line) editors.markError(err.tab, err.line)
+      if (err && err.tab !== null && err.line && !err.gap) editors.markError(err.tab, err.line)
       return () => {
         latestCodes = codesNow()
         editors?.destroy()
@@ -676,6 +800,7 @@ export function createController(lesson: Lesson, variant: LessonVariant) {
 
     openTask,
     showStation,
+    showChoice,
     insertPiece,
     pick,
     closePicker,
@@ -706,7 +831,7 @@ export function createController(lesson: Lesson, variant: LessonVariant) {
 export function tabBadges(c: Controller, s: Pick<AppState, 'codes' | 'syntax' | 'runtimeErrorTab'>): TabBadge[] {
   const steps = c.variant.hasGuide ? c.lesson.steps : []
   return c.variant.tabs.map((_, i) => {
-    if (s.syntax[i] || s.runtimeErrorTab === i) return 'error'
+    if ((s.syntax[i] && !s.syntax[i]!.gap) || s.runtimeErrorTab === i) return 'error'
     if (i === 0) return 'engine'
     const step = steps.find((st) => st.tab === i)
     if (step && stepDone(s.codes[i], step.fns)) return 'done'
@@ -720,5 +845,6 @@ export function runQuestNow(c: Controller, codes: string[], ran: string[]): RunT
   const chain = questChain(c.lesson)
   const cur = currentQuest(chain, levelStates(chain, codes, ran))
   const task = cur && chain[cur.step].quests[cur.quest]
-  return task?.kind === 'run' ? task : null
+  // квест-проверка развилок: ученик смотрит на игру, затемнение ему бы мешало
+  return task?.kind === 'run' && !task.wrong ? task : null
 }

@@ -107,6 +107,11 @@ export async function pick(page: Page, pic: string) {
   await page.getByRole('dialog', { name: 'Выбери картинку' }).getByRole('button', { name: pic, exact: true }).click()
 }
 
+/** Выбрать вариант в открытом окне развилки — по тому, что встанет на место пропуска. */
+export async function choose(page: Page, value: string) {
+  await page.getByRole('dialog', { name: 'Выбери вариант' }).locator(`[data-value="${value}"]`).click()
+}
+
 /** Шаг 1, квесты 1–4: создать героя, выбрать картинку, нарисовать, собрать. */
 export async function drawHero(page: Page, pic = 'кот') {
   await openQuest(page, 1, 'Открыть «Герой»')
@@ -117,12 +122,19 @@ export async function drawHero(page: Page, pic = 'кот') {
   await run(page)
 }
 
-/** Шаг 1, квесты 5–6: движение по кусочкам и скорость в «Движке». */
+/**
+ * Шаг 1, квесты 5–7: движение по кусочкам с двумя развилками (окно вариантов открывается само, когда кусок
+ * встал), скорость в «Движке» и «Проверь стрелки» — собрать.
+ */
 export async function moveHero(page: Page, speed = '6') {
   await openQuest(page, 1, 'Открыть «Герой»', 'Научи героя ездить')
-  await addPieces(page, 4)
+  await addPieces(page, 3)
+  await choose(page, '-')
+  await addPieces(page, 1)
+  await choose(page, '<')
   await openQuest(page, 1, 'Открыть «Движок»', 'Дай герою скорость')
   await page.keyboard.type(speed)
+  await run(page)
 }
 
 /** Весь шаг 1. */

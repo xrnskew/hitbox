@@ -26,6 +26,7 @@ import { classHighlighter } from '@lezer/highlight'
 import type { SyntaxIssue } from '@/core/syntax.ts'
 import type { HintSet } from '@/lessons/types.ts'
 import { hintCompletions, hintHover, syntaxLinter } from './assist.ts'
+import { type ChoiceSource, choiceButtons } from './choices.ts'
 import { pickButtons, type PickSpot } from './pickers.ts'
 import './pickers.css'
 import { codeSlots, refreshSlots, type SlotSource } from './slots.ts'
@@ -83,7 +84,9 @@ export interface TabEditorsOptions {
   onRun: () => void
   /** Куски, которые всплывают в коде вкладки с кнопкой «Добавить» (по одному источнику на вкладку). */
   slots?: (SlotSource | null)[]
-  /** Нажали «Сменить» у рисунка или цвета в открытой вкладке. */
+  /** Развилки: в каких строках вкладки пропуск [?] или выбранный вариант (по одному источнику на вкладку). */
+  choices?: (ChoiceSource | null)[]
+  /** Нажали «Сменить» у рисунка или цвета или пропуск развилки в открытой вкладке. */
   onPick?: (tab: number, spot: PickSpot) => void
 }
 
@@ -178,7 +181,15 @@ export function createTabEditors(o: TabEditorsOptions): TabEditors {
 
   const states = o.docs.map((doc, tab) => {
     const slots = o.slots?.[tab]
-    return EditorState.create({ doc, extensions: slots ? [extensions, codeSlots(slots)] : extensions })
+    const choices = o.choices?.[tab]
+    return EditorState.create({
+      doc,
+      extensions: [
+        extensions,
+        slots ? codeSlots(slots) : [],
+        choices ? choiceButtons(choices, (_, spot) => o.onPick?.(current, spot)) : [],
+      ],
+    })
   })
   const view = new EditorView({ state: states[current], parent: o.parent })
 

@@ -1,3 +1,4 @@
+import { type Choice, choiceMatcher, GAP } from '../core/gaps.ts'
 import { planSettingInsert } from '../core/insert.ts'
 import { functionLines, stripComments, varLine } from '../core/progress.ts'
 import type { BuildPiece, BuildTask, EditTask, InsertPlan, Rich, RunTask } from './types.ts'
@@ -56,6 +57,34 @@ export function settingPiece(title: string, name: string, line: string): BuildPi
     isDone: (code) => varLine(code, name) > 0,
   }
 }
+
+/**
+ * Кусок с развилкой: `text` встаёт с пропуском [?] туда, куда скажет `where`, — пока строки развилки нет в коде.
+ * Засчитан, когда на месте пропуска стоит любой вариант (и выполнено `also`): верный ли он, покажет игра.
+ */
+export function choicePiece(
+  o: Choice & {
+    title: string
+    text: string
+    where: (code: string, text: string) => InsertPlan | null
+    also?: (code: string) => boolean
+  },
+): BuildPiece {
+  const m = choiceMatcher(o.text, o)
+  return {
+    title: o.title,
+    plan: (code) => (m.find(code) ? null : o.where(code, o.text)),
+    isDone: (code) => {
+      const spot = m.find(code)
+      return !!spot && spot.value !== GAP && (o.also?.(code) ?? true)
+    },
+    choice: { question: o.question, options: o.options, answer: o.answer, find: m.find, inLine: m.inLine },
+  }
+}
+
+/** На месте пропуска развилки — верный вариант. */
+export const rightChoice = (piece: BuildPiece, code: string) =>
+  !!piece.choice && piece.choice.find(code)?.value === piece.choice.answer
 
 /** Новая функция или переменная — в конец вкладки, через пустую строку. */
 export const append =
@@ -269,13 +298,23 @@ export function applyPlan(code: string, plan: InsertPlan): string {
   return lines.join('\n')
 }
 
-/** Собрать квест «по кусочкам» целиком: все куски по порядку. Для проверок. */
+/** Выбрать вариант развилки куска: `value` встаёт на место пропуска или прежнего варианта. Для проверок. */
+export function choose(piece: BuildPiece, code: string, value = piece.choice?.answer): string {
+  const spot = piece.choice?.find(code)
+  if (!spot || value === undefined) return code
+  const lines = code.split('\n')
+  const text = lines[spot.line - 1]
+  lines[spot.line - 1] = text.slice(0, spot.from) + value + text.slice(spot.to)
+  return lines.join('\n')
+}
+
+/** Собрать квест «по кусочкам» целиком: все куски по порядку, в развилках — верный вариант. Для проверок. */
 export function buildAll(task: BuildTask, code: string): string {
   for (const piece of task.pieces) {
     if (piece.isDone(code)) continue
     const plan = piece.plan(code)
     if (!plan) throw new Error(`«${task.title}»: нет места для «${piece.title}»`)
-    code = applyPlan(code, plan)
+    code = choose(piece, applyPlan(code, plan))
     if (!piece.isDone(code)) throw new Error(`«${task.title}»: «${piece.title}» не засчитан после вставки`)
   }
   return code

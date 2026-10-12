@@ -1,5 +1,6 @@
 import { parse } from 'acorn'
 import { explainSyntax } from './errors.ts'
+import { findGaps, GAP } from './gaps.ts'
 
 // Синтаксис проверяется до запуска, по каждой вкладке отдельно. Браузер про незакрытую {
 // сообщает только в конце склейки — не в той вкладке и не на той строке.
@@ -11,6 +12,8 @@ export interface SyntaxIssue {
   column: number
   /** Уже переведённое сообщение. */
   message: string
+  /** Это не ошибка, а пропуск развилки: вариант ещё не выбран. */
+  gap?: boolean
 }
 
 const CLOSE: Record<string, string> = { '(': ')', '[': ']', '{': '}' }
@@ -213,10 +216,12 @@ export function scanBrackets(code: string): SyntaxIssue | null {
 }
 
 /**
- * Синтаксическая ошибка во вкладке или null. Если acorn нашёл ошибку, дополнительно
- * работает сканер скобок; берётся та ошибка, что стоит раньше.
+ * Синтаксическая ошибка во вкладке или null. Первым ловится пропуск развилки: вариант ещё не выбран.
+ * Если acorn нашёл ошибку, дополнительно работает сканер скобок; берётся та ошибка, что стоит раньше.
  */
 export function findSyntaxError(code: string): SyntaxIssue | null {
+  const gap = findGaps(code)[0]
+  if (gap) return { ...gap, gap: true, message: `здесь пропуск ${GAP} — нажми на него и выбери вариант` }
   let found: SyntaxIssue
   try {
     parse(code, { ecmaVersion: 'latest', sourceType: 'script', locations: true })

@@ -1,0 +1,93 @@
+/* Развилка в коде. Пропуск [?] — маленькая жёлтая клавиша «?» прямо в строке: это следующий шаг ученика,
+   поэтому Солнце; цвета — те же, что у клавиши .key--sun (класс стоит на кнопке рядом с .cm-gap).
+   Выбранный вариант — обычный код, подчёркнут пунктиром; «Сменить» в конце строки — тихая клавиша,
+   не жёлтая: решение уже принято. */
+.cm-gap {
+  display: inline-grid;
+  place-items: center;
+  min-width: 3ch;
+  height: 1.3em;
+  margin: 0 1px 2px;
+  padding: 0 4px;
+  border: 1px solid var(--key-line);
+  border-radius: 6px;
+  background: var(--key-bg);
+  box-shadow: 0 2px 0 var(--key-edge);
+  color: var(--key-ink);
+  font: 700 var(--code-size) / 1 var(--font-mono);
+  vertical-align: 0;
+  cursor: pointer;
+  /* появляется один раз мягким кольцом, как пульс станции на карте, — и успокаивается */
+  animation: cm-gap-call 1.2s ease-out 2;
+}
+
+.cm-gap:hover {
+  background: var(--key-bg-hover);
+}
+
+.cm-gap:active {
+  box-shadow: 0 0 0 var(--key-edge);
+  transform: translateY(2px);
+}
+
+.cm-gap:focus-visible {
+  outline: 3px solid var(--sun);
+  outline-offset: 2px;
+}
+
+@keyframes cm-gap-call {
+  from {
+    box-shadow:
+      0 2px 0 var(--key-edge),
+      0 0 0 0 color-mix(in srgb, var(--sun) 55%, transparent);
+  }
+  to {
+    box-shadow:
+      0 2px 0 var(--key-edge),
+      0 0 0 8px color-mix(in srgb, var(--sun) 0%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cm-gap {
+    animation: none;
+  }
+}
+
+/* выбранный вариант: видно, что здесь было решение */
+.cm-choiceValue {
+  text-decoration: underline dashed var(--scr-dim);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.cm-choiceChange {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0 0 2px 10px;
+  padding: 1px 8px 1px 6px;
+  border: 1px solid var(--keycap-line);
+  border-radius: 6px;
+  background: var(--keycap);
+  box-shadow: 0 2px 0 var(--keycap-edge);
+  color: var(--scr-dim);
+  font: 600 var(--text-s) / 1.35 var(--font-ui);
+  vertical-align: 1px;
+  cursor: pointer;
+}
+
+.cm-choiceChange:hover {
+  background: var(--keycap-hover);
+  color: var(--scr-ink);
+}
+
+.cm-choiceChange:active {
+  box-shadow: 0 0 0 var(--keycap-edge);
+  transform: translateY(2px);
+}
+
+.cm-choiceChange:focus-visible {
+  outline: 2px solid var(--sun);
+  outline-offset: 2px;
+}

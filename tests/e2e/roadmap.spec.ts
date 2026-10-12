@@ -33,7 +33,7 @@ const GAMES: Game[] = [
       { n: 5, title: 'Звезда', pic: 'звезда' },
     ],
     extrasTitle: 'Бомба и звезда',
-    quests: [6, 4],
+    quests: [7, 4],
     step1: (page) => buildHero(page),
   },
   {

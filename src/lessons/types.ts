@@ -1,3 +1,5 @@
+import type { Choice, ChoiceSpot } from '../core/gaps.ts'
+
 // Описание урока. Ядро ничего не знает про яблоки, птиц и пришельцев: всё, что относится
 // к конкретной игре, лежит в пакете урока (src/lessons/<id>/).
 
@@ -74,7 +76,18 @@ export interface BuildPiece {
   title: string
   /** Куда и что вставить (вставка всплывает в коде призраком); null — пока нельзя (нет предыдущей части). */
   plan: (code: string) => InsertPlan | null
+  /** Кусок на месте; у развилки — и вариант выбран (любой). */
   isDone: (code: string) => boolean
+  /** Развилка: кусок встаёт с пропуском [?], на его месте ученик выбирает вариант сам. */
+  choice?: PieceChoice
+}
+
+/** Развилка куска: варианты и как найти её строку в коде. */
+export interface PieceChoice extends Choice {
+  /** Строка развилки в коде: где пропуск или выбранный вариант. */
+  find: (code: string) => ChoiceSpot | null
+  /** То же в одной строке — для кнопки в редакторе. */
+  inLine: (text: string, line: number) => ChoiceSpot | null
 }
 
 /** Задание «собери по частям»: функция собирается кнопками кусок за куском. */
@@ -100,6 +113,17 @@ export interface RunTask {
   doneText: string
   /** Проверка по коду последнего запуска. */
   isDone: (ranCodes: string[]) => boolean
+  /**
+   * Квест-проверка развилок: «Собрать» не подсвечивается поверх затемнения — ученик смотрит на игру. Собрал,
+   * а решение неверное (`check` по коду запуска) — под квестом нейтральное `say`, со второго раза ещё и `hint`:
+   * что проверить, без ответа, и клавиша к развилке `piece`.
+   */
+  wrong?: {
+    check: (ranCodes: string[]) => boolean
+    say: Rich
+    hint: (ranCodes: string[]) => Rich
+    piece: (ranCodes: string[]) => BuildPiece
+  }
 }
 
 export type StepTask = EditTask | BuildTask | RunTask

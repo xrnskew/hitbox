@@ -2,21 +2,22 @@ import { expect, test } from '@playwright/test'
 import {
   addPieces,
   app,
-  doBonus,
-  openBonusQuest,
   buildApples,
   buildGame,
   buildHero,
+  choose,
+  doBonus,
   drawHero,
   game,
   moveHero,
   open,
+  openBonusQuest,
   openQuest,
   pick,
   run,
-  showStation,
   runButton,
   savedCodes,
+  showStation,
   tab,
   waitGame,
 } from './helpers.ts'
@@ -175,9 +176,12 @@ test('шаг 1 по квестам: картинка из окна, подсве
   await expect(runButton(page)).toHaveAttribute('data-dirty', 'false')
   await expect(runButton(page)).toHaveAttribute('data-spot', 'false')
 
-  // 5. движение по кусочкам — но скорость в «Движке» 0, герой стоит
+  // 5. движение по кусочкам, в двух местах — развилки: окно вариантов открывается само. Скорость в «Движке» 0, герой стоит
   await openQuest(page, 1, 'Открыть «Герой»')
-  await addPieces(page, 4)
+  await addPieces(page, 3)
+  await choose(page, '-')
+  await addPieces(page, 1)
+  await choose(page, '<')
   await expect(page.getByRole('status')).toContainText('скорость playerSpeed — 0')
   await run(page)
   await page.locator('iframe').click()
@@ -193,14 +197,18 @@ test('шаг 1 по квестам: картинка из окна, подсве
   await openQuest(page, 1, 'Открыть «Движок»')
   await page.keyboard.type('6')
   expect((await savedCodes(page))[0]).toContain('var playerSpeed = 6;')
+  await expect(page.getByRole('status')).toContainText('«Проверь стрелки»')
+  // 7. проверка развилок: «Собрать» не светится поверх затемнения — смотрим на игру; подсветка была один раз,
+  // дальше «Собрать» только подпрыгивает
+  await expect(runButton(page)).toHaveAttribute('data-spot', 'false')
+  await expect(runButton(page)).toHaveAttribute('data-dirty', 'true')
+  await run(page)
   await expect(page.getByRole('status')).toContainText('Шаг 2 открыт')
   await tab(page, 'Гайд')
   await expect(step1).toHaveAttribute('data-state', 'done')
   await expect(step2).toHaveAttribute('data-state', 'active')
   await expect(page.locator('#guide-step-3')).toHaveAttribute('data-state', 'locked')
   await expect(page.getByRole('navigation', { name: 'Прогресс' })).toContainText('1/5')
-  // подсветка была один раз: дальше «Собрать» только подпрыгивает
-  await expect(runButton(page)).toHaveAttribute('data-dirty', 'true')
   await expect(runButton(page)).toHaveAttribute('data-spot', 'false')
 })
 
@@ -258,6 +266,65 @@ test('«Сменить» у картинки в коде: окно закрыв�
   await run(page)
   expect(await game(page, 'itemPic')).toBe('пончик')
   await expect(runButton(page)).toHaveAttribute('data-dirty', 'false')
+})
+
+test('развилка: пропуск [?] — окно вариантов, неверный выбор видно в игре, «так и задумано?»', async ({ page }) => {
+  const errors = await open(page)
+  await drawHero(page)
+  await openQuest(page, 1, 'Открыть «Герой»', 'Научи героя ездить')
+  await addPieces(page, 2)
+  // в призраке куска пропуск — пунктирная клетка, в заголовке — «реши сам»
+  const slot = page.locator('.cm-slot')
+  await expect(slot.locator('.cm-slotGap')).toHaveCount(1)
+  await expect(slot).toContainText('реши сам')
+  // кусок встал — окно вариантов открылось само, вопрос — заголовком, фокус на первом варианте
+  await addPieces(page, 1)
+  const dialog = page.getByRole('dialog', { name: 'Выбери вариант' })
+  await expect(dialog).toContainText('Жмёшь ←')
+  await expect(dialog.locator('[data-value="+"]')).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+  // пропуск — жёлтая клавиша «?», не ошибка: без красной волны и без красного значка вкладки
+  await expect(page.locator('.cm-gap')).toHaveCount(1)
+  await page.waitForTimeout(900)
+  await expect(page.locator('.cm-lintRange-error')).toHaveCount(0)
+  await expect(page.getByRole('tab', { name: /Герой/ })).not.toHaveAttribute('data-error', 'true')
+  // с пропуском игра не собирается — «Показать пропуск» открывает окно
+  await run(page)
+  await expect(page.getByText('В коде пропуск')).toBeVisible()
+  await page.getByRole('alert').getByRole('button', { name: 'Показать пропуск' }).click()
+  await expect(dialog).toBeVisible()
+  // цифра — выбрать сразу: 1 — «+», неверный знак
+  await page.keyboard.press('1')
+  await expect(dialog).toHaveCount(0)
+  expect((await savedCodes(page))[1]).toContain('if (keys["ArrowLeft"])  playerX = playerX + playerSpeed;')
+  await expect(page.locator('.cm-editor').getByRole('button', { name: 'Сменить вариант: сейчас +' })).toBeVisible()
+  await addPieces(page, 1)
+  await choose(page, '<')
+  await openQuest(page, 1, 'Открыть «Движок»', 'Дай герою скорость')
+  await page.keyboard.type('6')
+  // собрал с неверным знаком: ← везёт вправо, под квестом — нейтральное «так и задумано?»
+  await run(page)
+  await page.locator('iframe').click()
+  const x0 = await game<number>(page, 'playerX')
+  await page.keyboard.down('ArrowLeft')
+  await page.waitForTimeout(200)
+  await page.keyboard.up('ArrowLeft')
+  expect(await game<number>(page, 'playerX')).toBeGreaterThan(x0)
+  await tab(page, 'Гайд')
+  const check = page.getByRole('region', { name: 'Квест: Проверь стрелки' })
+  await expect(check).toContainText('так и задумано?')
+  await expect(check.getByRole('button', { name: 'Показать строку' })).toHaveCount(0)
+  // второй раз — что проверить и клавиша к строке; окно помнит, что стоит сейчас
+  await run(page)
+  await expect(check).toContainText('ArrowLeft')
+  await check.getByRole('button', { name: 'Показать строку' }).click()
+  await expect(dialog.locator('[data-value="+"]')).toHaveAttribute('aria-pressed', 'true')
+  await choose(page, '-')
+  await run(page)
+  await expect(page.getByRole('status')).toContainText('Шаг 2 открыт')
+  // ошибка синтаксиса из iframe при запуске с пропуском — ожидаема, других нет
+  expect(errors.filter((e) => !/Unexpected token/.test(e))).toEqual([])
 })
 
 test('«Всё быстрее»: части функции всплывают в коде «Яблок» и добавляются по очереди', async ({ page }) => {

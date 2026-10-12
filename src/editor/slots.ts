@@ -1,6 +1,7 @@
 import type { EditorState } from '@codemirror/state'
 import { StateEffect, StateField } from '@codemirror/state'
 import { Decoration, type DecorationSet, EditorView, WidgetType } from '@codemirror/view'
+import { GAP } from '@/core/gaps.ts'
 import './slots.css'
 import { typingField } from './typing.ts'
 
@@ -80,7 +81,12 @@ class SlotWidget extends WidgetType {
 
     const code = document.createElement('div')
     code.className = 'cm-slotCode'
-    code.textContent = slot.code
+    // пропуск развилки [?] — пунктирной клеткой: решение будет здесь
+    slot.code.split(GAP).forEach((part, i) => {
+      if (i > 0)
+        code.append(Object.assign(document.createElement('span'), { className: 'cm-slotGap', textContent: '?' }))
+      code.append(part)
+    })
     code.setAttribute('aria-hidden', 'true')
 
     box.append(head, code)

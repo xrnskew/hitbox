@@ -1,6 +1,8 @@
 import { expect } from 'vitest'
 import { applySettingInsert, planSettingInsert } from '@/core/insert.ts'
 import { findSyntaxError } from '@/core/syntax.ts'
+import { findGaps } from '@/core/gaps.ts'
+import { choose } from '@/lessons/kit.ts'
 import type { BuildTask, InsertPlan } from '@/lessons/types.ts'
 
 // Сборка по кусочкам без редактора и строка настройки в «Движок» — общие для квестов всех игр.
@@ -12,7 +14,10 @@ export function apply(code: string, plan: InsertPlan): string {
   return lines.join('\n')
 }
 
-/** Собрать все части по порядку, как кнопками «Добавить». Каждая промежуточная версия — без ошибок. */
+/**
+ * Собрать все части по порядку, как кнопками «Добавить»; в развилке — выбрать верный вариант.
+ * Каждая промежуточная версия — без ошибок.
+ */
 export function build(code: string, ...tasks: BuildTask[]): string {
   for (const task of tasks)
     for (const piece of task.pieces) {
@@ -20,6 +25,13 @@ export function build(code: string, ...tasks: BuildTask[]): string {
       const plan = piece.plan(code)
       expect(plan, piece.title).not.toBeNull()
       code = apply(code, plan!)
+      if (piece.choice) {
+        // кусок встал с пропуском: пока вариант не выбран, кусок не засчитан и второй раз не всплывает
+        expect(findGaps(code), piece.title).toHaveLength(1)
+        expect(piece.isDone(code), piece.title).toBe(false)
+        expect(piece.plan(code), piece.title).toBeNull()
+        code = choose(piece, code)
+      }
       expect(piece.isDone(code), piece.title).toBe(true)
       expect(findSyntaxError(code), piece.title).toBeNull()
     }

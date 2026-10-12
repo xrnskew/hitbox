@@ -150,6 +150,17 @@
   color: var(--scr-danger);
 }
 
+.error[data-gap='true'] {
+  border-top-color: var(--rule);
+  background: var(--sun-soft);
+  color: var(--ink);
+}
+
+.error[data-gap='true'] p {
+  font-family: var(--font-ui);
+  font-size: var(--text-s);
+}
+
 .error p {
   flex: 1;
   margin: 0;

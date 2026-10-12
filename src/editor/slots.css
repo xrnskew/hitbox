@@ -99,3 +99,11 @@
 .cm-slotOld span {
   color: inherit !important;
 }
+
+/* пропуск в призраке куска: пунктирная клетка — выбор будет здесь */
+.cm-slotGap {
+  padding: 0 4px;
+  border: 1px dashed var(--sun);
+  border-radius: 6px;
+  color: var(--sun);
+}

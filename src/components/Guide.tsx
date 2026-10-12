@@ -451,7 +451,7 @@ function TaskBox({
       </p>
       {task.kind === 'edit' && <EditTaskBody stepIndex={stepIndex} taskIndex={taskIndex} task={task} done={done} />}
       {task.kind === 'build' && <BuildTaskBody stepIndex={stepIndex} taskIndex={taskIndex} task={task} code={code} />}
-      {task.kind === 'run' && <RunTaskBody task={task} done={done} />}
+      {task.kind === 'run' && <RunTaskBody stepIndex={stepIndex} taskIndex={taskIndex} task={task} done={done} />}
       {next && <NextStep next={next} />}
     </section>
   )
@@ -624,17 +624,55 @@ function BuildTaskBody({
   )
 }
 
-/** «Нажми «Собрать»»: та же кнопка, что в шапке. */
-function RunTaskBody({ task, done }: { task: RunTask; done: boolean }) {
+/**
+ * «Нажми «Собрать»»: та же кнопка, что в шапке. В квесте-проверке развилок после неверной сборки — нейтральное
+ * «так и задумано?», со второй — что проверить. Ответа не подсказываем: его покажет игра.
+ */
+function RunTaskBody({
+  stepIndex,
+  taskIndex,
+  task,
+  done,
+}: {
+  stepIndex: number
+  taskIndex: number
+  task: RunTask
+  done: boolean
+}) {
   const c = useController()
+  const misses = useApp((s) => s.misses[`${stepIndex}:${taskIndex}`] ?? 0)
+  const ran = useApp((s) => s.ran)
+  const wrong = !done && task.wrong && misses > 0 ? task.wrong : null
   return (
-    <div className={styles.actions}>
-      <button type="button" className={done ? 'key key--l' : 'key key--apple key--l'} onClick={c.run}>
-        <PlayIcon size={15} />
-        Собрать
-      </button>
-      {!done && <span className={styles.aside}>{task.callout}</span>}
-    </div>
+    <>
+      <div className={styles.actions}>
+        <button type="button" className={done ? 'key key--l' : 'key key--apple key--l'} onClick={c.run}>
+          <PlayIcon size={15} />
+          Собрать
+        </button>
+        {!done && !wrong && <span className={styles.aside}>{task.callout}</span>}
+      </div>
+      {wrong && (
+        <div className={styles.hint} role="status">
+          <p>
+            <Rich text={wrong.say} />
+          </p>
+          {misses > 1 && (
+            <>
+              <p>
+                <Rich text={wrong.hint(ran)} />
+              </p>
+              <div className={styles.actions}>
+                <button type="button" className="key key--s" onClick={() => c.showChoice(wrong.piece(ran))}>
+                  <TargetIcon size={14} />
+                  Показать строку
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </>
   )
 }
 

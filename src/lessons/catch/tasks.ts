@@ -1,17 +1,21 @@
 import {
   after,
   append,
+  before,
+  choicePiece,
   createPicQuest,
   decl,
   drawPicQuest,
   has,
   into,
+  numberAbove0,
   numberQuest,
   pickPicQuest,
+  rightChoice,
   runQuest,
   shell,
 } from '../kit.ts'
-import type { BuildTask, EditTask } from '../types.ts'
+import type { BuildTask, EditTask, RunTask } from '../types.ts'
 import { HERO_PIC } from './tabs.ts'
 
 // Квесты шагов «Корзинки». Код шага собирается кнопками «Добавить» по кусочкам и в итоге совпадает с STEP_* из tabs.ts.
@@ -58,32 +62,44 @@ export const HERO_RUN_TASK = runQuest({
   after: [HERO_DRAW_TASK],
 })
 
+// Две развилки — решения ученика: знак движения влево (строка вправо дана готовой — по ней и догадаться)
+// и сравнение у левого края (строка для правого края — готовая). Верный ли выбор, покажет игра: см. HERO_CHECK_TASK.
+const RIGHT_LINE = /["']ArrowRight["']/
+
+export const LEFT_PIECE = choicePiece({
+  title: 'Стрелка ← — едем влево',
+  text: '  if (keys["ArrowLeft"])  playerX = playerX [?] playerSpeed;',
+  // над строкой для → — как в готовом коде
+  where: (code, text) => before(code, RIGHT_LINE, text),
+  question: 'Жмёшь ← — что делаем с playerX?',
+  options: ['+', '-'],
+  answer: '-',
+})
+
+export const EDGE_PIECE = choicePiece({
+  title: 'Не уезжать за край',
+  text: '\n  // не даём герою уехать за край поля\n  if (playerX [?] 0)   playerX = 0;\n  if (playerX > 340) playerX = 340;',
+  where: (code, text) => into('movePlayer', text)(code),
+  also: (code) => has(code, /\bif\s*\(\s*playerX\s*>\s*340\s*\)/),
+  question: 'Когда вернуть героя к левому краю, в 0?',
+  options: ['<', '>'],
+  answer: '<',
+})
+
 export const HERO_MOVE_TASK: BuildTask = {
   kind: 'build',
   title: 'Научи героя ездить',
-  text: 'Движок зовёт и `movePlayer()`: она слушает стрелки и двигает героя. Собери её по кусочкам в «Герое».',
+  text: 'Движок зовёт и `movePlayer()`: она слушает стрелки и двигает героя. Собери её по кусочкам в «Герое». Два места реши сам: там, где [?], нажми и выбери вариант.',
   tab: 1,
   pieces: [
     shell('movePlayer'),
     {
-      title: 'Стрелка ← — едем влево',
-      plan: into('movePlayer', '  if (keys["ArrowLeft"])  playerX = playerX - playerSpeed;'),
-      isDone: (code) => has(code, /["']ArrowLeft["']/),
-    },
-    {
       title: 'Стрелка → — едем вправо',
       plan: into('movePlayer', '  if (keys["ArrowRight"]) playerX = playerX + playerSpeed;'),
-      isDone: (code) => has(code, /["']ArrowRight["']/),
+      isDone: (code) => has(code, RIGHT_LINE),
     },
-    {
-      title: 'Не уезжать за край',
-      plan: into(
-        'movePlayer',
-        '\n  // не даём герою уехать за край поля\n  if (playerX < 0)   playerX = 0;\n  if (playerX > 340) playerX = 340;',
-      ),
-      isDone: (code) =>
-        has(code, /\bif\s*\(\s*playerX\s*<\s*0\s*\)/) && has(code, /\bif\s*\(\s*playerX\s*>\s*340\s*\)/),
-    },
+    LEFT_PIECE,
+    EDGE_PIECE,
   ],
   doneText: 'Движение готово! Но герой пока стоит: в «Движке» скорость playerSpeed — 0. Следующий квест — в «Гайде».',
 }
@@ -95,6 +111,33 @@ export const SPEED_TASK = numberQuest({
   name: 'playerSpeed',
   hint: 'Это первая строка «Движка»: `var playerSpeed = 0;`. Это сколько пикселей герой проезжает за кадр: 5 — спокойно, 7 — шустро. Попробуй разные!',
 })
+
+/** Проверка развилок героя: засчитана, когда собрана игра со скоростью и верными знаками. */
+export const HERO_CHECK_TASK: RunTask = {
+  kind: 'run',
+  title: 'Проверь стрелки',
+  text: 'Нажми «Собрать», кликни по экрану и покатайся [[←]] [[→]]. Герой едет туда, куда жмёшь? И останавливается у левого края?',
+  tab: 1,
+  callout: 'Собери игру и покатайся стрелками.',
+  doneText: 'Герой слушается стрелок!',
+  isDone: (ran) =>
+    numberAbove0('playerSpeed')(ran[0] ?? '') &&
+    rightChoice(LEFT_PIECE, ran[1] ?? '') &&
+    rightChoice(EDGE_PIECE, ran[1] ?? ''),
+  wrong: {
+    // собрал с выбранными вариантами и со скоростью, но где-то не тот
+    check: (ran) =>
+      numberAbove0('playerSpeed')(ran[0] ?? '') &&
+      [LEFT_PIECE, EDGE_PIECE].every((p) => p.isDone(ran[1] ?? '')) &&
+      ![LEFT_PIECE, EDGE_PIECE].every((p) => rightChoice(p, ran[1] ?? '')),
+    say: 'Посмотри на игру — так и задумано?',
+    piece: (ran) => (rightChoice(LEFT_PIECE, ran[1] ?? '') ? EDGE_PIECE : LEFT_PIECE),
+    hint: (ran) =>
+      rightChoice(LEFT_PIECE, ran[1] ?? '')
+        ? 'Герой прилип к левому краю? Проверь знак в строке `if (playerX … 0)`: в 0 героя надо возвращать, только когда он уехал левее нуля.'
+        : 'Нажми [[←]] — куда поехал герой? Проверь знак в строке с `ArrowLeft` и сравни со строкой `ArrowRight`: вправо x растёт, а влево?',
+  },
+}
 
 // ===== Шаг 2. Яблоки: падают → рисуются → скорость → «Всё быстрее» =====
 

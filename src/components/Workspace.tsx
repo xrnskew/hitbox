@@ -125,13 +125,14 @@ function ErrorBar() {
   const c = useController()
   const error = useApp((s) => s.error)
   if (!error) return null
+  // пропуск развилки — не ошибка: та же полоса, но тоном «что дальше» и с клавишей к пропуску
   return (
-    <div className={styles.error} role="alert">
-      <WarnIcon className={styles.errorIcon} />
+    <div className={styles.error} data-gap={!!error.gap} role="alert">
+      {!error.gap && <WarnIcon className={styles.errorIcon} />}
       <p>{error.text}</p>
       {error.tab !== null && (
-        <button type="button" className="key key--s" onClick={c.showError}>
-          Показать
+        <button type="button" className={error.gap ? 'key key--sun key--s' : 'key key--s'} onClick={c.showError}>
+          {error.gap ? 'Показать пропуск' : 'Показать'}
         </button>
       )}
     </div>

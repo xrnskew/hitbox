@@ -14,7 +14,8 @@ export function syntaxLinter(check: (code: string) => SyntaxIssue | null) {
   return linter(
     (view: EditorView): Diagnostic[] => {
       const issue = check(view.state.doc.toString())
-      if (!issue) return []
+      // пропуск развилки — не ошибка: он и так виден жёлтой клавишей «?»
+      if (!issue || issue.gap) return []
       const doc = view.state.doc
       const line = doc.line(Math.min(Math.max(issue.line, 1), doc.lines))
       let from = Math.min(line.from + issue.column, line.to)
