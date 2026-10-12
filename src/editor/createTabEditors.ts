@@ -5,6 +5,7 @@ import { bracketMatching, indentOnInput, indentUnit, syntaxHighlighting } from '
 import { lintGutter } from '@codemirror/lint'
 import {
   Annotation,
+  Compartment,
   EditorState,
   type Extension,
   Prec,
@@ -133,7 +134,13 @@ export function createTabEditors(o: TabEditorsOptions): TabEditors {
     return true
   }
 
+  // На телефоне длинные строки переносятся: иначе кусок кода шире экрана и «Добавить» уезжает за край.
+  const narrow = window.matchMedia?.('(max-width: 640px)')
+  const wrap = new Compartment()
+  const wrapping = () => (narrow?.matches ? EditorView.lineWrapping : [])
+
   const extensions: Extension[] = [
+    wrap.of(wrapping()),
     // Prec.highest — иначе Ctrl+Enter перехватит insertBlankLine
     Prec.highest(
       keymap.of([
@@ -192,6 +199,15 @@ export function createTabEditors(o: TabEditorsOptions): TabEditors {
     })
   })
   const view = new EditorView({ state: states[current], parent: o.parent })
+
+  const rewrap = () => {
+    const effects = wrap.reconfigure(wrapping())
+    states.forEach((s, tab) => {
+      if (tab !== current) states[tab] = s.update({ effects }).state
+    })
+    view.dispatch({ effects })
+  }
+  narrow?.addEventListener('change', rewrap)
 
   const stateOf = (tab: number) => (tab === current ? view.state : states[tab])
 
@@ -337,6 +353,7 @@ export function createTabEditors(o: TabEditorsOptions): TabEditors {
     },
     destroy() {
       stopAnimation()
+      narrow?.removeEventListener('change', rewrap)
       view.destroy()
     },
   }
