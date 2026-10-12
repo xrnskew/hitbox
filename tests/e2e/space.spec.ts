@@ -104,7 +104,10 @@ test('Космос: вся игра по квестам — луч, переза
   await openQuest(page, 3, 'Выбрать картинку в «Пришельцы»')
   await pick(page, 'осьминог')
   await run(page)
-  expect(await game(page, '[wave, enemies.length, enemyPic, bulletColor]')).toEqual([1, 5, 'осьминог', '#ec407a'])
+  // первая волна выходит в первом кадре, а он — по requestAnimationFrame, чуть позже загрузки
+  await expect
+    .poll(() => game(page, '[wave, enemies.length, enemyPic, bulletColor]'))
+    .toEqual([1, 5, 'осьминог', '#ec407a'])
   // у каждого своя скорость вбок: через полсекунды пришелец уже сдвинулся
   const x0 = await game<number>(page, 'enemies[0].x')
   await page.waitForTimeout(500)
