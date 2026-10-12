@@ -111,7 +111,7 @@
   position: absolute;
   inset: auto 0 0;
   height: 3px;
-  background: var(--sun);
+  background: var(--rule-2);
   transform-origin: left;
   animation: countdown linear forwards;
 }
@@ -156,17 +156,11 @@
   color: var(--ink);
 }
 
-.error[data-gap='true'] p {
-  font-family: var(--font-ui);
-  font-size: var(--text-s);
-}
-
 .error p {
   flex: 1;
   margin: 0;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  line-height: 1.55;
+  font-size: 14px;
+  line-height: 1.5;
   overflow-wrap: anywhere;
 }
 
@@ -176,9 +170,17 @@
   }
 }
 
+/* телефон: текст и крестик — первой строкой, «Вернуть как было» — под текстом */
 @media (max-width: 560px) {
   .toast {
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    width: calc(100% - 32px);
+  }
+
+  .toast > :global(.key):not(.close) {
+    grid-row: 2;
+    justify-self: start;
   }
 
   .note p {

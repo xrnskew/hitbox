@@ -1,8 +1,10 @@
 /* Развилка в коде. Пропуск [?] — маленькая жёлтая клавиша «?» прямо в строке: это следующий шаг ученика,
-   поэтому Солнце; цвета — те же, что у клавиши .key--sun (класс стоит на кнопке рядом с .cm-gap).
+   поэтому Солнце; цвета — те же, что у клавиши .key--sun (класс стоит на кнопке рядом с .cm-choiceGap).
+   Класс — cm-choiceGap, не cm-gap: cm-gap — служебный блок CodeMirror (место под строки вне экрана),
+   и наши поля на нём сдвигали номера строк.
    Выбранный вариант — обычный код, подчёркнут пунктиром; «Сменить» в конце строки — тихая клавиша,
    не жёлтая: решение уже принято. */
-.cm-gap {
+.cm-choiceGap {
   display: inline-grid;
   place-items: center;
   min-width: 3ch;
@@ -18,24 +20,24 @@
   vertical-align: 0;
   cursor: pointer;
   /* появляется один раз мягким кольцом, как пульс станции на карте, — и успокаивается */
-  animation: cm-gap-call 1.2s ease-out 2;
+  animation: cm-choiceGap-call 1.2s ease-out 2;
 }
 
-.cm-gap:hover {
+.cm-choiceGap:hover {
   background: var(--key-bg-hover);
 }
 
-.cm-gap:active {
+.cm-choiceGap:active {
   box-shadow: 0 0 0 var(--key-edge);
   transform: translateY(2px);
 }
 
-.cm-gap:focus-visible {
+.cm-choiceGap:focus-visible {
   outline: 3px solid var(--sun);
   outline-offset: 2px;
 }
 
-@keyframes cm-gap-call {
+@keyframes cm-choiceGap-call {
   from {
     box-shadow:
       0 2px 0 var(--key-edge),
@@ -49,7 +51,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cm-gap {
+  .cm-choiceGap {
     animation: none;
   }
 }
@@ -89,6 +91,6 @@
 }
 
 .cm-choiceChange:focus-visible {
-  outline: 2px solid var(--sun);
+  outline: 3px solid var(--sun);
   outline-offset: 2px;
 }

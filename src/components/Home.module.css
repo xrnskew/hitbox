@@ -67,6 +67,7 @@
 
 /* ===== Карточка игры ===== */
 .card {
+  position: relative;
   display: grid;
   grid-template-rows: auto 1fr;
   justify-items: center;
@@ -76,6 +77,16 @@
   border: 1px solid var(--rule);
   border-radius: var(--radius-card);
   background: var(--paper);
+  transition: border-color 0.2s ease-out;
+}
+
+/* наведение на карточку: приставку берут со стола — она приподнимается и чуть поворачивается */
+.card:hover {
+  border-color: var(--rule-2);
+}
+
+.card:hover .console {
+  transform: translateY(-4px) rotate(-2deg);
 }
 
 /* текст и клавиша — колонкой; клавиши всех карточек стоят на одной линии, внизу */
@@ -140,7 +151,16 @@
 }
 
 .play {
+  position: static;
   margin-top: auto;
+}
+
+/* вся карточка — ссылка клавиши «Начать»: нажать можно и по приставке; в Tab — по-прежнему одна остановка */
+.play::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-card);
 }
 
 /* место под клавишу: на одной линии во всех карточках, даже если текст короче */
@@ -153,6 +173,7 @@
   width: 156px;
   padding: 12px 12px 10px;
   border-radius: 20px 20px 30px 30px;
+  transition: transform 0.24s cubic-bezier(0.2, 0.8, 0.3, 1);
   background: linear-gradient(165deg, var(--shell-hi), var(--shell) 42%, var(--shell-lo));
   box-shadow:
     inset 0 2px 0 rgba(255, 255, 255, 0.35),

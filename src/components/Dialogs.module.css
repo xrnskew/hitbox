@@ -98,7 +98,7 @@
 .input:focus {
   border-color: var(--sun);
   outline: none;
-  box-shadow: 0 0 0 3px var(--sun);
+  box-shadow: 0 0 0 3px rgba(255, 200, 58, 0.3);
 }
 
 .buttons {

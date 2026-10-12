@@ -1,7 +1,8 @@
 .guide {
   max-width: 840px;
   margin: 0 auto;
-  padding: 36px 40px 56px;
+  /* снизу запас под уведомление: оно не закрывает кнопки последнего квеста */
+  padding: 36px 40px 112px;
 }
 
 .guide p {
@@ -9,7 +10,7 @@
 }
 
 /* ===== Начало ===== */
-.hero h1 {
+.hero h2 {
   margin: 0 0 10px;
   font-family: var(--font-display);
   font-size: var(--text-hero);
@@ -38,6 +39,26 @@
   font-size: 14px;
 }
 
+/* ученик уже начал: название и клавиши — одной строкой, без вводного абзаца */
+.hero[data-started='true'] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 22px;
+}
+
+.hero[data-started='true'] h2 {
+  margin: 0;
+  font-size: var(--text-xl);
+}
+
+.hero[data-started='true'] .tips {
+  margin: 0;
+  padding: 0;
+  background: none;
+  font-size: var(--text-s);
+}
+
 /* ===== Шаги — дорожка уровней ===== */
 .stage {
   scroll-margin-top: 12px;
@@ -45,7 +66,7 @@
 
 /* ===== Станция под картой: шаг, бонус или финиш — по одному ===== */
 .track {
-  margin: 28px 0 0;
+  margin: 24px 0 0;
   padding: 0;
   list-style: none;
 }
@@ -68,23 +89,20 @@
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: var(--text-xl);
   font-weight: 700;
-  box-shadow: 0 4px 0 #07080b;
 }
 
 .step[data-state='done'] .node {
   border-color: var(--leaf-fill);
   background: var(--leaf-fill);
   color: #fff;
-  box-shadow: 0 4px 0 #0e3d22;
 }
 
 .step[data-state='locked'] .node {
   border-color: var(--rule-2);
   background: var(--paper-2);
-  color: var(--ink-3);
-  box-shadow: none;
+  color: var(--ink-2);
 }
 
 .stepBody {
@@ -110,7 +128,7 @@
 
 .step[data-state='locked'] .stepHead h2,
 .step[data-state='locked'] .stepLead {
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 
 .stepLead {
@@ -142,7 +160,7 @@
   border: 1px dashed var(--rule-2);
   border-radius: 999px;
   color: var(--ink-2);
-  font-size: 12.5px;
+  font-size: var(--text-s);
 }
 
 .fns li[data-state='ok'] {
@@ -219,33 +237,55 @@
   border-radius: 4px;
 }
 
-/* ===== Квесты шага: выполненные — строкой с галочкой, текущий — карточкой ===== */
+/* ===== Квесты шага: выполненные — зелёными чипами в ряд, текущий — карточкой во всю ширину ===== */
 .quests {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   margin: 18px 0 0;
   padding: 0;
   list-style: none;
 }
 
+.quests > li:not(.questDone) {
+  flex-basis: 100%;
+  margin-top: 6px;
+}
+
 .questDone {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 9px;
-  padding: 7px 14px;
-  border-radius: 12px;
+  gap: 6px;
+  padding: 4px 12px 4px 10px;
+  border-radius: 999px;
   background: var(--leaf-soft);
   color: var(--leaf);
-  font-size: 14px;
+  font-size: var(--text-s);
   font-weight: 600;
+  animation: quest-done 0.3s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+/* квест выполнен: карточка сворачивается в чип — чип проявляется на её месте */
+@keyframes quest-done {
+  from {
+    opacity: 0;
+    translate: 0 4px;
+  }
 }
 
 .task {
-  margin-top: 4px;
   padding: 18px 18px 14px;
   border: 1px solid #4a3d12;
-  border-radius: 18px;
+  border-radius: 16px;
+  animation: task-in 0.32s cubic-bezier(0.2, 0.8, 0.3, 1);
   background: linear-gradient(180deg, var(--sun-soft), var(--paper) 140%);
+}
+
+@keyframes task-in {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
 }
 
 .task[data-done='true'] {
@@ -265,7 +305,7 @@
   border-radius: 8px;
   background: var(--sun);
   color: #151a23;
-  font-size: 12px;
+  font-size: var(--text-s);
   font-weight: 700;
 }
 
@@ -274,7 +314,7 @@
   color: #fff;
 }
 
-.taskHead h3 {
+.taskTitle {
   margin: 0;
   font-family: var(--font-display);
   font-size: var(--text-l);
@@ -319,8 +359,7 @@
 /* части функции: сами кнопки «Добавить» всплывают в коде вкладки */
 .pieces {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px 18px;
+  gap: 8px;
   margin: 14px 0 0;
   padding: 0;
   list-style: none;
@@ -334,7 +373,7 @@
 }
 
 .piece[data-state='wait'] {
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 
 .partNode {
@@ -399,12 +438,12 @@
 .extra {
   padding: 18px;
   border: 1px solid var(--rule);
-  border-radius: 20px;
+  border-radius: 16px;
   background: var(--paper-2);
   scroll-margin-top: 20px;
 }
 
-.extra[data-locked='true'] {
+.extra[data-locked='true'] .badge {
   opacity: 0.6;
 }
 
@@ -428,7 +467,6 @@
   background: var(--keycap);
   color: var(--ink-2);
   font-size: 36px;
-  box-shadow: 0 3px 0 var(--keycap-edge);
 }
 
 .extraHead h3 {
@@ -483,7 +521,7 @@
 }
 
 .nearDir {
-  color: var(--ink-3);
+  color: var(--ink-2);
   font-size: var(--text-s);
   font-weight: 500;
 }
@@ -526,7 +564,7 @@
   width: 120px;
   height: 120px;
   border: 3px solid var(--sun);
-  border-radius: 26px;
+  border-radius: var(--radius-card);
   background: var(--sun-soft);
   box-shadow:
     0 6px 0 var(--keycap-edge),
@@ -572,7 +610,6 @@
   border: 2px solid var(--leaf-fill);
   border-radius: 12px;
   background: var(--keycap);
-  box-shadow: 0 3px 0 var(--keycap-edge);
 }
 
 /* бонусы отделены от шагов, как на карте */
@@ -654,11 +691,15 @@
 
 @media (max-width: 640px) {
   .guide {
-    padding: 24px 16px 48px;
+    padding: 24px 16px 112px;
   }
 
-  .hero h1 {
+  .hero h2 {
     font-size: 26px;
+  }
+
+  .hero[data-started='true'] h2 {
+    font-size: var(--text-xl);
   }
 
   .step {

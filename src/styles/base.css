@@ -75,6 +75,20 @@ body {
   background: var(--desk);
 }
 
+/* поверхности браузера — тоже из палитры: выделение, полосы прокрутки, каретка в полях */
+::selection {
+  background: var(--scr-selection);
+}
+
+html {
+  scrollbar-color: var(--rule-2) var(--desk);
+}
+
+input,
+textarea {
+  caret-color: var(--sun);
+}
+
 #root {
   min-height: 100dvh;
 }

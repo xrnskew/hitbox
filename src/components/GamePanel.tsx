@@ -1,4 +1,4 @@
-import { type MouseEvent, type PointerEvent, useEffect, useRef } from 'react'
+import { type KeyboardEvent, type MouseEvent, type PointerEvent, useEffect, useRef } from 'react'
 import { useApp, useController } from '@/app/context.ts'
 import { useStore } from '@/app/store.ts'
 import { ResetIcon, TriangleIcon } from './icons.tsx'
@@ -54,7 +54,7 @@ function GameScreen() {
       />
       {game === 'running' && !focused && (
         <button type="button" className={styles.clickToPlay} onClick={c.focusGame}>
-          <span>Кликни, чтобы играть</span>
+          <span>Нажми, чтобы играть</span>
         </button>
       )}
       {game === 'over' && <GameOver />}
@@ -111,7 +111,7 @@ function FocusLed() {
   return (
     <p className={styles.led} data-on={focused} aria-live="polite">
       <span className={styles.ledDot} aria-hidden="true" />
-      {focused ? `Играем: жми ${keys}` : `Кликни по экрану, потом жми ${keys}`}
+      {focused ? `Играем: жми ${keys}` : `Нажми на экран, потом жми ${keys}`}
     </p>
   )
 }
@@ -123,7 +123,7 @@ function Controls() {
   const game = useApp((s) => s.game)
   const { buttons } = c.lesson.controls
 
-  // Фокус остаётся у игры: иначе кнопка забирает его, и поверх экрана всплывает «Кликни, чтобы играть».
+  // Фокус остаётся у игры: иначе кнопка забирает его, и поверх экрана всплывает «Нажми, чтобы играть».
   const hold = (k: string) => ({
     onPointerDown: (e: PointerEvent<HTMLButtonElement>) => {
       try {
@@ -151,6 +151,8 @@ function Controls() {
             className={styles.arrow}
             data-wide={b.wide === true}
             aria-label={b.label}
+            // с клавиатуры играют настоящими клавишами: кнопки корпуса — для мыши и пальца, Tab их пропускает
+            tabIndex={-1}
             {...hold(b.key)}
           >
             <TriangleIcon dir={b.icon} />
@@ -188,13 +190,24 @@ function Tools() {
   const c = useController()
   const panel = useApp((s) => s.panel)
   const unread = useApp((s) => s.unreadLogs)
+  // стрелки ← → переключают «Приборы» и «Консоль», как вкладки над кодом
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return
+    e.preventDefault()
+    const next =
+      e.key === 'Home' ? 'inspector' : e.key === 'End' ? 'console' : panel === 'inspector' ? 'console' : 'inspector'
+    c.setPanel(next)
+    document.getElementById(`tool-${next}`)?.focus()
+  }
   return (
     <div className={styles.tools}>
-      <div className={styles.toolTabs} role="tablist" aria-label="Инструменты">
+      <div className={styles.toolTabs} role="tablist" aria-label="Инструменты" onKeyDown={onKeyDown}>
         <button
           type="button"
           role="tab"
+          id="tool-inspector"
           aria-selected={panel === 'inspector'}
+          tabIndex={panel === 'inspector' ? 0 : -1}
           aria-controls="tool-panel"
           onClick={() => c.setPanel('inspector')}
         >
@@ -203,7 +216,9 @@ function Tools() {
         <button
           type="button"
           role="tab"
+          id="tool-console"
           aria-selected={panel === 'console'}
+          tabIndex={panel === 'console' ? 0 : -1}
           aria-controls="tool-panel"
           onClick={() => c.setPanel('console')}
         >
@@ -211,7 +226,7 @@ function Tools() {
           {unread > 0 && <span className={styles.unread}>{unread}</span>}
         </button>
       </div>
-      <div id="tool-panel" role="tabpanel" className={styles.toolBody}>
+      <div id="tool-panel" role="tabpanel" aria-labelledby={`tool-${panel}`} className={styles.toolBody}>
         {panel === 'inspector' ? <Inspector /> : <Console />}
       </div>
     </div>

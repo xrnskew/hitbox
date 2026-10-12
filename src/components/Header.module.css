@@ -28,7 +28,7 @@
 }
 
 .home:focus-visible {
-  outline: 2px solid var(--sun);
+  outline: 3px solid var(--sun);
   outline-offset: 2px;
 }
 
@@ -65,7 +65,7 @@
   border-radius: 999px;
   background: var(--paper);
   color: var(--ink-2);
-  font-size: 12px;
+  font-size: var(--text-s);
   font-weight: 600;
 }
 
@@ -159,6 +159,19 @@
   color: var(--mark-ink);
 }
 
+/* номер шага в кольце — только когда подписи спрятаны */
+.markNum {
+  display: none;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.header:not([data-squeeze='0']) .markNum {
+  display: block;
+}
+
 .point[data-done='true'] .mark {
   border-color: var(--mark);
   background: var(--mark);
@@ -173,31 +186,27 @@
 }
 
 .justDone {
-  animation: hop 0.6s cubic-bezier(0.3, 0.7, 0.4, 1);
+  animation: fill-in 0.32s cubic-bezier(0.2, 0.8, 0.3, 1);
 }
 
-@keyframes hop {
-  0% {
-    transform: none;
+/* галочка проявляется кругом от центра, а вокруг расходится кольцо — без прыжков и пружин */
+@keyframes fill-in {
+  from {
+    clip-path: circle(0 at 50% 50%);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--mark) 60%, transparent);
   }
-  35% {
-    transform: translateY(-6px) scale(1.2);
-  }
-  65% {
-    transform: translateY(1px) scale(0.95);
-  }
-  100% {
-    transform: none;
+  to {
+    clip-path: circle(75% at 50% 50%);
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--mark) 0%, transparent);
   }
 }
 
 .pop {
-  animation: pop 0.5s ease-out 0.3s;
+  animation: pop 0.6s ease-out 0.2s;
 }
 
 @keyframes pop {
-  40% {
-    transform: scale(1.3);
+  30% {
     color: var(--leaf);
   }
 }
@@ -223,7 +232,7 @@
   padding: 0 18px 0 20px;
 }
 
-/* ===== Есть несобранные изменения: кнопка подпрыгивает и вокруг неё пульсирует кольцо ===== */
+/* ===== Есть несобранные изменения: вокруг кнопки трижды расходится кольцо, дальше горит точка ===== */
 .run::after {
   content: '';
   position: absolute;
@@ -234,47 +243,42 @@
   pointer-events: none;
 }
 
-.run[data-dirty='true'] {
-  animation: nudge 2.6s ease-in-out infinite;
-}
-
 .run[data-dirty='true']::after {
-  animation: ring 2.6s ease-out infinite;
-}
-
-/* translate, а не transform: transform занят нажатием клавиши */
-@keyframes nudge {
-  0%,
-  64%,
-  100% {
-    translate: 0 0;
-  }
-  70% {
-    translate: 0 -6px;
-  }
-  76% {
-    translate: 0 0;
-  }
-  81% {
-    translate: 0 -2px;
-  }
-  86% {
-    translate: 0 0;
-  }
+  animation: ring 2.4s ease-out 3;
 }
 
 @keyframes ring {
   0%,
-  62% {
+  20% {
     opacity: 0;
     scale: 0.96;
   }
-  72% {
+  35% {
     opacity: 1;
   }
   100% {
     opacity: 0;
     scale: 1.12;
+  }
+}
+
+/* точка «не собрано» в углу кнопки: видно и после того, как кольцо успокоилось */
+.dirtyDot {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--desk);
+  border-radius: 50%;
+  background: var(--sun);
+  animation: dot-in 0.24s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+@keyframes dot-in {
+  from {
+    opacity: 0;
+    scale: 0.4;
   }
 }
 
@@ -293,7 +297,17 @@
     0 var(--key-depth) 0 var(--key-edge),
     0 0 0 4px var(--sun),
     0 0 48px 10px rgba(255, 200, 58, 0.42);
-  animation: nudge 1.8s ease-in-out infinite;
+  animation: glow 1.8s ease-in-out infinite alternate;
+}
+
+/* свет вокруг кнопки дышит — без прыжков */
+@keyframes glow {
+  to {
+    box-shadow:
+      0 var(--key-depth) 0 var(--key-edge),
+      0 0 0 4px var(--sun),
+      0 0 64px 16px rgba(255, 200, 58, 0.55);
+  }
 }
 
 .callout {
@@ -356,9 +370,9 @@
     animation: none;
   }
 
+  /* кольцо не расходится — о несобранном говорит точка в углу */
   .run[data-dirty='true']::after {
     animation: none;
-    opacity: 1;
   }
 }
 
@@ -381,6 +395,10 @@
 @media (max-width: 860px) {
   .label {
     display: none;
+  }
+
+  .markNum {
+    display: block;
   }
 
   .point {

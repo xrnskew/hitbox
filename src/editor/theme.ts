@@ -27,11 +27,11 @@ export const editorTheme = EditorView.theme(
     '.cm-activeLine': { backgroundColor: 'var(--scr-active-line)' },
     '.cm-gutters': {
       backgroundColor: 'var(--scr)',
-      color: 'var(--scr-faint)',
+      color: 'var(--scr-num)',
       border: 'none',
     },
     '.cm-lineNumbers .cm-gutterElement': { padding: '0 6px 0 14px', minWidth: '34px' },
-    '.cm-activeLineGutter': { backgroundColor: 'transparent', color: 'var(--scr-dim)' },
+    '.cm-activeLineGutter': { backgroundColor: 'transparent', color: 'var(--scr-ink)' },
     '.cm-matchingBracket, &.cm-focused .cm-matchingBracket': {
       backgroundColor: 'rgba(110, 176, 245, 0.16)',
       outline: '1px solid var(--scr-line)',

@@ -44,6 +44,8 @@
   --scr-ink: #e4e7ed;
   --scr-dim: #9ba3b1;
   --scr-faint: #687184;
+  /* номера строк: тише кода, но читаются (4.9:1) */
+  --scr-num: #7c8597;
   --scr-danger: #ff8a8f;
   --scr-danger-bg: #2d1c22;
   --scr-danger-line: rgba(255, 138, 143, 0.12);

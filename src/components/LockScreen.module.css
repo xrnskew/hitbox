@@ -77,7 +77,7 @@
   font-family: var(--font-ui);
   font-size: var(--text-m);
   letter-spacing: 0;
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 
 .input:focus {

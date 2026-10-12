@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { useApp, useController } from '@/app/context.ts'
 import { homeHref } from '@/app/routes.ts'
 import {
@@ -73,11 +73,14 @@ export function Guide() {
     el.scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'start' })
   }, [station.key])
 
+  // ученик уже начал — вступление ужимается до строки, чтобы текущий квест был виден без прокрутки
+  const started = levels[0].questsDone.some(Boolean)
+
   return (
-    <article className={styles.guide}>
-      <header className={styles.hero}>
-        <h1>{lesson.intro.title}</h1>
-        <p className={styles.lead}>
+    <article className={styles.guide} aria-labelledby="guide-title">
+      <header className={styles.hero} data-started={started}>
+        <h2 id="guide-title">{lesson.intro.title}</h2>
+        <p className={styles.lead} hidden={started}>
           <Rich text={lesson.intro.lead} />
         </p>
         <ul className={styles.tips}>
@@ -325,11 +328,6 @@ const StepItem = memo(function StepItem({
               Сделано
             </span>
           )}
-          {state === 'active' && level.current >= 0 && (
-            <span className="chip chip--todo">
-              Квест {level.current + 1} из {step.quests.length}
-            </span>
-          )}
           {state === 'locked' && (
             <span className="chip chip--todo">
               <LockIcon size={11} />
@@ -355,7 +353,7 @@ const StepItem = memo(function StepItem({
               ))}
             </ul>
 
-            <QuestList chainIndex={index} quests={step.quests} level={level} codes={codes} next={next} />
+            <QuestList chainIndex={index} quests={step.quests} level={level} codes={codes} next={next} heading={3} />
 
             <div className={styles.actions}>
               <button
@@ -422,6 +420,7 @@ function TaskBox({
   done,
   code,
   next,
+  heading,
 }: {
   stepIndex: number
   taskIndex: number
@@ -429,16 +428,19 @@ function TaskBox({
   count: number
   done: boolean
   code: string
+  heading: 3 | 4
   /** Станция, которая открылась после этого квеста. */
   next: Next | null
 }) {
   return (
-    <section className={styles.task} data-done={done} aria-label={`Квест: ${task.title}`}>
+    <article className={styles.task} data-done={done} aria-label={`Квест: ${task.title}`}>
       <div className={styles.taskHead}>
         <span className={styles.taskLabel}>
           Квест {taskIndex + 1} из {count}
         </span>
-        <h3>{task.title}</h3>
+        <Heading level={heading} className={styles.taskTitle}>
+          {task.title}
+        </Heading>
         {done && (
           <span className="chip chip--ok">
             <CheckIcon size={12} />
@@ -453,8 +455,13 @@ function TaskBox({
       {task.kind === 'build' && <BuildTaskBody stepIndex={stepIndex} taskIndex={taskIndex} task={task} code={code} />}
       {task.kind === 'run' && <RunTaskBody stepIndex={stepIndex} taskIndex={taskIndex} task={task} done={done} />}
       {next && <NextStep next={next} />}
-    </section>
+    </article>
   )
+}
+
+/** Заголовок квеста: в шаге — h3, в бонусе (под заголовком бонуса h3) — h4. */
+function Heading({ level, className, children }: { level: 3 | 4; className: string; children: ReactNode }) {
+  return level === 3 ? <h3 className={className}>{children}</h3> : <h4 className={className}>{children}</h4>
 }
 
 /** Станция после пройденного уровня: шаг, бонус или финиш. */
@@ -476,12 +483,15 @@ function QuestList({
   level,
   codes,
   next,
+  heading,
 }: {
   chainIndex: number
   quests: StepTask[]
   level: LevelState
   codes: string[]
   next: Next | null
+  /** Уровень заголовка квеста: 3 — в шаге, 4 — в бонусе. */
+  heading: 3 | 4
 }) {
   return (
     <ol className={styles.quests} aria-label="Квесты">
@@ -503,6 +513,7 @@ function QuestList({
                 done={level.questsDone[j]}
                 code={codes[task.tab]}
                 next={level.done ? next : null}
+                heading={heading}
               />
             </li>
           )
@@ -729,13 +740,7 @@ const Extra = memo(function Extra({
             <LockIcon size={11} />
             Закрыто
           </span>
-        ) : (
-          state.current >= 0 && (
-            <span className={`chip chip--todo ${styles.extraChip}`}>
-              Квест {state.current + 1} из {extra.quests.length}
-            </span>
-          )
-        )}
+        ) : null}
       </div>
 
       {locked ? (
@@ -743,7 +748,7 @@ const Extra = memo(function Extra({
           {prev ? `Откроется после «${prev.title}».` : 'Откроется, когда соберёшь игру: все шаги вместе с квестами.'}
         </p>
       ) : (
-        <QuestList chainIndex={chainIndex} quests={extra.quests} level={state} codes={codes} next={next} />
+        <QuestList chainIndex={chainIndex} quests={extra.quests} level={state} codes={codes} next={next} heading={4} />
       )}
     </div>
   )

@@ -64,7 +64,7 @@ export async function openQuest(page: Page, n: number, button: string | RegExp, 
   const step = page.locator(`#guide-step-${n}`)
   // под картой видна одна станция: если открыта другая — выбрать шаг на карте
   if (await step.isHidden()) await showStation(page, new RegExp(`^Шаг ${n}:`))
-  const scope = quest ? step.getByRole('region', { name: `Квест: ${quest}` }) : step
+  const scope = quest ? step.getByRole('article', { name: `Квест: ${quest}` }) : step
   await scope.getByRole('button', { name: button }).click()
 }
 
@@ -86,7 +86,7 @@ export async function openBonusQuest(page: Page, n: number, button: string | Reg
   await tab(page, 'Гайд')
   const box = page.locator(`#guide-task-${n}`)
   if (await box.isHidden()) await showStation(page, new RegExp(`^Бонус: ${await bonusTitle(page, n)}`))
-  const scope = quest ? box.getByRole('region', { name: `Квест: ${quest}` }) : box
+  const scope = quest ? box.getByRole('article', { name: `Квест: ${quest}` }) : box
   await scope.getByRole('button', { name: button }).click()
 }
 

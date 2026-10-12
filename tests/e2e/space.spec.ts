@@ -188,7 +188,7 @@ test('зажатая клавиша отпускается, когда игра 
   await page.keyboard.down('ArrowLeft')
   await expect.poll(() => game(page, '[keys[" "], keys.ArrowLeft]')).toEqual([true, true])
   // клик мимо игры: keyup до неё уже не дойдёт — обвязка отпускает клавиши сама
-  await page.getByRole('heading', { level: 1, name: 'Космос' }).click()
+  await page.getByRole('heading', { level: 2, name: 'Космос' }).click()
   await expect.poll(() => game(page, '[keys[" "], keys.ArrowLeft]')).toEqual([false, false])
   await page.keyboard.up(' ')
   await page.keyboard.up('ArrowLeft')

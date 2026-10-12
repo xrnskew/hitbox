@@ -14,6 +14,11 @@ export function Header() {
 
   return (
     <header ref={header} className={styles.header} data-squeeze={squeeze}>
+      {/* имя игры — главный заголовок страницы: виден и когда гайд закрыт вкладкой кода */}
+      <h1 className="visually-hidden">
+        {c.lesson.title}
+        {tutorial ? '' : ' — готовая игра'}
+      </h1>
       <div className={styles.brand}>
         <a className={styles.home} href={homeHref()} title="В главное меню" aria-label="HitBox — в главное меню">
           <LogoCube className={styles.logo} />
@@ -39,11 +44,11 @@ export function Header() {
           type="button"
           className="key key--ghost key--s"
           onClick={() => c.openDialog({ kind: 'resetAll' })}
-          aria-label="Сбросить всё"
-          title="Сбросить всё"
+          aria-label="Сбросить код"
+          title="Сбросить код всех вкладок этой игры"
         >
           <ResetIcon size={13} />
-          <span className={styles.wideOnly}>Сбросить всё</span>
+          <span className={styles.wideOnly}>Сбросить код</span>
         </button>
         <RunButton />
       </div>
@@ -53,7 +58,7 @@ export function Header() {
 
 /**
  * Шапка не помещается в окно — сжимаем её по шагам: 1 — прячем подписи чек-поинтов (остаются кружки),
- * 2 — ещё и текст «Сбросить всё» (остаётся значок), 3 — две строки, как на телефоне. Подписи у игр разной
+ * 2 — ещё и текст «Сбросить код» (остаётся значок), 3 — две строки, как на телефоне. Подписи у игр разной
  * длины, поэтому меряем, а не угадываем ширину экрана. Ширину, которая была нужна до сжатия, запоминаем:
  * окно стало шире — разжимаем обратно. Меряем и после загрузки шрифтов: с ними подписи шире.
  */
@@ -88,7 +93,7 @@ function useSqueeze(ref: RefObject<HTMLElement | null>): number {
 }
 
 /**
- * «Собрать». Есть несобранные изменения — кнопка подпрыгивает. В квесте «Собери игру» всё вокруг
+ * «Собрать». Есть несобранные изменения — вокруг кнопки трижды расходится кольцо, в углу горит точка. В квесте «Собери игру» всё вокруг
  * темнеет, а кнопка светится поверх: первый раз ученик должен её найти.
  */
 function RunButton() {
@@ -130,7 +135,12 @@ function RunButton() {
         <span className={styles.shortcut} aria-hidden="true">
           Ctrl+Enter
         </span>
-        {dirty && !spot && <span className="visually-hidden"> — есть несобранные изменения</span>}
+        {dirty && !spot && (
+          <>
+            <span className={styles.dirtyDot} aria-hidden="true" />
+            <span className="visually-hidden"> — есть несобранные изменения</span>
+          </>
+        )}
       </button>
       {spot && (
         <div className={styles.callout} id="run-callout" role="status">
@@ -175,7 +185,7 @@ function Checkpoints() {
   const counter = useRef<HTMLSpanElement | null>(null)
   const doneKey = done.join()
 
-  // Единственная анимация без действия ученика: чек-поинт пройден — галочка подпрыгивает.
+  // Единственная анимация без действия ученика: чек-поинт пройден — галочка проявляется.
   useEffect(() => {
     const now = doneKey.split(',').map((d) => d === 'true')
     const before = prev.current
@@ -209,6 +219,7 @@ function Checkpoints() {
               data-done={p.done}
               onClick={() => open(p.key, p.target)}
               aria-label={`${p.aria}: ${p.done ? 'сделано' : 'не сделано'}`}
+              title={p.label}
             >
               <span
                 ref={(el) => {
@@ -217,7 +228,16 @@ function Checkpoints() {
                 className={styles.mark}
                 onAnimationEnd={(e) => e.currentTarget.classList.remove(styles.justDone)}
               >
-                {p.done && <CheckIcon size={13} />}
+                {p.done ? (
+                  <CheckIcon size={13} />
+                ) : (
+                  // без подписей (шапка сжата) в кольце шага — его номер
+                  p.kind === 'step' && (
+                    <span className={styles.markNum} aria-hidden="true">
+                      {i + 1}
+                    </span>
+                  )
+                )}
               </span>
               <span className={styles.label}>{p.label}</span>
             </button>
@@ -230,7 +250,12 @@ function Checkpoints() {
         onAnimationEnd={(e) => e.currentTarget.classList.remove(styles.pop)}
         aria-live="polite"
       >
-        {count}/{points.length}
+        <span aria-hidden="true">
+          {count}/{points.length}
+        </span>
+        <span className="visually-hidden">
+          Пройдено {count} из {points.length}
+        </span>
       </span>
     </nav>
   )

@@ -1,4 +1,4 @@
-import { type KeyboardEvent, useMemo } from 'react'
+import { type KeyboardEvent, type RefObject, useEffect, useMemo, useRef, useState } from 'react'
 import { useApp, useController } from '@/app/context.ts'
 import { type TabBadge, tabBadges, type View } from '@/app/controller.ts'
 import { BadgeIcon, BookIcon, SlidersIcon } from './icons.tsx'
@@ -20,6 +20,20 @@ export function TabBar() {
   const runtimeErrorTab = useApp((s) => s.runtimeErrorTab)
   const badges = useMemo(() => tabBadges(c, { codes, syntax, runtimeErrorTab }), [c, codes, syntax, runtimeErrorTab])
 
+  const bar = useRef<HTMLDivElement>(null)
+  const more = useMore(bar)
+
+  // открытая вкладка всегда видна: полоса листается к ней сама (только вбок — страницу не трогаем)
+  useEffect(() => {
+    const el = bar.current
+    const tab = document.getElementById(`tab-${String(view)}`)
+    if (!el || !tab) return
+    const from = tab.offsetLeft - 48
+    const to = from + tab.offsetWidth + 96
+    if (from < el.scrollLeft) el.scrollLeft = from
+    else if (to > el.scrollLeft + el.clientWidth) el.scrollLeft = to - el.clientWidth
+  }, [view])
+
   const views: View[] = [...(c.variant.hasGuide ? (['guide'] as View[]) : []), ...c.variant.tabs.map((_, i) => i)]
 
   // Стрелки ← → переключают вкладки, как в любом списке вкладок.
@@ -37,13 +51,22 @@ export function TabBar() {
   }
 
   return (
-    <div className={styles.bar} role="tablist" aria-label="Вкладки" onKeyDown={onKeyDown}>
+    <div
+      ref={bar}
+      className={styles.bar}
+      role="tablist"
+      aria-label="Вкладки"
+      onKeyDown={onKeyDown}
+      data-more-left={more.left}
+      data-more-right={more.right}
+    >
       {c.variant.hasGuide && (
         <button
           type="button"
           role="tab"
           id="tab-guide"
           aria-selected={view === 'guide'}
+          aria-controls="work-panel"
           tabIndex={view === 'guide' ? 0 : -1}
           className={`key ${styles.tab} ${styles.guide}`}
           onClick={() => c.selectView('guide')}
@@ -61,6 +84,7 @@ export function TabBar() {
             role="tab"
             id={`tab-${i}`}
             aria-selected={view === i}
+            aria-controls="work-panel"
             tabIndex={view === i ? 0 : -1}
             className={`key ${styles.tab}`}
             data-error={badge === 'error' || undefined}
@@ -78,4 +102,27 @@ export function TabBar() {
       })}
     </div>
   )
+}
+
+/** Вкладки не помещаются: с какой стороны есть ещё — там край полосы тает, видно, что её можно листать. */
+function useMore(ref: RefObject<HTMLDivElement | null>) {
+  const [more, setMore] = useState({ left: false, right: false })
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const check = () => {
+      const left = el.scrollLeft > 1
+      const right = el.scrollLeft + el.clientWidth < el.scrollWidth - 1
+      setMore((m) => (m.left === left && m.right === right ? m : { left, right }))
+    }
+    check()
+    el.addEventListener('scroll', check, { passive: true })
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(check)
+    ro?.observe(el)
+    return () => {
+      el.removeEventListener('scroll', check)
+      ro?.disconnect()
+    }
+  }, [ref])
+  return more
 }

@@ -147,7 +147,7 @@ function ResetAllDialog() {
             Отмена
           </button>
           <button type="submit" className="key key--danger" disabled={!ok}>
-            Сбросить всё
+            Сбросить код
           </button>
         </div>
       </form>

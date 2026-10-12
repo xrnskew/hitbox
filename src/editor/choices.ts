@@ -59,7 +59,7 @@ class GapWidget extends WidgetType {
   toDOM() {
     const btn = document.createElement('button')
     btn.type = 'button'
-    btn.className = 'cm-gap key--sun'
+    btn.className = 'cm-choiceGap key--sun'
     btn.textContent = '?'
     btn.title = `${this.question} Нажми и выбери вариант`
     btn.setAttribute('aria-label', `Пропуск. ${this.question} Нажми и выбери вариант`)

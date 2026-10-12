@@ -12,12 +12,12 @@ export function Workspace() {
   const view = useApp((s) => s.view)
 
   return (
-    <section className={styles.workspace} aria-label="Код" data-view={view === 'guide' ? 'guide' : 'code'}>
+    <section className={styles.workspace} aria-label="Окно игры" data-view={view === 'guide' ? 'guide' : 'code'}>
       <div className={styles.strip}>
         <TabBar />
         {view !== 'guide' && <NoteBar tab={view} />}
       </div>
-      <div className={styles.work}>
+      <div className={styles.work} id="work-panel" role="tabpanel" aria-labelledby={`tab-${String(view)}`}>
         <EditorHost />
         {c.variant.hasGuide && (
           <div className={styles.guide} hidden={view !== 'guide'}>
@@ -38,11 +38,7 @@ function NoteBar({ tab }: { tab: number }) {
   return (
     <div className={styles.note}>
       <p>{def.note}</p>
-      <button
-        type="button"
-        className={engine ? 'key key--sun key--s' : 'key key--s'}
-        onClick={() => c.openDialog({ kind: 'reset', tab })}
-      >
+      <button type="button" className="key key--s" onClick={() => c.openDialog({ kind: 'reset', tab })}>
         <ResetIcon size={13} />
         {engine ? 'Сбросить движок' : 'Сбросить вкладку'}
       </button>
@@ -72,7 +68,7 @@ function ToastBody({ toast }: { toast: Toast }) {
   const [paused, setPaused] = useState(false)
   const left = useRef(toast.ms)
 
-  // Пока на уведомление наведена мышь, оно не исчезает: его читают.
+  // Пока на уведомление наведена мышь или на его кнопке фокус, оно не исчезает: его читают.
   useEffect(() => {
     if (paused) return
     const startedAt = Date.now()
@@ -89,12 +85,16 @@ function ToastBody({ toast }: { toast: Toast }) {
       role="status"
       onPointerEnter={() => setPaused(true)}
       onPointerLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) setPaused(false)
+      }}
     >
       <p>{toast.text}</p>
       {toast.undo && (
         <button
           type="button"
-          className="key key--sun key--s"
+          className="key key--s"
           onClick={() => {
             toast.undo?.()
             c.dismissToast()
@@ -127,7 +127,7 @@ function ErrorBar() {
   if (!error) return null
   // пропуск развилки — не ошибка: та же полоса, но тоном «что дальше» и с клавишей к пропуску
   return (
-    <div className={styles.error} data-gap={!!error.gap} role="alert">
+    <div className={styles.error} data-gap={!!error.gap} role={error.gap ? 'status' : 'alert'}>
       {!error.gap && <WarnIcon className={styles.errorIcon} />}
       <p>{error.text}</p>
       {error.tab !== null && (

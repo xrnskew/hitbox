@@ -114,25 +114,25 @@ test('2. шаг 1: герой ездит стрелками, страница н
   await run(page)
   // игра забрала фокус сама
   await expect(page.getByText('Играем: жми')).toBeVisible()
-  await expect(page.getByText('Кликни, чтобы играть')).toHaveCount(0)
+  await expect(page.getByText('Нажми, чтобы играть')).toHaveCount(0)
   // клик в редактор уводит фокус, клик по игре — возвращает
   await page.locator('.cm-content').click()
-  await expect(page.getByText('Кликни, чтобы играть')).toBeVisible()
-  await page.getByText('Кликни, чтобы играть').click()
+  await expect(page.getByText('Нажми, чтобы играть')).toBeVisible()
+  await page.getByText('Нажми, чтобы играть').click()
   await expect(page.getByText('Играем: жми')).toBeVisible()
   const x0 = await game<number>(page, 'playerX')
   await page.keyboard.down('ArrowRight')
   await page.waitForTimeout(300)
   await page.keyboard.up('ArrowRight')
   expect(await game<number>(page, 'playerX')).toBeGreaterThan(x0 + 30)
-  // стрелки на корпусе не забирают фокус: «Кликни, чтобы играть» не всплывает
+  // стрелки на корпусе не забирают фокус: «Нажми, чтобы играть» не всплывает
   const right = page.getByRole('button', { name: 'Вправо' })
   const box = (await right.boundingBox())!
   const x1 = await game<number>(page, 'playerX')
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
   await page.mouse.down()
   await page.waitForTimeout(300)
-  await expect(page.getByText('Кликни, чтобы играть')).toHaveCount(0)
+  await expect(page.getByText('Нажми, чтобы играть')).toHaveCount(0)
   await page.mouse.up()
   expect(await game<number>(page, 'playerX')).toBeGreaterThan(x1 + 30)
   await expect(page.getByText('Играем: жми')).toBeVisible()
@@ -146,8 +146,8 @@ test('шаг 1 по квестам: картинка из окна, подсве
   const step2 = page.locator('#guide-step-2')
   await expect(step2).toHaveAttribute('data-state', 'locked')
   // виден только текущий квест
-  await expect(step1.getByRole('region', { name: /^Квест:/ })).toHaveCount(1)
-  await expect(step1.getByRole('region', { name: 'Квест: Создай героя' })).toBeVisible()
+  await expect(step1.getByRole('article', { name: /^Квест:/ })).toHaveCount(1)
+  await expect(step1.getByRole('article', { name: 'Квест: Создай героя' })).toBeVisible()
 
   // 1. создать героя: кусок всплывает в «Герое»
   await openQuest(page, 1, 'Открыть «Герой»')
@@ -305,14 +305,18 @@ test('развилка: пропуск [?] — окно вариантов, не
   await page.keyboard.press('Escape')
   await expect(dialog).toHaveCount(0)
   // пропуск — жёлтая клавиша «?», не ошибка: без красной волны и без красного значка вкладки
-  await expect(page.locator('.cm-gap')).toHaveCount(1)
+  await expect(page.locator('.cm-choiceGap')).toHaveCount(1)
   await page.waitForTimeout(900)
   await expect(page.locator('.cm-lintRange-error')).toHaveCount(0)
   await expect(page.getByRole('tab', { name: /Герой/ })).not.toHaveAttribute('data-error', 'true')
   // с пропуском игра не собирается — «Показать пропуск» открывает окно
   await run(page)
   await expect(page.getByText('В коде пропуск')).toBeVisible()
-  await page.getByRole('alert').getByRole('button', { name: 'Показать пропуск' }).click()
+  await page
+    .getByRole('status')
+    .filter({ hasText: 'пропуск' })
+    .getByRole('button', { name: 'Показать пропуск' })
+    .click()
   await expect(dialog).toBeVisible()
   // цифра — выбрать сразу: 1 — «+», неверный знак
   await page.keyboard.press('1')
@@ -332,7 +336,7 @@ test('развилка: пропуск [?] — окно вариантов, не
   await page.keyboard.up('ArrowLeft')
   expect(await game<number>(page, 'playerX')).toBeGreaterThan(x0)
   await tab(page, 'Гайд')
-  const check = page.getByRole('region', { name: 'Квест: Проверь стрелки' })
+  const check = page.getByRole('article', { name: 'Квест: Проверь стрелки' })
   await expect(check).toContainText('так и задумано?')
   await expect(check.getByRole('button', { name: 'Показать строку' })).toHaveCount(0)
   // второй раз — что проверить и клавиша к строке; окно помнит, что стоит сейчас
@@ -355,7 +359,7 @@ test('«Всё быстрее»: части функции всплывают в
   await tab(page, 'Гайд')
   const guideTask = page.locator('#guide-step-2')
   // следующий квест прячется, пока не собрано ускорение
-  await expect(guideTask.getByRole('region', { name: /^Квест:/ })).toHaveCount(1)
+  await expect(guideTask.getByRole('article', { name: /^Квест:/ })).toHaveCount(1)
   await expect(guideTask.getByRole('button', { name: /^Добавить:/ })).toHaveCount(0)
   await expect(guideTask.getByRole('list', { name: 'Части функции' }).getByRole('listitem')).toHaveCount(4)
 
@@ -545,7 +549,7 @@ test('8. бомба и звезда: закрыты до сборки игры, 
   await buildGame(page)
   await expect(bomb).toBeVisible()
   await expect(bomb).toHaveAttribute('data-locked', 'false')
-  await expect(bomb.getByRole('region', { name: 'Квест: Картинка бомбы' })).toBeVisible()
+  await expect(bomb.getByRole('article', { name: 'Квест: Картинка бомбы' })).toBeVisible()
   // звезда скрыта, пока под картой бомба, — и закрыта до бомбы
   await expect(star).toHaveAttribute('data-locked', 'true')
 
@@ -613,12 +617,12 @@ test('8. бомба и звезда: закрыты до сборки игры, 
   expect(await game(page, 'lives')).toBe(3)
 })
 
-test('9. «Сбросить всё»: без слова кнопка неактивна, «Вернуть как было» возвращает код', async ({ page }) => {
+test('9. «Сбросить код»: без слова кнопка неактивна, «Вернуть как было» возвращает код', async ({ page }) => {
   await open(page)
   await drawHero(page)
-  await page.getByRole('button', { name: 'Сбросить всё' }).click()
+  await page.getByRole('button', { name: 'Сбросить код' }).click()
   const dialog = page.getByRole('dialog')
-  const confirm = dialog.getByRole('button', { name: 'Сбросить всё' })
+  const confirm = dialog.getByRole('button', { name: 'Сбросить код' })
   await expect(confirm).toBeDisabled()
   await dialog.getByRole('textbox').fill('сбро')
   await expect(confirm).toBeDisabled()

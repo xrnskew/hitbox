@@ -1,5 +1,7 @@
 /* Вкладки — ряд клавиш вверху окна. Открытая вкладка — светлая нажатая клавиша. */
 .bar {
+  /* точка отсчёта для offsetLeft вкладок: полоса листается к открытой */
+  position: relative;
   display: flex;
   align-items: flex-end;
   gap: 8px;
@@ -10,6 +12,19 @@
 
 .bar::-webkit-scrollbar {
   display: none;
+}
+
+/* за краем есть ещё вкладки — край полосы тает (у маски важна только непрозрачность цвета) */
+.bar[data-more-right='true'] {
+  mask-image: linear-gradient(90deg, var(--desk) calc(100% - 48px), transparent);
+}
+
+.bar[data-more-left='true'] {
+  mask-image: linear-gradient(90deg, transparent, var(--desk) 48px);
+}
+
+.bar[data-more-left='true'][data-more-right='true'] {
+  mask-image: linear-gradient(90deg, transparent, var(--desk) 48px, var(--desk) calc(100% - 48px), transparent);
 }
 
 .tab {
