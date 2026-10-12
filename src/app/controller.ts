@@ -22,7 +22,7 @@ import { runner } from '@/sandbox/harness.ts'
 import {
   loadActive,
   loadBest,
-  loadCodes,
+  loadVariantCodes,
   rememberFinishedUnlocked,
   saveActive,
   saveBest,
@@ -111,7 +111,7 @@ export function createController(lesson: Lesson, variant: LessonVariant) {
   const tabs = variant.tabs
   const key = variant.storageKey
 
-  let latestCodes = loadCodes(key, tabs.length) ?? [...variant.initial]
+  let latestCodes = loadVariantCodes(variant) ?? [...variant.initial]
   const savedView = loadActive(key, tabs.length)
   const startView: View = variant.hasGuide ? (savedView ?? 'guide') : typeof savedView === 'number' ? savedView : 0
 

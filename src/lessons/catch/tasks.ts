@@ -13,10 +13,11 @@ import {
   pickPicQuest,
   rightChoice,
   runQuest,
+  settingVar,
   shell,
 } from '../kit.ts'
 import type { BuildTask, EditTask, RunTask } from '../types.ts'
-import { HERO_PIC } from './tabs.ts'
+import { FALL_LINE, HERO_PIC, SPEED_LINE } from './tabs.ts'
 
 // Квесты шагов «Корзинки». Код шага собирается кнопками «Добавить» по кусочкам и в итоге совпадает с STEP_* из tabs.ts.
 // Помощники (куда вставить кусок, как проверить) — общие для всех игр, в lessons/kit.ts.
@@ -89,9 +90,10 @@ export const EDGE_PIECE = choicePiece({
 export const HERO_MOVE_TASK: BuildTask = {
   kind: 'build',
   title: 'Научи героя ездить',
-  text: 'Движок зовёт и `movePlayer()`: она слушает стрелки и двигает героя. Собери её по кусочкам в «Герое». Два места реши сам: там, где [?], нажми и выбери вариант.',
+  text: 'Движок зовёт и `movePlayer()`: она слушает стрелки и двигает героя на `playerSpeed` пикселей. Собери её по кусочкам в «Герое». Два места реши сам: там, где [?], нажми и выбери вариант.',
   tab: 1,
   pieces: [
+    settingVar('Скорость героя', 'playerSpeed', SPEED_LINE()),
     shell('movePlayer'),
     {
       title: 'Стрелка → — едем вправо',
@@ -101,15 +103,15 @@ export const HERO_MOVE_TASK: BuildTask = {
     LEFT_PIECE,
     EDGE_PIECE,
   ],
-  doneText: 'Движение готово! Но герой пока стоит: в «Движке» скорость playerSpeed — 0. Следующий квест — в «Гайде».',
+  doneText: 'Движение готово! Но герой пока стоит: его скорость playerSpeed — 0. Следующий квест — в «Гайде».',
 }
 
 export const SPEED_TASK = numberQuest({
   title: 'Дай герою скорость',
-  text: 'Герой стоит, потому что в «Движке» `playerSpeed` — 0. Поставь число от 5 до 7, нажми «Собрать» и проверь стрелками.',
-  tab: 0,
+  text: 'Герой стоит, потому что его скорость `playerSpeed` — 0. Она прямо тут, в «Герое», над `movePlayer`. Поставь число от 5 до 7, нажми «Собрать» и проверь стрелками.',
+  tab: 1,
   name: 'playerSpeed',
-  hint: 'Это первая строка «Движка»: `var playerSpeed = 0;`. Это сколько пикселей герой проезжает за кадр: 5 — спокойно, 7 — шустро. Попробуй разные!',
+  hint: 'Это строка `var playerSpeed = 0;` во вкладке «Герой». Это сколько пикселей герой проезжает за кадр: 5 — спокойно, 7 — шустро. Попробуй разные!',
 })
 
 /** Проверка развилок героя: засчитана, когда собрана игра со скоростью и верными знаками. */
@@ -121,13 +123,13 @@ export const HERO_CHECK_TASK: RunTask = {
   callout: 'Собери игру и покатайся стрелками.',
   doneText: 'Герой слушается стрелок!',
   isDone: (ran) =>
-    numberAbove0('playerSpeed')(ran[0] ?? '') &&
+    numberAbove0('playerSpeed')(ran[1] ?? '') &&
     rightChoice(LEFT_PIECE, ran[1] ?? '') &&
     rightChoice(EDGE_PIECE, ran[1] ?? ''),
   wrong: {
     // собрал с выбранными вариантами и со скоростью, но где-то не тот
     check: (ran) =>
-      numberAbove0('playerSpeed')(ran[0] ?? '') &&
+      numberAbove0('playerSpeed')(ran[1] ?? '') &&
       [LEFT_PIECE, EDGE_PIECE].every((p) => p.isDone(ran[1] ?? '')) &&
       ![LEFT_PIECE, EDGE_PIECE].every((p) => rightChoice(p, ran[1] ?? '')),
     say: 'Посмотри на игру — так и задумано?',
@@ -146,9 +148,10 @@ const FRAME_TICK = /\bframe\s*=\s*frame\s*\+\s*1\s*;/
 export const ITEMS_MOVE_TASK: BuildTask = {
   kind: 'build',
   title: 'Яблоки падают',
-  text: 'Собери `moveItems()` в «Яблоках»: раз в секунду сверху появляется яблоко, и все яблоки летят вниз.',
+  text: 'Собери `moveItems()` в «Яблоках»: раз в секунду сверху появляется яблоко, и все яблоки летят вниз на `fallSpeed` пикселей.',
   tab: 2,
   pieces: [
+    settingVar('Скорость яблок', 'fallSpeed', FALL_LINE()),
     shell('moveItems'),
     {
       title: 'Считать кадры',
@@ -192,16 +195,15 @@ export const ITEMS_DRAW_TASK: BuildTask = {
       isDone: (code) => has(code, /\bdrawPic\s*\(/),
     },
   ],
-  doneText:
-    'Яблоки нарисованы! Но они висят над экраном: в «Движке» скорость fallSpeed — 0. Следующий квест — в «Гайде».',
+  doneText: 'Яблоки нарисованы! Но они висят над экраном: их скорость fallSpeed — 0. Следующий квест — в «Гайде».',
 }
 
 export const FALL_SPEED_TASK = numberQuest({
   title: 'Дай яблокам скорость',
-  text: 'Яблоки появляются, но висят над экраном: в «Движке» `fallSpeed` — 0. Поставь 3, нажми «Собрать» — и они полетят вниз.',
-  tab: 0,
+  text: 'Яблоки появляются, но висят над экраном: их скорость `fallSpeed` — 0. Она тут же, в «Яблоках», над `moveItems`. Поставь 3, нажми «Собрать» — и они полетят вниз.',
+  tab: 2,
   name: 'fallSpeed',
-  hint: 'Это вторая строка «Движка»: `var fallSpeed   = 0;`. Это сколько пикселей яблоко пролетает за кадр. 3 — в самый раз, больше — ловить труднее.',
+  hint: 'Это строка `var fallSpeed = 0;` во вкладке «Яблоки». Это сколько пикселей яблоко пролетает за кадр. 3 — в самый раз, больше — ловить труднее.',
 })
 
 const SPEEDUP_DECL = decl('speedUp')

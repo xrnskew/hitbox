@@ -1,3 +1,5 @@
+import { type MovedSetting, moveSettings } from '@/core/migrate.ts'
+
 // Сохранение в localStorage. Всё в try/catch: нет хранилища (приватный режим,
 // запрет сайта) — приложение работает без сохранения. Битые данные или не та длина
 // массива — стартуем с исходного кода.
@@ -28,6 +30,16 @@ export function loadCodes(key: string, count: number): string[] | null {
     // битые данные
   }
   return null
+}
+
+/** Код урока из сохранения (старое — с переездом настроек из «Движка») или null, если сохранения нет. */
+export function loadVariantCodes(v: {
+  storageKey: string
+  initial: string[]
+  moved?: MovedSetting[]
+}): string[] | null {
+  const codes = loadCodes(v.storageKey, v.initial.length)
+  return codes && v.moved ? moveSettings(codes, v.moved) : codes
 }
 
 export function saveCodes(key: string, codes: string[]) {

@@ -1,6 +1,7 @@
 import {
   after,
   createPicQuest,
+  before,
   decl,
   drawPicQuest,
   has,
@@ -10,10 +11,21 @@ import {
   pickColorQuest,
   pickPicQuest,
   runQuest,
+  settingVar,
   shell,
 } from '../kit.ts'
 import type { BuildTask } from '../types.ts'
-import { BULLET_COLOR, ENEMY_PIC, SHIP_PIC } from './tabs.ts'
+import {
+  BULLET_COLOR,
+  BULLET_COLOR_LINE,
+  BULLET_SPEED_LINE,
+  ENEMY_PIC,
+  ENEMY_PIC_LINE,
+  ENEMY_SPEED_LINE,
+  RELOAD_LINE,
+  SHIP_PIC,
+  SHIP_SPEED_LINE,
+} from './tabs.ts'
 
 // Квесты Космоса. Код шага собирается кнопками «Добавить» по кусочкам и в итоге совпадает с STEP_* из tabs.ts.
 // Шаги 1 и 3 похожи на то, что ученик уже делал в Корзинке и Птичке; новое — в шагах 2 (второй массив и
@@ -66,6 +78,7 @@ export const SHIP_MOVE_TASK: BuildTask = {
   text: 'Движок зовёт и `moveShip()`: она слушает стрелки и двигает корабль. Это как герой в Корзинке — собери её в «Корабле».',
   tab: 1,
   pieces: [
+    settingVar('Скорость корабля', 'shipSpeed', SHIP_SPEED_LINE()),
     shell('moveShip'),
     {
       title: 'Стрелка ← — летим влево',
@@ -86,15 +99,15 @@ export const SHIP_MOVE_TASK: BuildTask = {
       isDone: (code) => has(code, /\bif\s*\(\s*shipX\s*<\s*0\s*\)/) && has(code, /\bif\s*\(\s*shipX\s*>\s*340\s*\)/),
     },
   ],
-  doneText: 'Полёт готов! Но корабль пока стоит: в «Движке» скорость shipSpeed — 0. Следующий квест — в «Гайде».',
+  doneText: 'Полёт готов! Но корабль пока стоит: его скорость shipSpeed — 0. Следующий квест — в «Гайде».',
 }
 
 export const SHIP_SPEED_TASK = numberQuest({
   title: 'Скорость корабля',
-  text: 'Корабль стоит, потому что в «Движке» `shipSpeed` — 0. Поставь 6, нажми «Собрать» и проверь стрелками.',
-  tab: 0,
+  text: 'Корабль стоит, потому что его скорость `shipSpeed` — 0. Она тут же, в «Корабле», над `moveShip`. Поставь 6, нажми «Собрать» и проверь стрелками.',
+  tab: 1,
   name: 'shipSpeed',
-  hint: 'Это первая строка «Движка»: `var shipSpeed   = 0;`. Это сколько пикселей корабль пролетает за кадр: 4 — спокойно, 8 — очень шустро.',
+  hint: 'Это строка `var shipSpeed = 0;` во вкладке «Корабль». Это сколько пикселей корабль пролетает за кадр: 4 — спокойно, 8 — очень шустро.',
 })
 
 // ===== Шаг 2. Пули: выстрел → полёт → отрисовка → скорость → луч → перезарядка → её время → цвет =====
@@ -126,6 +139,7 @@ export const BULLETS_MOVE_TASK: BuildTask = {
   text: 'Собери `moveBullets()`: каждая пуля летит вверх — это минус к `y`. Улетела за верх — убираем, иначе массив будет расти вечно.',
   tab: 2,
   pieces: [
+    settingVar('Скорость пуль', 'bulletSpeed', BULLET_SPEED_LINE()),
     shell('moveBullets'),
     {
       title: 'Все пули летят вверх',
@@ -150,9 +164,10 @@ export const BULLETS_MOVE_TASK: BuildTask = {
 export const BULLETS_DRAW_TASK: BuildTask = {
   kind: 'build',
   title: 'Нарисуй пули',
-  text: 'Собери `drawBullets()`: пуля — узкий прямоугольник 4 × 14 цветом `bulletColor` из «Движка».',
+  text: 'Собери `drawBullets()`: пуля — узкий прямоугольник 4 × 14 цветом `bulletColor`.',
   tab: 2,
   pieces: [
+    settingVar('Цвет пуль', 'bulletColor', BULLET_COLOR_LINE()),
     shell('drawBullets'),
     {
       title: 'Кисточка цвета пуль',
@@ -168,16 +183,15 @@ export const BULLETS_DRAW_TASK: BuildTask = {
       isDone: (code) => has(code, /\bctx\.fillRect\s*\(\s*bullets\s*\[/),
     },
   ],
-  doneText:
-    'Пули нарисованы! Но они висят у носа корабля: в «Движке» скорость bulletSpeed — 0. Следующий квест — в «Гайде».',
+  doneText: 'Пули нарисованы! Но они висят у носа корабля: их скорость bulletSpeed — 0. Следующий квест — в «Гайде».',
 }
 
 export const BULLET_SPEED_TASK = numberQuest({
   title: 'Скорость пуль',
-  text: 'Пули не летят: в «Движке» `bulletSpeed` — 0. Поставь 9 — пуля должна быть намного быстрее пришельцев.',
-  tab: 0,
+  text: 'Пули не летят: их скорость `bulletSpeed` — 0. Она тут же, в «Пулях», над `moveBullets`. Поставь 9 — пуля должна быть намного быстрее пришельцев.',
+  tab: 2,
   name: 'bulletSpeed',
-  hint: 'Это вторая строка «Движка»: `var bulletSpeed = 0;`. Это сколько пикселей пуля пролетает за кадр. 9 — в самый раз.',
+  hint: 'Это строка `var bulletSpeed = 0;` во вкладке «Пули». Это сколько пикселей пуля пролетает за кадр. 9 — в самый раз.',
 })
 
 /** Пули стреляют, летят и рисуются, но перезарядки ещё нет: в запуске видно сплошной луч. */
@@ -187,7 +201,7 @@ export const BEAM_RUN_TASK = runQuest({
   callout: 'Пули готовы! Нажми «Собрать», потом зажми пробел.',
   doneText: 'Видишь сплошной луч? Пуля вылетает каждый кадр — 60 в секунду. Так нечестно: нужна перезарядка.',
   after: [SHOOT_TASK, BULLETS_MOVE_TASK, BULLETS_DRAW_TASK],
-  also: (ran) => numberAbove0('bulletSpeed')(ran[0] ?? ''),
+  also: (ran) => numberAbove0('bulletSpeed')(ran[2] ?? ''),
 })
 
 export const RELOAD_TASK: BuildTask = {
@@ -196,6 +210,10 @@ export const RELOAD_TASK: BuildTask = {
   text: 'Счётчик `reload` — сколько кадров ещё ждать. Выстрелил — счётчик заряжается, потом каждый кадр уменьшается на 1. Стрелять можно, только когда он 0.',
   tab: 2,
   pieces: [
+    // время перезарядки — над shoot, которая его использует
+    settingVar('Время перезарядки', 'reloadTime', RELOAD_LINE(), (code, text) =>
+      before(code, decl('shoot'), `${text}\n`),
+    ),
     {
       title: 'Ждём, пока счётчик дойдёт до нуля',
       plan: (code) =>
@@ -212,25 +230,24 @@ export const RELOAD_TASK: BuildTask = {
       isDone: (code) => has(code, /\breload\s*=\s*reloadTime\b/),
     },
   ],
-  doneText:
-    'Перезарядка готова! Но луч остался: в «Движке» время перезарядки reloadTime — 0. Следующий квест — в «Гайде».',
+  doneText: 'Перезарядка готова! Но луч остался: время перезарядки reloadTime — 0. Следующий квест — в «Гайде».',
 }
 
 export const RELOAD_TIME_TASK = numberQuest({
   title: 'Время перезарядки',
-  text: 'В «Движке» `reloadTime` — 0: счётчик сразу ноль, и корабль снова стреляет каждый кадр. Поставь 15 — луч станет очередью.',
-  tab: 0,
+  text: 'Время перезарядки `reloadTime` — 0: счётчик сразу ноль, и корабль снова стреляет каждый кадр. Оно тут же, в «Пулях», над `shoot`. Поставь 15 — луч станет очередью.',
+  tab: 2,
   name: 'reloadTime',
-  hint: 'Это третья строка «Движка»: `var reloadTime  = 0;`. Это сколько кадров ждать между выстрелами. 15 — четыре выстрела в секунду, 30 — два.',
+  hint: 'Это строка `var reloadTime = 0;` во вкладке «Пули». Это сколько кадров ждать между выстрелами. 15 — четыре выстрела в секунду, 30 — два.',
 })
 
 export const BULLET_COLOR_TASK = pickColorQuest({
   title: 'Цвет пуль',
-  text: 'Пули жёлтые, потому что так написано в «Движке»: `bulletColor`. Нажми «Сменить» рядом с цветом и выбери свой, потом «Собрать».',
-  tab: 0,
+  text: 'Пули жёлтые, потому что так написано в `bulletColor` — тут же, в «Пулях», над `drawBullets`. Нажми «Сменить» рядом с цветом и выбери свой, потом «Собрать».',
+  tab: 2,
   name: 'bulletColor',
   color: BULLET_COLOR,
-  hint: `Это строка \`var bulletColor = "${BULLET_COLOR}";\` в «Движке». Кнопка «Сменить» с квадратиком цвета — прямо рядом с ней. Можно напечатать и название цвета по-английски: "red", "cyan", "lime".`,
+  hint: `Это строка \`var bulletColor = "${BULLET_COLOR}";\` во вкладке «Пули». Кнопка «Сменить» с квадратиком цвета — прямо рядом с ней. Можно напечатать и название цвета по-английски: "red", "cyan", "lime".`,
 })
 
 // ===== Шаг 3. Пришельцы: волна → отрисовка → скорость → зигзаг → свой пришелец =====
@@ -243,6 +260,7 @@ export const WAVE_TASK: BuildTask = {
   text: 'Собери `moveEnemies()` в «Пришельцах»: когда пришельцев не осталось, цикл `for` сразу добавляет целую волну — каждого в случайном месте, — и все они спускаются вниз.',
   tab: 3,
   pieces: [
+    settingVar('Скорость пришельцев', 'enemySpeed', ENEMY_SPEED_LINE()),
     shell('moveEnemies'),
     {
       title: 'Пришельцев нет — новая волна',
@@ -277,9 +295,10 @@ export const WAVE_TASK: BuildTask = {
 export const ENEMIES_DRAW_TASK: BuildTask = {
   kind: 'build',
   title: 'Нарисуй пришельцев',
-  text: 'Собери `drawEnemies()`: каждый пришелец — картинка `enemyPic` из «Движка».',
+  text: 'Собери `drawEnemies()`: каждый пришелец — картинка `enemyPic`.',
   tab: 3,
   pieces: [
+    settingVar('Картинка пришельца', 'enemyPic', ENEMY_PIC_LINE()),
     shell('drawEnemies'),
     {
       title: 'Каждый пришелец — картинка',
@@ -290,15 +309,15 @@ export const ENEMIES_DRAW_TASK: BuildTask = {
       isDone: (code) => has(code, /\bdrawPic\s*\(\s*enemyPic\b/),
     },
   ],
-  doneText: 'Пришельцы нарисованы! Но они висят: в «Движке» скорость enemySpeed — 0. Следующий квест — в «Гайде».',
+  doneText: 'Пришельцы нарисованы! Но они висят: их скорость enemySpeed — 0. Следующий квест — в «Гайде».',
 }
 
 export const ENEMY_SPEED_TASK = numberQuest({
   title: 'Скорость пришельцев',
-  text: 'Пришельцы висят: в «Движке» `enemySpeed` — 0. Поставь 1, нажми «Собрать» — и волна поползёт вниз.',
-  tab: 0,
+  text: 'Пришельцы висят: их скорость `enemySpeed` — 0. Она тут же, в «Пришельцах», над `moveEnemies`. Поставь 1, нажми «Собрать» — и волна поползёт вниз.',
+  tab: 3,
   name: 'enemySpeed',
-  hint: 'Это четвёртая строка «Движка»: `var enemySpeed  = 0;`. Это сколько пикселей пришельцы спускаются за кадр: `0.5` — медленно (дробные числа — через точку), 1 — в самый раз, 2 — очень быстро.',
+  hint: 'Это строка `var enemySpeed = 0;` во вкладке «Пришельцы». Это сколько пикселей пришельцы спускаются за кадр: `0.5` — медленно (дробные числа — через точку), 1 — в самый раз, 2 — очень быстро.',
 })
 
 const A_DOWN = /\ba\.y\s*(=\s*a\.y\s*\+|\+=)\s*enemySpeed\b/
@@ -325,11 +344,11 @@ export const ZIGZAG_TASK: BuildTask = {
 
 export const ENEMY_PICK_TASK = pickPicQuest({
   title: 'Свой пришелец',
-  text: 'Картинка пришельца записана в «Движке»: `enemyPic`. Нажми «Сменить» рядом с ней и выбери, кто нападает, — например, осьминог или астероид.',
-  tab: 0,
+  text: 'Картинка пришельца записана в `enemyPic` — тут же, в «Пришельцах», над `drawEnemies`. Нажми «Сменить» рядом с ней и выбери, кто нападает, — например, осьминог или астероид.',
+  tab: 3,
   name: 'enemyPic',
   pic: ENEMY_PIC,
-  hint: `Это строка \`var enemyPic    = "${ENEMY_PIC}";\` в «Движке». Кнопка «Сменить» — прямо рядом с ней.`,
+  hint: `Это строка \`var enemyPic = "${ENEMY_PIC}";\` во вкладке «Пришельцы». Кнопка «Сменить» — прямо рядом с ней.`,
 })
 
 // ===== Шаг 4. Попадание: вложенный цикл → очко → прорыв =====

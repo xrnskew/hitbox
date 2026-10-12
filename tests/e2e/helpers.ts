@@ -128,11 +128,12 @@ export async function drawHero(page: Page, pic = 'кот') {
  */
 export async function moveHero(page: Page, speed = '6') {
   await openQuest(page, 1, 'Открыть «Герой»', 'Научи героя ездить')
-  await addPieces(page, 3)
+  // скорость героя, пустая movePlayer, строка вправо; дальше — развилки
+  await addPieces(page, 4)
   await choose(page, '-')
   await addPieces(page, 1)
   await choose(page, '<')
-  await openQuest(page, 1, 'Открыть «Движок»', 'Дай герою скорость')
+  await openQuest(page, 1, 'Открыть «Герой»', 'Дай герою скорость')
   await page.keyboard.type(speed)
   await run(page)
 }
@@ -146,8 +147,8 @@ export async function buildHero(page: Page, pic = 'кот') {
 /** Шаг 2, квесты 1–3: яблоки падают, рисуются, скорость в «Движке». */
 export async function buildApples(page: Page) {
   await openQuest(page, 2, 'Открыть «Яблоки»')
-  await addPieces(page, 4 + 2)
-  await openQuest(page, 2, 'Открыть «Движок»', 'Дай яблокам скорость')
+  await addPieces(page, 5 + 2)
+  await openQuest(page, 2, 'Открыть «Яблоки»', 'Дай яблокам скорость')
   await page.keyboard.type('3')
 }
 
@@ -184,8 +185,8 @@ export async function birdStep1(page: Page) {
   await addPieces(page, 2)
   await run(page)
   await openQuest(page, 1, 'Открыть «Птица»', 'Птица падает')
-  await addPieces(page, 4)
-  await openQuest(page, 1, 'Открыть «Движок»', 'Включи гравитацию')
+  await addPieces(page, 5)
+  await openQuest(page, 1, 'Открыть «Птица»', 'Включи гравитацию')
   await page.keyboard.type('0.4')
 }
 
@@ -198,7 +199,7 @@ export async function spaceStep1(page: Page) {
   await addPieces(page, 2)
   await run(page)
   await openQuest(page, 1, 'Открыть «Корабль»', 'Научи корабль летать')
-  await addPieces(page, 4)
-  await openQuest(page, 1, 'Открыть «Движок»', 'Скорость корабля')
+  await addPieces(page, 5)
+  await openQuest(page, 1, 'Открыть «Корабль»', 'Скорость корабля')
   await page.keyboard.type('6')
 }

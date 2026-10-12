@@ -3,7 +3,8 @@ import type { LessonVariant, TabDef } from '../types.ts'
 
 // Птичка (как Flappy Bird). Новое по сравнению с «Корзинкой» — скорость, а не только позиция:
 // гравитация каждый кадр прибавляется к скорости speedY, а скорость — к высоте birdY.
-// Гравитация, сила взмаха и скорость труб в учебном движке — 0: их ученик ставит сам в квестах.
+// Гравитации, силы взмаха, скорости и цвета труб в движке нет: они во вкладках своих шагов, там ученик их и
+// ставит в квестах. Первый кадр — когда выполнились все вкладки (requestAnimationFrame в конце движка).
 // Строк coinPic и maxSpeed нет: их ученик добавляет в дополнительных заданиях. Птицу и монетки рисует
 // готовая функция drawPic — картинками из набора HitBox.
 // Красивую трубу (шапка, блик, тень) рисует готовая функция движка drawPipe цветом pipeColor —
@@ -11,12 +12,8 @@ import type { LessonVariant, TabDef } from '../types.ts'
 export const PIPE_COLOR = '#5ec639'
 
 export const TUTORIAL_ENGINE = `// ===== НАСТРОЙКИ =====
-var gravity   = 0;
-var flapPower = 0;
-var pipeSpeed = 0;
 var pipeGap   = 150;
 var pipeEvery = 90;
-var pipeColor = "${PIPE_COLOR}";
 
 // ===== СОСТОЯНИЕ ИГРЫ =====
 var birdX = 80;
@@ -103,7 +100,18 @@ function loop() {
   }
   requestAnimationFrame(loop);
 }
-loop();`
+// первый кадр — когда выполнятся все вкладки: их переменные уже будут на месте
+requestAnimationFrame(loop);`
+
+/** Настройки шагов — во вкладках шагов, над функциями, которые их используют. Квесты меняют их числа. */
+export const GRAVITY_LINE = (n: number | string = 0) => `// гравитация: на сколько каждый кадр растёт скорость падения
+var gravity = ${n};`
+export const FLAP_LINE = (n: number | string = 0) => `// сила взмаха: какую скорость вверх даёт взмах
+var flapPower = ${n};`
+export const PIPE_SPEED_LINE = (n: number | string = 0) => `// скорость труб: сколько пикселей они проезжают за кадр
+var pipeSpeed = ${n};`
+export const PIPE_COLOR_LINE = (c: string = `"${PIPE_COLOR}"`) => `// цвет труб — его берёт готовая функция drawPipe
+var pipeColor = ${c};`
 
 export const COIN_LINE = 'var coinPic = "монетка";'
 export const MAX_SPEED_LINE = 'var maxSpeed  = 5;'
@@ -120,6 +128,8 @@ var birdPic = "${BIRD_PIC}";
 function drawBird() {
   drawPic(birdPic, birdX, birdY);
 }
+
+${GRAVITY_LINE()}
 
 function moveBird() {
   // гравитация разгоняет птицу вниз
@@ -138,12 +148,16 @@ function moveBird() {
   }
 }`
 
-export const STEP_FLAP = `function flap() {
+export const STEP_FLAP = `${FLAP_LINE()}
+
+function flap() {
   // взмах: скорость сразу вверх (вверх — это минус)
   speedY = -flapPower;
 }`
 
-const MOVE_PIPES = (push: string, extra = '') => `function movePipes() {
+const MOVE_PIPES = (push: string, extra = '') => `${PIPE_SPEED_LINE()}
+
+function movePipes() {
   frame = frame + 1;${extra}
 
   // раз в pipeEvery кадров — новая труба справа, дырка на случайной высоте
@@ -162,7 +176,9 @@ const MOVE_PIPES = (push: string, extra = '') => `function movePipes() {
   }
 }`
 
-const DRAW_PIPES = (coin = '') => `function drawPipes() {
+const DRAW_PIPES = (coin = '') => `${PIPE_COLOR_LINE()}
+
+function drawPipes() {
   for (var i = 0; i < pipes.length; i++) {
     var p = pipes[i];
     // верхняя труба — до дырки, нижняя — после неё
@@ -239,12 +255,12 @@ ${SPEEDUP_FN}`
 
 // ===== Готовая версия (?finished): монетки, ускорение, всё настроено =====
 
-const FINISHED_ENGINE = TUTORIAL_ENGINE.replace('var gravity   = 0;', 'var gravity   = 0.4;')
-  .replace('var flapPower = 0;', 'var flapPower = 7;')
-  .replace('var pipeSpeed = 0;', 'var pipeSpeed = 2;')
-  .replace('// ===== НАСТРОЙКИ =====', `// ===== НАСТРОЙКИ =====\n${COIN_LINE}\n${MAX_SPEED_LINE}`)
+const FINISHED_ENGINE = TUTORIAL_ENGINE.replace(
+  '// ===== НАСТРОЙКИ =====',
+  `// ===== НАСТРОЙКИ =====\n${COIN_LINE}\n${MAX_SPEED_LINE}`,
+)
 
-const FINISHED_BIRD = STEP_BIRD.replace(`"${BIRD_PIC}"`, '"птичка"')
+const FINISHED_BIRD = STEP_BIRD.replace(`"${BIRD_PIC}"`, '"птичка"').replace(GRAVITY_LINE(), GRAVITY_LINE(0.4))
 
 // ===== Вкладки =====
 
@@ -277,17 +293,34 @@ export const TUTORIAL_CODES: string[] = [
 ]
 
 export const FINISHED_TABS: TabDef[] = [
-  { id: 'engine', title: 'Движок', note: 'Настройки, состояние игры и главный цикл. Числа и картинки можно менять.' },
+  {
+    id: 'engine',
+    title: 'Движок',
+    note: 'Настройки, состояние игры и главный цикл. Ширину дырки и картинки можно менять.',
+  },
   { id: 'bird', title: 'Птица', note: 'Птица: картинка, отрисовка и полёт с гравитацией.' },
   { id: 'flap', title: 'Взмах', note: 'Пробел, стрелка вверх или клик — взмах.' },
   { id: 'pipes', title: 'Трубы', note: 'Трубы с дыркой и монетками. Каждые 10 секунд едут быстрее.' },
   { id: 'hit', title: 'Удар', note: 'Земля и трубы — конец игры. Труба — 1 очко, монетка — 5.' },
 ]
 
-export const FINISHED_CODES: string[] = [FINISHED_ENGINE, FINISHED_BIRD, STEP_FLAP, FAST_PIPES, COIN_HIT]
+export const FINISHED_CODES: string[] = [
+  FINISHED_ENGINE,
+  FINISHED_BIRD,
+  STEP_FLAP.replace(FLAP_LINE(), FLAP_LINE(7)),
+  FAST_PIPES.replace(PIPE_SPEED_LINE(), PIPE_SPEED_LINE(2)),
+  COIN_HIT,
+]
 
 export const TUTORIAL: LessonVariant = {
   id: 'tutorial',
+  // настройки шагов раньше были в «Движке» — в старых сохранениях переезжают во вкладки шагов
+  moved: [
+    { name: 'gravity', tab: 1, was: '0', line: (v) => GRAVITY_LINE(v) },
+    { name: 'flapPower', tab: 2, was: '0', line: (v) => FLAP_LINE(v) },
+    { name: 'pipeSpeed', tab: 3, was: '0', line: (v) => PIPE_SPEED_LINE(v) },
+    { name: 'pipeColor', tab: 3, was: `"${PIPE_COLOR}"`, line: (v) => PIPE_COLOR_LINE(v), above: 'drawPipes' },
+  ],
   // v2: игры рисуют картинками, а не смайликами — старый код с fillText квесты бы не засчитали
   storageKey: 'bird-sandbox-v2',
   tabs: TUTORIAL_TABS,
@@ -308,6 +341,6 @@ export const FINISHED: LessonVariant = {
     'Пролетел трубу — 1 очко. Врезался в трубу или ударился о низ экрана — конец игры.',
     'Монетка в дырке — плюс 5 очков.',
     'Каждые 10 секунд трубы едут быстрее, но не быстрее maxSpeed.',
-    'Гравитацию, силу взмаха, ширину дырки, цвет труб и картинки можно менять в «Движке» и «Птице».',
+    'Гравитация — в «Птице», сила взмаха — во «Взмахе», скорость и цвет труб — в «Трубах», ширина дырки — в «Движке».',
   ],
 }

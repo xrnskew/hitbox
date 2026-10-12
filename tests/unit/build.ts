@@ -41,3 +41,25 @@ export function build(code: string, ...tasks: BuildTask[]): string {
 /** То же, что кнопка «Добавить переменную в «Движок»» в дополнительном задании. */
 export const withSetting = (engine: string, name: string, line: string) =>
   applySettingInsert(engine, planSettingInsert(engine, name, line))
+
+// Настройки шагов (скорости, гравитация, цвета) живут во вкладках шагов. Проверкам удобно задавать их разом:
+// движок с пометкой → tune расставит значения в строки `var name = …;` там, где настройка объявлена.
+
+const TUNE = '// значения настроек для проверки: '
+
+/** Движок с пометкой, какие значения поставить настройкам. Значение — текст JS: `6`, `"#ec407a"`. */
+export const withTune = (engine: string, vars: Record<string, string | number>) =>
+  `${engine}\n${TUNE}${JSON.stringify(vars)}`
+
+/** Код вкладок с настройками из пометки в движке: значение встаёт там, где настройка объявлена. */
+export function tune(codes: string[]): string[] {
+  const at = codes[0]?.lastIndexOf(TUNE) ?? -1
+  if (at < 0) return codes
+  const vars: Record<string, string | number> = JSON.parse(codes[0].slice(at + TUNE.length).split('\n')[0])
+  return codes.map((code) =>
+    Object.entries(vars).reduce(
+      (c, [name, value]) => c.replace(new RegExp(`^(\\s*var\\s+${name}\\s*=\\s*)[^;\\n]*;`, 'm'), `$1${value};`),
+      code,
+    ),
+  )
+}

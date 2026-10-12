@@ -37,18 +37,18 @@ import {
 } from '@/lessons/bird/tasks.ts'
 import { editTarget } from '@/lessons/kit.ts'
 import { LESSONS, lessonById } from '@/lessons/index.ts'
-import { build, withSetting } from './build.ts'
-import { boot } from './sim.ts'
+import { build, tune, withSetting, withTune } from './build.ts'
+import { boot as simBoot } from './sim.ts'
+
+/** Запуск с настройками из пометки движка (engineWith): они встают во вкладки шагов. */
+const boot = (codes: string[]) => simBoot(tune(codes))
 
 /** Бонусы по коду: открыты ли и пройдены ли — как их считает гайд. */
-const extras = (codes: string[]) => lessonProgress({ steps: GUIDE_STEPS, extras: GUIDE_EXTRAS }, codes).extras
+const extras = (codes: string[]) => lessonProgress({ steps: GUIDE_STEPS, extras: GUIDE_EXTRAS }, tune(codes)).extras
 
-/** Движок со своими настройками: по умолчанию всё настроено, как в квестах. */
+/** Движок с пометкой, какие значения поставить настройкам шагов: по умолчанию всё настроено, как в квестах. */
 const engineWith = (gravity = 0.4, flap = 7, pipes = 2, color = '#e53935') =>
-  TUTORIAL_ENGINE.replace('var gravity   = 0;', `var gravity   = ${gravity};`)
-    .replace('var flapPower = 0;', `var flapPower = ${flap};`)
-    .replace('var pipeSpeed = 0;', `var pipeSpeed = ${pipes};`)
-    .replace(`var pipeColor = "${PIPE_COLOR}";`, `var pipeColor = "${color}";`)
+  withTune(TUTORIAL_ENGINE, { gravity, flapPower: flap, pipeSpeed: pipes, pipeColor: JSON.stringify(color) })
 const birdWith = (emoji: string) => STEP_BIRD.replace(`"${BIRD_PIC}"`, `"${emoji}"`)
 /** Вся игра без дополнительных заданий. */
 const fullGame = (engine = engineWith()) => [engine, birdWith('сова'), STEP_FLAP, STEP_PIPES, STEP_HIT]
@@ -99,32 +99,35 @@ describe('Птичка: квесты «поправь сам»', () => {
     expect(bird.split('\n')[at.line - 1].slice(at.from, at.to)).toBe(BIRD_PIC)
   })
 
-  it('гравитация, сила взмаха и скорость труб — 0 в движке; засчитано любое число больше 0', () => {
-    for (const [task, name] of [
-      [GRAVITY_TASK, 'gravity'],
-      [FLAP_POWER_TASK, 'flapPower'],
-      [PIPE_SPEED_TASK, 'pipeSpeed'],
+  it('гравитация, сила взмаха и скорость труб — 0 во вкладках своих шагов; засчитано любое число больше 0', () => {
+    expect(TUTORIAL_ENGINE).not.toMatch(/gravity|flapPower|pipeSpeed|pipeColor\s*=/)
+    for (const [task, name, tab, code] of [
+      [GRAVITY_TASK, 'gravity', 1, STEP_BIRD],
+      [FLAP_POWER_TASK, 'flapPower', 2, STEP_FLAP],
+      [PIPE_SPEED_TASK, 'pipeSpeed', 3, STEP_PIPES],
     ] as const) {
-      expect(task.isDone(TUTORIAL_ENGINE), name).toBe(false)
-      expect(task.isDone(engineWith()), name).toBe(true)
-      const at = editTarget(TUTORIAL_ENGINE, task.target)!
-      const line = TUTORIAL_ENGINE.split('\n')[at.line - 1]
+      expect(task.tab, name).toBe(tab)
+      expect(task.isDone(code), name).toBe(false)
+      expect(task.isDone(tune([engineWith(), code])[1]), name).toBe(true)
+      const at = editTarget(code, task.target)!
+      const line = code.split('\n')[at.line - 1]
       expect(line, name).toContain(name)
       expect(line.slice(at.from, at.to), name).toBe('0')
     }
-    expect(GRAVITY_TASK.isDone(engineWith(0.25))).toBe(true)
+    expect(GRAVITY_TASK.isDone(tune([engineWith(0.25), STEP_BIRD])[1])).toBe(true)
   })
 
-  it('«Цвет труб»: окно цветов у pipeColor в «Движке»; засчитан любой цвет, кроме зелёного', () => {
+  it('«Цвет труб»: окно цветов у pipeColor в «Трубах»; засчитан любой цвет, кроме зелёного', () => {
+    const pipesWith = (c: string) => tune([engineWith(0, 0, 0, c), STEP_PIPES])[1]
     expect(PIPE_COLOR_TASK.picker).toBe('color')
-    expect(PIPE_COLOR_TASK.tab).toBe(0)
-    expect(PIPE_COLOR_TASK.isDone(TUTORIAL_ENGINE)).toBe(false)
-    expect(PIPE_COLOR_TASK.isDone(engineWith(0, 0, 0, '#5EC639'))).toBe(false)
-    expect(PIPE_COLOR_TASK.isDone(engineWith(0, 0, 0, '#ec407a'))).toBe(true)
-    expect(PIPE_COLOR_TASK.isDone(engineWith(0, 0, 0, 'gold'))).toBe(true)
-    expect(PIPE_COLOR_TASK.isDone(engineWith(0, 0, 0, ''))).toBe(false)
-    const at = editTarget(TUTORIAL_ENGINE, PIPE_COLOR_TASK.target)!
-    expect(TUTORIAL_ENGINE.split('\n')[at.line - 1].slice(at.from, at.to)).toBe(PIPE_COLOR)
+    expect(PIPE_COLOR_TASK.tab).toBe(3)
+    expect(PIPE_COLOR_TASK.isDone(STEP_PIPES)).toBe(false)
+    expect(PIPE_COLOR_TASK.isDone(pipesWith('#5EC639'))).toBe(false)
+    expect(PIPE_COLOR_TASK.isDone(pipesWith('#ec407a'))).toBe(true)
+    expect(PIPE_COLOR_TASK.isDone(pipesWith('gold'))).toBe(true)
+    expect(PIPE_COLOR_TASK.isDone(pipesWith(''))).toBe(false)
+    const at = editTarget(STEP_PIPES, PIPE_COLOR_TASK.target)!
+    expect(STEP_PIPES.split('\n')[at.line - 1].slice(at.from, at.to)).toBe(PIPE_COLOR)
   })
 
   it('«Собери игру» засчитан по коду последнего запуска', () => {
@@ -135,7 +138,8 @@ describe('Птичка: квесты «поправь сам»', () => {
 })
 
 describe('Птичка: квесты идут по порядку', () => {
-  const quest = (codes: string[], ran = codes) => currentQuest(GUIDE_STEPS, levelStates(GUIDE_STEPS, codes, ran))
+  const quest = (codes: string[], ran = codes) =>
+    currentQuest(GUIDE_STEPS, levelStates(GUIDE_STEPS, tune(codes), tune(ran)))
 
   it('от создания птицы до последнего квеста', () => {
     const codes = [...TUTORIAL_CODES]
@@ -161,7 +165,7 @@ describe('Птичка: квесты идут по порядку', () => {
     expect(quest(codes)).toEqual({ step: 3, quest: 1 })
     codes[4] = STEP_HIT
     expect(quest(codes)).toBeNull()
-    expect(levelStates(GUIDE_STEPS, codes).every((l) => l.done)).toBe(true)
+    expect(levelStates(GUIDE_STEPS, tune(codes)).every((l) => l.done)).toBe(true)
   })
 
   it('монетки и скорость закрыты до сборки игры; их код сохраняет все квесты', () => {
@@ -169,11 +173,11 @@ describe('Птичка: квесты идут по порядку', () => {
     let engine = withSetting(engineWith(), 'coinPic', COIN_LINE)
     const coins = [engine, birdWith('сова'), STEP_FLAP, COIN_PIPES, COIN_HIT]
     expect(extras(coins).map((x) => x.done)).toEqual([true, false])
-    expect(levelStates(GUIDE_STEPS, coins).every((l) => l.done)).toBe(true)
+    expect(levelStates(GUIDE_STEPS, tune(coins)).every((l) => l.done)).toBe(true)
     engine = withSetting(engine, 'maxSpeed', MAX_SPEED_LINE)
     const fast = [engine, birdWith('сова'), STEP_FLAP, FAST_PIPES, COIN_HIT]
     expect(extras(fast).map((x) => x.done)).toEqual([true, true])
-    expect(levelStates(GUIDE_STEPS, fast).every((l) => l.done)).toBe(true)
+    expect(levelStates(GUIDE_STEPS, tune(fast)).every((l) => l.done)).toBe(true)
   })
 })
 

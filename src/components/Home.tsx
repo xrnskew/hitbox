@@ -4,7 +4,7 @@ import { gameHref } from '@/app/routes.ts'
 import { LESSONS } from '@/lessons/index.ts'
 import { chosenPic } from '@/lessons/kit.ts'
 import type { Lesson } from '@/lessons/types.ts'
-import { loadCodes, loadLastGame } from '@/sandbox/storage.ts'
+import { loadLastGame, loadVariantCodes } from '@/sandbox/storage.ts'
 import { CheckIcon, LogoCube, PlayIcon } from './icons.tsx'
 import { Pic } from './Pic.tsx'
 import styles from './Home.module.css'
@@ -58,7 +58,7 @@ interface Progress {
 
 function progressOf(lesson: Lesson): Progress {
   const v = lesson.tutorial
-  const codes = loadCodes(v.storageKey, v.tabs.length) ?? v.initial
+  const codes = loadVariantCodes(v) ?? v.initial
   const list = stationList(lesson, lessonProgress(lesson, codes))
   const here = hereStation(list)
   const steps = lesson.steps.length

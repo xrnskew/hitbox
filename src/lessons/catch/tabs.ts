@@ -2,12 +2,10 @@ import { DRAW_PIC } from '../engine.ts'
 import type { LessonVariant, TabDef } from '../types.ts'
 
 // Движок учебной версии — из ТЗ, с отличиями: картинку героя ученик создаёт сам во вкладке «Герой»,
-// а скорости героя и яблок — 0: их ученик ставит сам в квестах после движения и после яблок. Строк bombPic
-// и goldPic тоже нет: их ученик добавляет в заданиях про бомбу и звезду. Рисует всё готовая функция drawPic —
-// картинки из набора HitBox вместо смайликов.
+// а скоростей героя и яблок тут нет: они — во вкладках «Герой» и «Яблоки», там ученик их и ставит в квестах.
+// Строк bombPic и goldPic тоже нет: их ученик добавляет в заданиях про бомбу и звезду. Рисует всё готовая
+// функция drawPic — картинки из набора HitBox вместо смайликов. Первый кадр — когда выполнились все вкладки.
 export const TUTORIAL_ENGINE = `// ===== НАСТРОЙКИ =====
-var playerSpeed = 0;
-var fallSpeed   = 0;
 var spawnEvery  = 60;
 var itemPic     = "яблоко";
 
@@ -58,7 +56,8 @@ function loop() {
   }
   requestAnimationFrame(loop);
 }
-loop();`
+// первый кадр — когда выполнятся все вкладки: их переменные уже будут на месте
+requestAnimationFrame(loop);`
 
 export const BOMB_LINE = 'var bombPic     = "бомба";'
 export const GOLD_LINE = 'var goldPic     = "звезда";'
@@ -69,12 +68,22 @@ export const GOLD_LINE = 'var goldPic     = "звезда";'
 /** Картинка героя, с которой начинают. Квест «Выбери героя» — поменять её на свою. */
 export const HERO_PIC = 'улыбка'
 
+/** Скорость героя — во вкладке «Герой», над movePlayer. Квест «Дай герою скорость» меняет 0 на своё число. */
+export const SPEED_LINE = (n: number | string = 0) => `// скорость героя: сколько пикселей он проезжает за кадр
+var playerSpeed = ${n};`
+
+/** Скорость яблок — во вкладке «Яблоки», над moveItems. */
+export const FALL_LINE = (n: number | string = 0) => `// скорость яблок: сколько пикселей они пролетают за кадр
+var fallSpeed = ${n};`
+
 export const STEP_HERO = `// герой — любая картинка
 var playerPic = "${HERO_PIC}";
 
 function drawPlayer() {
   drawPic(playerPic, playerX, playerY);
 }
+
+${SPEED_LINE()}
 
 function movePlayer() {
   if (keys["ArrowLeft"])  playerX = playerX - playerSpeed;
@@ -85,7 +94,9 @@ function movePlayer() {
   if (playerX > 340) playerX = 340;
 }`
 
-export const STEP_APPLES = `function moveItems() {
+export const STEP_APPLES = `${FALL_LINE()}
+
+function moveItems() {
   frame = frame + 1;
 
   // раз в spawnEvery кадров — новое яблоко в случайном месте сверху
@@ -134,7 +145,9 @@ function speedUp() {
 // ===== Бомба и звезда: так выглядит код, когда собраны квесты бонусов (bonus.ts) =====
 // Основа — код после всех шагов: ускорение и 10 очков.
 
-const moveItemsWith = (push: string) => `function moveItems() {
+const moveItemsWith = (push: string) => `${FALL_LINE()}
+
+function moveItems() {
   frame = frame + 1;
   speedUp();
 
@@ -214,11 +227,12 @@ export const GOLD_CATCH = catchWith(`      } else if (items[i].kind === "gold") 
 
 // ===== Готовая версия (?finished): бомба, звезда, +10 очков, ускорение каждые 15 секунд до 8 =====
 
-const FINISHED_ENGINE = TUTORIAL_ENGINE.replace('var playerSpeed = 0;', 'var playerSpeed = 6;')
-  .replace('var fallSpeed   = 0;', 'var fallSpeed   = 3;')
-  .replace('var itemPic     = "яблоко";', `var itemPic     = "яблоко";\n${BOMB_LINE}\n${GOLD_LINE}`)
+const FINISHED_ENGINE = TUTORIAL_ENGINE.replace(
+  'var itemPic     = "яблоко";',
+  `var itemPic     = "яблоко";\n${BOMB_LINE}\n${GOLD_LINE}`,
+)
 
-const FINISHED_HERO = STEP_HERO.replace(`"${HERO_PIC}"`, '"корзинка"')
+const FINISHED_HERO = STEP_HERO.replace(`"${HERO_PIC}"`, '"корзинка"').replace(SPEED_LINE(), SPEED_LINE(6))
 
 // ===== Вкладки =====
 
@@ -252,17 +266,27 @@ export const FINISHED_TABS: TabDef[] = [
   {
     id: 'engine',
     title: 'Движок',
-    note: 'Настройки, состояние игры и главный цикл. Картинки и скорости можно менять.',
+    note: 'Настройки, состояние игры и главный цикл. Картинки можно менять.',
   },
-  { id: 'hero', title: 'Герой', note: 'Корзина: картинка, отрисовка и движение стрелками.' },
+  { id: 'hero', title: 'Герой', note: 'Корзина: картинка, скорость, отрисовка и движение стрелками.' },
   { id: 'apples', title: 'Яблоки', note: 'Предметы: яблоко, бомба или звезда. Каждые 15 секунд всё падает быстрее.' },
   { id: 'catch', title: 'Поимка', note: 'Яблоко — 10 очков, бомба — минус жизнь, звезда — плюс жизнь.' },
 ]
 
-export const FINISHED_CODES: string[] = [FINISHED_ENGINE, FINISHED_HERO, GOLD_APPLES, GOLD_CATCH]
+export const FINISHED_CODES: string[] = [
+  FINISHED_ENGINE,
+  FINISHED_HERO,
+  GOLD_APPLES.replace(FALL_LINE(), FALL_LINE(3)),
+  GOLD_CATCH,
+]
 
 export const TUTORIAL: LessonVariant = {
   id: 'tutorial',
+  // скорости раньше были в «Движке» — в старых сохранениях переезжают во вкладки шагов
+  moved: [
+    { name: 'playerSpeed', tab: 1, was: '0', line: (v) => SPEED_LINE(v) },
+    { name: 'fallSpeed', tab: 2, was: '0', line: (v) => FALL_LINE(v) },
+  ],
   // v2: игры рисуют картинками, а не смайликами — старый код с fillText квесты бы не засчитали
   storageKey: 'catch-sandbox-v2',
   tabs: TUTORIAL_TABS,
@@ -281,6 +305,6 @@ export const FINISHED: LessonVariant = {
     'Бомба: поймал — минус жизнь, упустил — ничего страшного.',
     'Звезда: поймал — плюс жизнь.',
     'Каждые 15 секунд всё падает быстрее, но не быстрее скорости 8.',
-    'Скорости, частоту появления и картинки можно менять в «Движке» и «Герое».',
+    'Скорость героя — в «Герое», скорость яблок — в «Яблоках», картинки и частоту появления — в «Движке».',
   ],
 }

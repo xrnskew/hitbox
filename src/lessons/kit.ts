@@ -86,6 +86,22 @@ export function choicePiece(
 export const rightChoice = (piece: BuildPiece, code: string) =>
   !!piece.choice && piece.choice.find(code)?.value === piece.choice.answer
 
+/**
+ * Настройка шага во вкладке шага: `text` — строка `var name = …;` с комментарием, встаёт в конец вкладки.
+ * Её число (скорость, сила) потом меняет квест прямо в этой же вкладке — не надо искать её в «Движке».
+ */
+export const settingVar = (
+  title: string,
+  name: string,
+  text: string,
+  /** Куда встаёт строка; по умолчанию — в конец вкладки. */
+  where: (code: string, text: string) => InsertPlan | null = (code, t) => append(t)(code),
+): BuildPiece => ({
+  title,
+  plan: (code) => (varLine(code, name) ? null : where(code, text)),
+  isDone: (code) => varLine(code, name) > 0,
+})
+
 /** Новая функция или переменная — в конец вкладки, через пустую строку. */
 export const append =
   (text: string) =>

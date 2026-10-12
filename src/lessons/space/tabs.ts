@@ -3,12 +3,11 @@ import type { LessonVariant, TabDef } from '../types.ts'
 
 // Космос. Новое по сравнению с Корзинкой и Птичкой: два массива сразу (пули и пришельцы), вложенный цикл
 // «каждый пришелец × каждая пуля» и перезарядка — счётчик, который каждый кадр уменьшается до нуля.
-// Скорости и перезарядка в учебном движке — 0: их ученик ставит сам в квестах. Строк boomPic и maxSpeed
-// нет: их ученик добавляет в дополнительных заданиях.
+// Скоростей, перезарядки, цвета пуль и картинки пришельца в движке нет: они во вкладках своих шагов, там ученик
+// их и ставит в квестах. Строк boomPic и maxSpeed нет: их ученик добавляет в дополнительных заданиях.
 //
-// Все массивы — только в «Движке», даже booms из задания «Взрывы». Движок зовёт loop() в своей последней
-// строке, до того как выполнятся другие вкладки: функции из них уже есть, а их var — ещё нет. Массив,
-// объявленный во вкладке ученика, в первом кадре был бы undefined, и игра упала бы на .length.
+// Все массивы — только в «Движке», даже booms из задания «Взрывы»: так их видно в одном месте. Первый кадр —
+// requestAnimationFrame в конце движка, когда выполнились все вкладки и их var уже на месте.
 
 /** Цвет пуль, с которого начинают. Квест «Цвет пуль» — выбрать свой. */
 export const BULLET_COLOR = '#ffd54a'
@@ -16,13 +15,7 @@ export const BULLET_COLOR = '#ffd54a'
 export const ENEMY_PIC = 'пришелец'
 
 export const TUTORIAL_ENGINE = `// ===== НАСТРОЙКИ =====
-var shipSpeed   = 0;
-var bulletSpeed = 0;
-var reloadTime  = 0;
-var enemySpeed  = 0;
 var waveSize    = 5;
-var enemyPic    = "${ENEMY_PIC}";
-var bulletColor = "${BULLET_COLOR}";
 
 // ===== СОСТОЯНИЕ ИГРЫ =====
 var shipX = 170;
@@ -129,7 +122,24 @@ function loop() {
   }
   requestAnimationFrame(loop);
 }
-loop();`
+// первый кадр — когда выполнятся все вкладки: их переменные уже будут на месте
+requestAnimationFrame(loop);`
+
+/** Настройки шагов — во вкладках шагов, над функциями, которые их используют. Квесты меняют их значения. */
+export const SHIP_SPEED_LINE = (n: number | string = 0) => `// скорость корабля: сколько пикселей он пролетает за кадр
+var shipSpeed = ${n};`
+export const RELOAD_LINE = (n: number | string = 0) => `// перезарядка: сколько кадров ждать между выстрелами
+var reloadTime = ${n};`
+export const BULLET_SPEED_LINE = (n: number | string = 0) => `// скорость пуль: сколько пикселей они пролетают за кадр
+var bulletSpeed = ${n};`
+export const BULLET_COLOR_LINE = (c = `"${BULLET_COLOR}"`) => `// цвет пуль
+var bulletColor = ${c};`
+export const ENEMY_SPEED_LINE = (
+  n: number | string = 0,
+) => `// скорость пришельцев: на сколько пикселей они спускаются за кадр
+var enemySpeed = ${n};`
+export const ENEMY_PIC_LINE = (pic = `"${ENEMY_PIC}"`) => `// пришелец — любая картинка
+var enemyPic = ${pic};`
 
 export const BOOM_LINE = 'var boomPic     = "взрыв";'
 export const MAX_SPEED_LINE = 'var maxSpeed    = 2;'
@@ -147,6 +157,8 @@ function drawShip() {
   drawPic(shipPic, shipX, shipY);
 }
 
+${SHIP_SPEED_LINE()}
+
 function moveShip() {
   if (keys["ArrowLeft"])  shipX = shipX - shipSpeed;
   if (keys["ArrowRight"]) shipX = shipX + shipSpeed;
@@ -156,7 +168,9 @@ function moveShip() {
   if (shipX > 340) shipX = 340;
 }`
 
-export const STEP_BULLETS = `function shoot() {
+export const STEP_BULLETS = `${RELOAD_LINE()}
+
+function shoot() {
   // перезарядка: пока счётчик не дошёл до нуля — не стреляем
   if (reload > 0) {
     reload = reload - 1;
@@ -170,6 +184,8 @@ export const STEP_BULLETS = `function shoot() {
   }
 }
 
+${BULLET_SPEED_LINE()}
+
 function moveBullets() {
   // все пули летят вверх
   for (var i = 0; i < bullets.length; i++) {
@@ -182,6 +198,8 @@ function moveBullets() {
   }
 }
 
+${BULLET_COLOR_LINE()}
+
 function drawBullets() {
   ctx.fillStyle = bulletColor;
   for (var i = 0; i < bullets.length; i++) {
@@ -189,7 +207,9 @@ function drawBullets() {
   }
 }`
 
-const ENEMIES = (fast = '', boom = '') => `function moveEnemies() {
+const ENEMIES = (fast = '', boom = '') => `${ENEMY_SPEED_LINE()}
+
+function moveEnemies() {
   // пришельцев не осталось — летит новая волна
   if (enemies.length === 0) {
     wave = wave + 1;${fast}
@@ -209,6 +229,8 @@ const ENEMIES = (fast = '', boom = '') => `function moveEnemies() {
     if (a.x < 0 || a.x > 340) a.dx = -a.dx;
   }
 }
+
+${ENEMY_PIC_LINE()}
 
 function drawEnemies() {
   for (var i = 0; i < enemies.length; i++) {
@@ -281,11 +303,10 @@ export const FAST_ENEMIES = ENEMIES(FAST, BOOM_DRAW)
 
 // ===== Готовая версия (?finished): взрывы, волны всё больше и быстрее, всё настроено =====
 
-const FINISHED_ENGINE = TUTORIAL_ENGINE.replace('var shipSpeed   = 0;', 'var shipSpeed   = 6;')
-  .replace('var bulletSpeed = 0;', 'var bulletSpeed = 9;')
-  .replace('var reloadTime  = 0;', 'var reloadTime  = 12;')
-  .replace('var enemySpeed  = 0;', 'var enemySpeed  = 1;')
-  .replace(`var enemyPic    = "${ENEMY_PIC}";`, `var enemyPic    = "${ENEMY_PIC}";\n${BOOM_LINE}\n${MAX_SPEED_LINE}`)
+const FINISHED_ENGINE = TUTORIAL_ENGINE.replace(
+  'var waveSize    = 5;',
+  `var waveSize    = 5;\n${BOOM_LINE}\n${MAX_SPEED_LINE}`,
+)
 
 // ===== Вкладки =====
 
@@ -296,7 +317,7 @@ export const TUTORIAL_TABS: TabDef[] = [
   {
     id: 'engine',
     title: 'Движок',
-    note: 'Готовый движок: настройки, состояние игры, космос и главный цикл. Настройки сверху можно менять.',
+    note: 'Готовый движок: настройки, состояние игры, космос и главный цикл. Размер волны сверху можно менять.',
   },
   { id: 'ship', title: 'Корабль', step: 1, note: 'Шаг 1: корабль — картинка внизу, летает стрелками ← →.' },
   {
@@ -326,7 +347,7 @@ export const FINISHED_TABS: TabDef[] = [
   {
     id: 'engine',
     title: 'Движок',
-    note: 'Настройки, состояние игры, космос и главный цикл. Числа, цвет и картинки можно менять.',
+    note: 'Настройки, состояние игры, космос и главный цикл. Размер волны можно менять.',
   },
   { id: 'ship', title: 'Корабль', note: 'Корабль: картинка, отрисовка и полёт стрелками.' },
   { id: 'bullets', title: 'Пули', note: 'Пробел — выстрел, между выстрелами перезарядка reloadTime кадров.' },
@@ -342,10 +363,25 @@ export const FINISHED_TABS: TabDef[] = [
   },
 ]
 
-export const FINISHED_CODES: string[] = [FINISHED_ENGINE, STEP_SHIP, STEP_BULLETS, FAST_ENEMIES, BOOM_HITS]
+export const FINISHED_CODES: string[] = [
+  FINISHED_ENGINE,
+  STEP_SHIP.replace(SHIP_SPEED_LINE(), SHIP_SPEED_LINE(6)),
+  STEP_BULLETS.replace(RELOAD_LINE(), RELOAD_LINE(12)).replace(BULLET_SPEED_LINE(), BULLET_SPEED_LINE(9)),
+  FAST_ENEMIES.replace(ENEMY_SPEED_LINE(), ENEMY_SPEED_LINE(1)),
+  BOOM_HITS,
+]
 
 export const TUTORIAL: LessonVariant = {
   id: 'tutorial',
+  // настройки шагов раньше были в «Движке» — в старых сохранениях переезжают во вкладки шагов
+  moved: [
+    { name: 'shipSpeed', tab: 1, was: '0', line: (v) => SHIP_SPEED_LINE(v) },
+    { name: 'reloadTime', tab: 2, was: '0', line: (v) => RELOAD_LINE(v) },
+    { name: 'bulletSpeed', tab: 2, was: '0', line: (v) => BULLET_SPEED_LINE(v) },
+    { name: 'bulletColor', tab: 2, was: `"${BULLET_COLOR}"`, line: (v) => BULLET_COLOR_LINE(v) },
+    { name: 'enemySpeed', tab: 3, was: '0', line: (v) => ENEMY_SPEED_LINE(v) },
+    { name: 'enemyPic', tab: 3, was: `"${ENEMY_PIC}"`, line: (v) => ENEMY_PIC_LINE(v) },
+  ],
   // v2: игры рисуют картинками, а не смайликами — старый код с fillText квесты бы не засчитали
   storageKey: 'space-sandbox-v2',
   tabs: TUTORIAL_TABS,
@@ -363,6 +399,6 @@ export const FINISHED: LessonVariant = {
     'Стрелки ← → — лететь, пробел — стрелять. Пробел можно держать: корабль стреляет сам, с перезарядкой.',
     'Сбил пришельца — 1 очко и взрыв. Пришелец долетел до корабля — минус жизнь, жизней три.',
     'Пришельцы летят волнами, вниз и зигзагом. Каждая новая волна больше и быстрее прошлой, но не быстрее maxSpeed.',
-    'Скорости, перезарядку, размер волны, цвет пуль и картинки можно менять в «Движке» и «Корабле».',
+    'Скорость корабля — в «Корабле», перезарядка, скорость и цвет пуль — в «Пулях», скорость и картинка пришельцев — в «Пришельцах», размер волны — в «Движке».',
   ],
 }

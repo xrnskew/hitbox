@@ -1,4 +1,5 @@
 import type { Choice, ChoiceSpot } from '../core/gaps.ts'
+import type { MovedSetting } from '../core/migrate.ts'
 
 // Описание урока. Ядро ничего не знает про яблоки, птиц и пришельцев: всё, что относится
 // к конкретной игре, лежит в пакете урока (src/lessons/<id>/).
@@ -22,6 +23,8 @@ export interface LessonVariant {
   hasGuide: boolean
   /** Список «Что тут есть» под игрой (только в готовой версии). */
   features?: string[]
+  /** Настройки, которые переехали из «Движка» во вкладки шагов: старые сохранения переносятся при загрузке. */
+  moved?: MovedSetting[]
 }
 
 /**

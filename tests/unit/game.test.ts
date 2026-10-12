@@ -3,17 +3,22 @@ import {
   BOMB_APPLES,
   BOMB_CATCH,
   BOMB_LINE,
+  FALL_LINE,
   FINISHED_CODES,
   GOLD_APPLES,
   GOLD_CATCH,
   GOLD_LINE,
   STEP_APPLES,
   STEP_CATCH,
+  SPEED_LINE,
   STEP_HERO,
   TUTORIAL_CODES,
   TUTORIAL_ENGINE,
 } from '@/lessons/catch/tabs.ts'
 import { withSetting } from './build.ts'
+
+/** Герой со скоростью 3 — она теперь во вкладке «Герой». */
+const hero3 = STEP_HERO.replace(SPEED_LINE(), SPEED_LINE(3))
 import { boot } from './sim.ts'
 
 describe('учебная версия', () => {
@@ -21,14 +26,12 @@ describe('учебная версия', () => {
     const sim = boot(TUTORIAL_CODES)
     sim.tick()
     expect(sim.drawn).toEqual(['Счёт: 0', 'Жизни: 3'])
-    expect(TUTORIAL_ENGINE).not.toMatch(/bombPic|goldPic|playerPic/)
-    expect(sim.peek('playerSpeed')).toBe(0)
-    expect(sim.peek('fallSpeed')).toBe(0)
+    // скоростей в движке нет: они во вкладках «Герой» и «Яблоки»
+    expect(TUTORIAL_ENGINE).not.toMatch(/bombPic|goldPic|playerPic|playerSpeed|fallSpeed/)
   })
 
   it('шаг 1: герой ездит и не уезжает за край', () => {
-    const engine = TUTORIAL_ENGINE.replace('var playerSpeed = 0;', 'var playerSpeed = 3;')
-    const sim = boot([engine, STEP_HERO, TUTORIAL_CODES[2], TUTORIAL_CODES[3]])
+    const sim = boot([TUTORIAL_ENGINE, hero3, TUTORIAL_CODES[2], TUTORIAL_CODES[3]])
     sim.key('ArrowRight', true)
     sim.tick(2)
     expect(sim.peek('playerX')).toBe(170 + 3 * 2)
@@ -41,11 +44,7 @@ describe('учебная версия', () => {
   })
 
   it('шаги 2 и 3: яблоки падают, ловятся и роняются, игра кончается', () => {
-    const engine = TUTORIAL_ENGINE.replace('var playerSpeed = 0;', 'var playerSpeed = 3;').replace(
-      'var fallSpeed   = 0;',
-      'var fallSpeed   = 3;',
-    )
-    const sim = boot([engine, STEP_HERO, STEP_APPLES, STEP_CATCH])
+    const sim = boot([TUTORIAL_ENGINE, hero3, STEP_APPLES.replace(FALL_LINE(), FALL_LINE(3)), STEP_CATCH])
     sim.tick(60)
     expect(sim.peek<unknown[]>('items').length).toBe(1)
 
@@ -146,7 +145,8 @@ describe('готовая версия', () => {
     const sim = boot(FINISHED_CODES)
     sim.peek('lives = 1000000')
     expect(sim.peek('fallSpeed')).toBe(3)
-    sim.tick(899)
+    // первый кадр — по requestAnimationFrame, когда выполнились все вкладки
+    sim.tick(900)
     expect(sim.peek('frame')).toBe(900)
     expect(sim.peek('fallSpeed')).toBe(4)
     sim.tick(900 * 10)

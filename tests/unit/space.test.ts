@@ -48,18 +48,24 @@ import {
   ZIGZAG_TASK,
 } from '@/lessons/space/tasks.ts'
 import type { BuildTask, EditTask } from '@/lessons/types.ts'
-import { apply, build, withSetting } from './build.ts'
-import { boot, type Sim } from './sim.ts'
+import { apply, build, tune, withSetting, withTune } from './build.ts'
+import { boot as simBoot, type Sim } from './sim.ts'
+
+/** Запуск с настройками из пометки движка (engineWith): они встают во вкладки шагов. */
+const boot = (codes: string[]) => simBoot(tune(codes))
 
 /** Бонусы по коду: открыты ли и пройдены ли — как их считает гайд. */
-const extras = (codes: string[]) => lessonProgress({ steps: GUIDE_STEPS, extras: GUIDE_EXTRAS }, codes).extras
+const extras = (codes: string[]) => lessonProgress({ steps: GUIDE_STEPS, extras: GUIDE_EXTRAS }, tune(codes)).extras
 
-/** Движок со своими настройками: по умолчанию всё настроено, как в квестах. */
-const engineWith = (ship = 6, bullet = 9, reload = 15, enemy = 1) =>
-  TUTORIAL_ENGINE.replace('var shipSpeed   = 0;', `var shipSpeed   = ${ship};`)
-    .replace('var bulletSpeed = 0;', `var bulletSpeed = ${bullet};`)
-    .replace('var reloadTime  = 0;', `var reloadTime  = ${reload};`)
-    .replace('var enemySpeed  = 0;', `var enemySpeed  = ${enemy};`)
+/** Движок с пометкой, какие значения поставить настройкам шагов: по умолчанию всё настроено, как в квестах. */
+const engineWith = (ship = 6, bullet = 9, reload = 15, enemy = 1, more: Record<string, string> = {}) =>
+  withTune(TUTORIAL_ENGINE, {
+    shipSpeed: ship,
+    bulletSpeed: bullet,
+    reloadTime: reload,
+    enemySpeed: enemy,
+    ...more,
+  })
 /** Вся игра без дополнительных заданий. */
 const fullGame = (engine = engineWith()) => [engine, STEP_SHIP, STEP_BULLETS, STEP_ENEMIES, STEP_HITS]
 /** Игра со взрывами — после задания 5. */
@@ -191,7 +197,7 @@ describe('Космос: пули и перезарядка', () => {
   })
 
   it('пули рисуются цветом bulletColor', () => {
-    const sim = shooting(engineWith(6, 9, 0).replace('"#ffd54a"', '"#ec407a"'))
+    const sim = shooting(engineWith(6, 9, 0, 1, { bulletColor: '"#ec407a"' }))
     sim.tick(3)
     expect(sim.fills.filter((f) => f === '#ec407a')).toHaveLength(3)
   })
@@ -223,10 +229,10 @@ describe('Космос: волны пришельцев', () => {
     let sim = boot(fullGame(engineWith(6, 9, 15, 0)))
     sim.tick(60)
     expect(n(sim, 'enemies[0].y')).toBe(40)
-    // первый кадр движок делает сам, при запуске: волна уже спустилась на 1
+    // первый кадр — по requestAnimationFrame, когда выполнились все вкладки: за 10 кадров волна спустилась на 10
     sim = boot(fullGame())
     sim.tick(10)
-    expect(n(sim, 'enemies[0].y')).toBe(51)
+    expect(n(sim, 'enemies[0].y')).toBe(50)
   })
 
   it('летят вбок зигзагом: у края разворачиваются', () => {
@@ -244,7 +250,7 @@ describe('Космос: волны пришельцев', () => {
 
   it('новая волна — крупная надпись «Волна N»: полторы секунды, в конце гаснет', () => {
     const sim = boot(fullGame())
-    // волна 1 прилетела ещё при запуске
+    // волна 1 прилетает в первом кадре
     sim.tick()
     let at = sim.drawn.indexOf('Волна 1')
     expect(at).toBeGreaterThan(-1)
@@ -253,7 +259,7 @@ describe('Космос: волны пришельцев', () => {
     sim.tick(70)
     at = sim.drawn.indexOf('Волна 1')
     expect(sim.textAlphas[at]).toBeLessThan(1)
-    sim.tick(19)
+    sim.tick(20)
     expect(sim.drawn).not.toContain('Волна 1')
     sim.peek('enemies = []')
     sim.tick()
@@ -360,8 +366,9 @@ describe('Космос: взрывы, «Волна за волной» и гот
   })
 
   it('каждая новая волна быстрее на 0.25 и на одного пришельца больше, до maxSpeed', () => {
-    // первая волна прилетает уже при запуске — с той скоростью и того размера, что в «Движке»
+    // первая волна прилетает в первом кадре — с той скоростью и того размера, что заданы
     const sim = boot(fastGame())
+    sim.tick()
     expect(sim.peek('[wave, enemySpeed, enemies.length]')).toEqual([1, 1, 5])
     const waves: number[][] = []
     for (let i = 0; i < 6; i++) {
@@ -432,19 +439,20 @@ describe('Космос: сборка по кусочкам даёт код ша�
   })
 
   it('куски, которым некуда встать, ждут своей очереди', () => {
-    // перезарядку некуда вставить, пока нет shoot с выстрелом
+    // время перезарядки встаёт над shoot, а перезарядку некуда вставить, пока нет shoot с выстрелом
     expect(RELOAD_TASK.pieces[0].plan(TUTORIAL_CODES[2])).toBeNull()
+    expect(RELOAD_TASK.pieces[1].plan(TUTORIAL_CODES[2])).toBeNull()
     expect(
-      RELOAD_TASK.pieces[1].plan(build(TUTORIAL_CODES[2], { ...SHOOT_TASK, pieces: SHOOT_TASK.pieces.slice(0, 1) })),
+      RELOAD_TASK.pieces[2].plan(build(TUTORIAL_CODES[2], { ...SHOOT_TASK, pieces: SHOOT_TASK.pieces.slice(0, 1) })),
     ).toBeNull()
     // волну некуда вставить, пока нет if
     expect(
-      WAVE_TASK.pieces[2].plan(build(TUTORIAL_CODES[3], { ...WAVE_TASK, pieces: WAVE_TASK.pieces.slice(0, 1) })),
+      WAVE_TASK.pieces[3].plan(build(TUTORIAL_CODES[3], { ...WAVE_TASK, pieces: WAVE_TASK.pieces.slice(0, 2) })),
     ).toBeNull()
     // очко некуда добавить, пока нет if (popal)
     // зигзаг некуда вставить, пока пришельцы не спускаются
     expect(
-      ZIGZAG_TASK.pieces[0].plan(build(TUTORIAL_CODES[3], { ...WAVE_TASK, pieces: WAVE_TASK.pieces.slice(0, 3) })),
+      ZIGZAG_TASK.pieces[0].plan(build(TUTORIAL_CODES[3], { ...WAVE_TASK, pieces: WAVE_TASK.pieces.slice(0, 4) })),
     ).toBeNull()
     const noIf = build(TUTORIAL_CODES[4], { ...HITS_TASK, pieces: HITS_TASK.pieces.slice(0, 4) })
     expect(SCORE_TASK.pieces[0].plan(noIf)).toBeNull()
@@ -479,7 +487,7 @@ describe('Космос: квесты «поправь сам»', () => {
     const ship = build(TUTORIAL_CODES[1], SHIP_CREATE_TASK)
     for (const [task, code, pic] of [
       [SHIP_PICK_TASK, ship, SHIP_PIC],
-      [ENEMY_PICK_TASK, TUTORIAL_ENGINE, ENEMY_PIC],
+      [ENEMY_PICK_TASK, STEP_ENEMIES, ENEMY_PIC],
     ] as const) {
       expect(task.picker).toBe('pic')
       expect(task.isDone(code)).toBe(false)
@@ -490,35 +498,37 @@ describe('Космос: квесты «поправь сам»', () => {
     }
   })
 
-  it('скорости и перезарядка — 0 в движке; засчитано любое число больше 0, кнопка выделяет число', () => {
-    const tasks: [EditTask, string][] = [
-      [SHIP_SPEED_TASK, 'shipSpeed'],
-      [BULLET_SPEED_TASK, 'bulletSpeed'],
-      [RELOAD_TIME_TASK, 'reloadTime'],
-      [ENEMY_SPEED_TASK, 'enemySpeed'],
+  it('скорости и перезарядка — 0 во вкладках своих шагов; засчитано любое число больше 0, кнопка выделяет число', () => {
+    expect(TUTORIAL_ENGINE).not.toMatch(/shipSpeed|bulletSpeed|reloadTime|enemySpeed|enemyPic|bulletColor/)
+    const tasks: [EditTask, string, number, string][] = [
+      [SHIP_SPEED_TASK, 'shipSpeed', 1, STEP_SHIP],
+      [BULLET_SPEED_TASK, 'bulletSpeed', 2, STEP_BULLETS],
+      [RELOAD_TIME_TASK, 'reloadTime', 2, STEP_BULLETS],
+      [ENEMY_SPEED_TASK, 'enemySpeed', 3, STEP_ENEMIES],
     ]
-    for (const [task, name] of tasks) {
-      expect(task.tab, name).toBe(0)
-      expect(task.isDone(TUTORIAL_ENGINE), name).toBe(false)
-      expect(task.isDone(engineWith()), name).toBe(true)
-      const at = editTarget(TUTORIAL_ENGINE, task.target)!
-      const line = TUTORIAL_ENGINE.split('\n')[at.line - 1]
+    for (const [task, name, tab, code] of tasks) {
+      expect(task.tab, name).toBe(tab)
+      expect(task.isDone(code), name).toBe(false)
+      expect(task.isDone(tune([engineWith(), code])[1]), name).toBe(true)
+      const at = editTarget(code, task.target)!
+      const line = code.split('\n')[at.line - 1]
       expect(line, name).toContain(name)
       expect(line.slice(at.from, at.to), name).toBe('0')
     }
-    expect(ENEMY_SPEED_TASK.isDone(engineWith(6, 9, 15, 0.25))).toBe(true)
+    expect(ENEMY_SPEED_TASK.isDone(tune([engineWith(6, 9, 15, 0.25), STEP_ENEMIES])[1])).toBe(true)
   })
 
   it('«Цвет пуль»: окно цветов у bulletColor; засчитан любой цвет, кроме исходного жёлтого', () => {
     expect(BULLET_COLOR_TASK.picker).toBe('color')
-    const withColor = (c: string) => TUTORIAL_ENGINE.replace(`"${BULLET_COLOR}"`, `"${c}"`)
-    expect(BULLET_COLOR_TASK.isDone(TUTORIAL_ENGINE)).toBe(false)
+    const withColor = (c: string) => STEP_BULLETS.replace(`"${BULLET_COLOR}"`, `"${c}"`)
+    expect(BULLET_COLOR_TASK.tab).toBe(2)
+    expect(BULLET_COLOR_TASK.isDone(STEP_BULLETS)).toBe(false)
     expect(BULLET_COLOR_TASK.isDone(withColor('#FFD54A'))).toBe(false)
     expect(BULLET_COLOR_TASK.isDone(withColor(''))).toBe(false)
     expect(BULLET_COLOR_TASK.isDone(withColor('#ec407a'))).toBe(true)
     expect(BULLET_COLOR_TASK.isDone(withColor('cyan'))).toBe(true)
-    const at = editTarget(TUTORIAL_ENGINE, BULLET_COLOR_TASK.target)!
-    expect(TUTORIAL_ENGINE.split('\n')[at.line - 1].slice(at.from, at.to)).toBe(BULLET_COLOR)
+    const at = editTarget(STEP_BULLETS, BULLET_COLOR_TASK.target)!
+    expect(STEP_BULLETS.split('\n')[at.line - 1].slice(at.from, at.to)).toBe(BULLET_COLOR)
   })
 })
 
@@ -531,7 +541,7 @@ describe('Космос: квесты «нажми «Собрать»»', () => {
 
   it('«Сплошной луч»: в запуске пули стреляют, летят и рисуются, а bulletSpeed больше 0', () => {
     const bullets = build(TUTORIAL_CODES[2], SHOOT_TASK, BULLETS_MOVE_TASK, BULLETS_DRAW_TASK)
-    const ran = (engine: string, tab2: string) => [engine, STEP_SHIP, tab2]
+    const ran = (engine: string, tab2: string) => tune([engine, STEP_SHIP, tab2])
     expect(BEAM_RUN_TASK.isDone(TUTORIAL_CODES)).toBe(false)
     expect(BEAM_RUN_TASK.isDone(ran(engineWith(6, 0), bullets))).toBe(false)
     expect(BEAM_RUN_TASK.isDone(ran(engineWith(6, 9), TUTORIAL_CODES[2]))).toBe(false)
@@ -592,12 +602,11 @@ describe('Космос в меню', () => {
 })
 
 describe('Космос: квесты идут по порядку', () => {
-  const quest = (codes: string[], ran = codes) => currentQuest(GUIDE_STEPS, levelStates(GUIDE_STEPS, codes, ran))
-  /** «Движок» после квестов: скорости, перезарядка, цвет пуль и пришелец. */
+  const quest = (codes: string[], ran = codes) =>
+    currentQuest(GUIDE_STEPS, levelStates(GUIDE_STEPS, tune(codes), tune(ran)))
+  /** Настройки после квестов: скорости, перезарядка, цвет пуль и пришелец (они во вкладках шагов). */
   const engine = (ship = 0, bullet = 0, reload = 0, enemy = 0, color = BULLET_COLOR, alien = ENEMY_PIC) =>
-    engineWith(ship, bullet, reload, enemy)
-      .replace(`"${BULLET_COLOR}"`, `"${color}"`)
-      .replace(`"${ENEMY_PIC}"`, `"${alien}"`)
+    engineWith(ship, bullet, reload, enemy, { bulletColor: JSON.stringify(color), enemyPic: JSON.stringify(alien) })
 
   it('от создания корабля до последнего квеста', () => {
     const codes = [...TUTORIAL_CODES]
@@ -647,7 +656,7 @@ describe('Космос: квесты идут по порядку', () => {
     expect(quest(codes)).toEqual({ step: 3, quest: 2 })
     codes[4] = build(codes[4], BREACH_TASK)
     expect(quest(codes)).toBeNull()
-    expect(levelStates(GUIDE_STEPS, codes).every((l) => l.done)).toBe(true)
+    expect(levelStates(GUIDE_STEPS, tune(codes)).every((l) => l.done)).toBe(true)
   })
 
   it('следующий шаг закрыт, пока не пройден предыдущий', () => {
@@ -659,25 +668,26 @@ describe('Космос: квесты идут по порядку', () => {
     expect(extras(TUTORIAL_CODES).map((x) => x.unlocked)).toEqual([false, false])
     const base = engine(6, 9, 15, 1, '#ec407a', 'осьминог')
     const done = [base, STEP_SHIP.replace(SHIP_PIC, 'тарелка'), STEP_BULLETS, STEP_ENEMIES, STEP_HITS]
-    expect(levelStates(GUIDE_STEPS, done).every((l) => l.done)).toBe(true)
+    expect(levelStates(GUIDE_STEPS, tune(done)).every((l) => l.done)).toBe(true)
     expect(extras(done).map((x) => x.done)).toEqual([false, false])
 
     const booms = boomGame(base)
     booms[1] = done[1]
     expect(extras(booms).map((x) => x.done)).toEqual([true, false])
-    expect(levelStates(GUIDE_STEPS, booms).every((l) => l.done)).toBe(true)
+    expect(levelStates(GUIDE_STEPS, tune(booms)).every((l) => l.done)).toBe(true)
 
     const fast = fastGame(base)
     fast[1] = done[1]
     expect(extras(fast).map((x) => x.done)).toEqual([true, true])
-    expect(levelStates(GUIDE_STEPS, fast).every((l) => l.done)).toBe(true)
+    expect(levelStates(GUIDE_STEPS, tune(fast)).every((l) => l.done)).toBe(true)
   })
 
   it('готовая версия засчитывает все шаги и оба задания', () => {
     const finished = [...FINISHED_CODES]
     finished[1] = finished[1].replace(SHIP_PIC, 'тарелка')
-    finished[0] = finished[0].replace(`"${BULLET_COLOR}"`, '"#ec407a"').replace(`"${ENEMY_PIC}"`, '"👽"')
-    expect(levelStates(GUIDE_STEPS, finished).every((l) => l.done)).toBe(true)
+    finished[2] = finished[2].replace(`"${BULLET_COLOR}"`, '"#ec407a"')
+    finished[3] = finished[3].replace(`"${ENEMY_PIC}"`, '"осьминог"')
+    expect(levelStates(GUIDE_STEPS, tune(finished)).every((l) => l.done)).toBe(true)
     expect(extras(finished).map((x) => x.done)).toEqual([true, true])
   })
 })

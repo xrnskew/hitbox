@@ -40,8 +40,8 @@ test('Птичка: вся игра по квестам, взмах, удар и
   await run(page)
   expect(await game(page, 'birdPic')).toBe('сова')
   await openQuest(page, 1, 'Открыть «Птица»', 'Птица падает')
-  await addPieces(page, 4)
-  await openQuest(page, 1, 'Открыть «Движок»', 'Включи гравитацию')
+  await addPieces(page, 5)
+  await openQuest(page, 1, 'Открыть «Птица»', 'Включи гравитацию')
   await page.keyboard.type('0.4')
   await run(page)
 
@@ -56,17 +56,17 @@ test('Птичка: вся игра по квестам, взмах, удар и
 
   // шаг 2: взмах
   await openQuest(page, 2, 'Открыть «Взмах»')
-  await addPieces(page, 2)
-  await openQuest(page, 2, 'Открыть «Движок»', 'Сила взмаха')
+  await addPieces(page, 3)
+  await openQuest(page, 2, 'Открыть «Взмах»', 'Сила взмаха')
   await page.keyboard.type('7')
 
   // шаг 3: трубы
   await openQuest(page, 3, 'Открыть «Трубы»')
-  await addPieces(page, 5 + 4)
-  await openQuest(page, 3, 'Открыть «Движок»', 'Скорость труб')
+  await addPieces(page, 6 + 5)
+  await openQuest(page, 3, 'Открыть «Трубы»', 'Скорость труб')
   await page.keyboard.type('2')
   // свой цвет труб — из палитры у pipeColor
-  await openQuest(page, 3, 'Выбрать цвет в «Движок»', 'Цвет труб')
+  await openQuest(page, 3, 'Выбрать цвет в «Трубы»', 'Цвет труб')
   const palette = page.getByRole('dialog', { name: 'Выбери цвет' })
   await expect(palette.getByRole('button', { name: 'зелёный', exact: true })).toHaveAttribute('aria-pressed', 'true')
   await palette.getByRole('button', { name: 'розовый', exact: true }).click()

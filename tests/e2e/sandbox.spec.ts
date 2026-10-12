@@ -183,7 +183,7 @@ test('шаг 1 по квестам: картинка из окна, подсве
 
   // 5. движение по кусочкам, в двух местах — развилки: окно вариантов открывается само. Скорость в «Движке» 0, герой стоит
   await openQuest(page, 1, 'Открыть «Герой»')
-  await addPieces(page, 3)
+  await addPieces(page, 4)
   await choose(page, '-')
   await addPieces(page, 1)
   await choose(page, '<')
@@ -199,9 +199,10 @@ test('шаг 1 по квестам: картинка из окна, подсве
 
   // 6. скорость: кнопка выделяет 0, печатаем 6 (советуем 5–7)
   await expect(step1).toContainText('от 5 до 7')
-  await openQuest(page, 1, 'Открыть «Движок»')
+  // скорость — прямо во вкладке «Герой», над movePlayer
+  await openQuest(page, 1, 'Открыть «Герой»', 'Дай герою скорость')
   await page.keyboard.type('6')
-  expect((await savedCodes(page))[0]).toContain('var playerSpeed = 6;')
+  expect((await savedCodes(page))[1]).toContain('var playerSpeed = 6;')
   await expect(page.getByRole('status')).toContainText('«Проверь стрелки»')
   // 7. проверка развилок: «Собрать» не светится поверх затемнения — смотрим на игру; подсветка была один раз,
   // дальше «Собрать» только подпрыгивает
@@ -277,7 +278,7 @@ test('развилка: пропуск [?] — окно вариантов, не
   const errors = await open(page)
   await drawHero(page)
   await openQuest(page, 1, 'Открыть «Герой»', 'Научи героя ездить')
-  await addPieces(page, 2)
+  await addPieces(page, 3)
   // в призраке куска пропуск — пунктирная клетка, в заголовке — «реши сам»
   const slot = page.locator('.cm-slot')
   await expect(slot.locator('.cm-slotGap')).toHaveCount(1)
@@ -306,7 +307,7 @@ test('развилка: пропуск [?] — окно вариантов, не
   await expect(page.locator('.cm-editor').getByRole('button', { name: 'Сменить вариант: сейчас +' })).toBeVisible()
   await addPieces(page, 1)
   await choose(page, '<')
-  await openQuest(page, 1, 'Открыть «Движок»', 'Дай герою скорость')
+  await openQuest(page, 1, 'Открыть «Герой»', 'Дай герою скорость')
   await page.keyboard.type('6')
   // собрал с неверным знаком: ← везёт вправо, под квестом — нейтральное «так и задумано?»
   await run(page)
@@ -446,7 +447,7 @@ test('4. сломанная скобка и ошибка выполнения: �
   await page.keyboard.type('drawBasket();')
   await page.keyboard.press('Escape')
   await run(page)
-  await expect(bar).toContainText('Ошибка во вкладке «Герой», строка 19: drawBasket не найдено')
+  await expect(bar).toContainText('Ошибка во вкладке «Герой», строка 22: drawBasket не найдено')
   await bar.getByRole('button', { name: 'Показать' }).click()
   await expect(page.getByRole('tab', { name: 'Герой' })).toHaveAttribute('aria-selected', 'true')
   await expect(page.locator('.cm-errorLine')).toHaveCount(1)
@@ -455,7 +456,7 @@ test('4. сломанная скобка и ошибка выполнения: �
 test('5–7. сохранение, сброс вкладки не трогает движок, Ctrl+Z и Ctrl+Shift+Z', async ({ page }) => {
   await open(page)
   await drawHero(page)
-  // настройка в «Движке»: playerSpeed = 9
+  // настройка в «Движке»: spawnEvery = 69
   await tab(page, 'Движок')
   await page.locator('.cm-content').click()
   await page.keyboard.press('ControlOrMeta+Home')
@@ -464,23 +465,23 @@ test('5–7. сохранение, сброс вкладки не трогает
   await page.keyboard.press('Backspace')
   await page.keyboard.press('Backspace')
   await page.keyboard.type('9;')
-  expect((await savedCodes(page))[0]).toContain('var playerSpeed = 9;')
+  expect((await savedCodes(page))[0]).toContain('var spawnEvery  = 69;')
 
   await page.reload()
   await expect(page.locator('.cm-editor')).toHaveCount(1)
   let codes = await savedCodes(page)
-  expect(codes[0]).toContain('var playerSpeed = 9;')
+  expect(codes[0]).toContain('var spawnEvery  = 69;')
   expect(codes[1]).toContain('function drawPlayer()')
 
   await tab(page, 'Герой')
   await page.getByRole('button', { name: 'Сбросить вкладку' }).click()
   const dialog = page.getByRole('dialog')
-  await expect(dialog).toContainText('Другие вкладки и настройки в «Движке» останутся как есть')
+  await expect(dialog).toContainText('Другие вкладки и «Движок» останутся как есть')
   await dialog.getByRole('button', { name: 'Сбросить вкладку' }).click()
   await expect(dialog).toBeHidden()
   codes = await savedCodes(page)
   expect(codes[1]).not.toContain('function drawPlayer()')
-  expect(codes[0]).toContain('var playerSpeed = 9;')
+  expect(codes[0]).toContain('var spawnEvery  = 69;')
 
   // фокус вернулся в редактор — Ctrl+Z работает сразу
   expect(await page.evaluate(() => !!document.activeElement?.closest('.cm-editor'))).toBe(true)
@@ -495,7 +496,7 @@ test('сброс движка: отдельное предупреждение, 
   await tab(page, 'Движок')
   await page.getByRole('button', { name: 'Сбросить движок' }).click()
   const dialog = page.getByRole('dialog')
-  await expect(dialog).toContainText('Твои настройки пропадут')
+  await expect(dialog).toContainText('Всё, что ты поменял в «Движке», пропадёт')
   await expect(dialog.getByRole('button', { name: 'Отмена' })).toBeFocused()
   await page.keyboard.press('Escape')
   await expect(dialog).toBeHidden()
@@ -539,8 +540,8 @@ test('8. бомба и звезда: закрыты до сборки игры, 
   await addPieces(page, 1)
   let codes = await savedCodes(page)
   const lines = codes[0].split('\n')
-  expect(lines[5]).toBe('var bombPic     = "бомба";')
-  expect(lines[4]).toBe('var itemPic     = "яблоко";')
+  expect(lines[3]).toBe('var bombPic     = "бомба";')
+  expect(lines[2]).toBe('var itemPic     = "яблоко";')
 
   // 2. яблоко или бомба: makeItem кусочками, а старую строку с items.push — заменить
   await openBonusQuest(page, 4, 'Открыть «Яблоки»')
