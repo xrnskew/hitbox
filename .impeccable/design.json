@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-10T14:38:15.131Z",
+  "generatedAt": "2026-10-12T12:00:00.000Z",
   "title": "Design System: HitBox",
   "extensions": {
     "colorMeta": {
@@ -424,6 +424,21 @@
           "#eaeff8"
         ]
       },
+      "scr-num": {
+        "role": "neutral",
+        "displayName": "Экран, номера строк",
+        "canonical": "#7c8597",
+        "tonalRamp": [
+          "#060b17",
+          "#1e2533",
+          "#3a4252",
+          "#596172",
+          "#7a8394",
+          "#9ca5b8",
+          "#c0c9dd",
+          "#e5efff"
+        ]
+      },
       "shell-white": {
         "role": "shell",
         "displayName": "Корпус белый (очень легко)",
@@ -660,6 +675,26 @@
         "purpose": "Пульс текущей станции."
       },
       {
+        "name": "run-ring",
+        "value": "2.4s ease-out 3",
+        "purpose": "Несобранные изменения: кольцо Солнцем трижды расходится вокруг «Собрать», потом горит точка 12px; кнопка не прыгает."
+      },
+      {
+        "name": "mark-fill-in",
+        "value": "0.32s cubic-bezier(0.2, 0.8, 0.3, 1)",
+        "purpose": "Отметка шага пройдена: галочка проявляется кругом от центра (clip-path) с расходящимся кольцом."
+      },
+      {
+        "name": "console-lift",
+        "value": "0.24s cubic-bezier(0.2, 0.8, 0.3, 1)",
+        "purpose": "Наведение на карточку игры: мини-приставка приподнимается на −4px и поворачивается на −2°."
+      },
+      {
+        "name": "quest-done",
+        "value": "0.3s cubic-bezier(0.2, 0.8, 0.3, 1)",
+        "purpose": "Квест выполнен: карточка сворачивается в зелёный чип, чип проявляется снизу на 4px."
+      },
+      {
         "name": "reduced-motion",
         "value": "@media (prefers-reduced-motion: reduce)",
         "purpose": "Все анимации и переходы гасятся глобально (base.css)."
@@ -673,8 +708,8 @@
       },
       {
         "name": "menu-one-column",
-        "value": "900px",
-        "purpose": "Карточки игр в меню — в одну колонку."
+        "value": "1000px",
+        "purpose": "Карточки игр в меню — по одной в строку, приставка слева."
       },
       {
         "name": "phone",
@@ -696,9 +731,9 @@
       "name": "Клавиша Яблоко",
       "kind": "button",
       "refersTo": "key-apple-l",
-      "description": "Запуск игры: «Собрать», «Играть». Одна главная на виду.",
-      "html": "<button class=\"ds-key-apple\">Собрать</button>",
-      "css": ".ds-key-apple { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 38px; margin-bottom: 3px; padding: 0 16px; border: 1px solid var(--keycap-line); border-radius: var(--radius-key); background: var(--keycap); color: var(--ink); font: 600 14px/1 var(--font-ui); box-shadow: 0 3px 0 var(--keycap-edge); transition: transform 0.07s ease-out, box-shadow 0.07s ease-out, background-color 0.12s; cursor: pointer; min-height: 48px; margin-bottom: 4px; padding: 0 22px; border-radius: 14px; font-size: 16px; border-color: var(--apple-deep); background: var(--apple); color: #fff; box-shadow: 0 4px 0 #5e0f0b; } .ds-key-apple:hover { background: #c9271f; } .ds-key-apple:active { box-shadow: 0 0 0 transparent; transform: translateY(4px); } .ds-key-apple:focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; }"
+      "description": "Запуск игры: «Собрать», «Играть». Одна главная на виду. Есть несобранные изменения — кольцо Солнцем трижды расходится вокруг, потом в углу горит точка 12px; кнопка не прыгает.",
+      "html": "<span class=\"ds-run-wrap\"><button class=\"ds-key-apple\" data-dirty=\"true\">Собрать</button><span class=\"ds-dirty-dot\" aria-hidden=\"true\"></span></span>",
+      "css": ".ds-key-apple { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 38px; margin-bottom: 3px; padding: 0 16px; border: 1px solid var(--keycap-line); border-radius: var(--radius-key); background: var(--keycap); color: var(--ink); font: 600 14px/1 var(--font-ui); box-shadow: 0 3px 0 var(--keycap-edge); transition: transform 0.07s ease-out, box-shadow 0.07s ease-out, background-color 0.12s; cursor: pointer; min-height: 48px; margin-bottom: 4px; padding: 0 22px; border-radius: 14px; font-size: 16px; border-color: var(--apple-deep); background: var(--apple); color: #fff; box-shadow: 0 4px 0 #5e0f0b; } .ds-key-apple:hover { background: #c9271f; } .ds-key-apple:active { box-shadow: 0 0 0 transparent; transform: translateY(4px); } .ds-key-apple:focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; } .ds-run-wrap { position: relative; display: inline-flex; } .ds-key-apple::after { content: ''; position: absolute; inset: -5px; border: 2px solid var(--sun); border-radius: 18px; opacity: 0; pointer-events: none; } .ds-key-apple[data-dirty='true']::after { animation: ds-ring 2.4s ease-out 3; } @keyframes ds-ring { 0%, 20% { opacity: 0; scale: 0.96; } 35% { opacity: 1; } 100% { opacity: 0; scale: 1.12; } } .ds-dirty-dot { position: absolute; top: -4px; right: -4px; width: 12px; height: 12px; border: 2px solid var(--desk); border-radius: 50%; background: var(--sun); animation: ds-dot-in 0.24s cubic-bezier(0.2, 0.8, 0.3, 1); } @keyframes ds-dot-in { from { opacity: 0; scale: 0.4; } } @media (prefers-reduced-motion: reduce) { .ds-key-apple[data-dirty='true']::after, .ds-dirty-dot { animation: none; } }"
     },
     {
       "name": "Клавиша Солнце",
@@ -720,17 +755,17 @@
       "name": "Вкладки",
       "kind": "nav",
       "refersTo": "tab-selected",
-      "description": "Ряд клавиш над редактором; открытая — светлая и нажатая.",
-      "html": "<div class=\"ds-tabs\"><button class=\"ds-tab\" aria-selected=\"true\">Гайд</button><button class=\"ds-tab\">1 Герой</button><button class=\"ds-tab\">2 Яблоки</button></div>",
-      "css": ".ds-tabs { display: flex; gap: 8px; padding: 12px; background: var(--paper); } .ds-tab { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 38px; margin-bottom: 3px; padding: 0 16px; border: 1px solid var(--keycap-line); border-radius: var(--radius-key); background: var(--keycap); color: var(--ink); font: 600 14px/1 var(--font-ui); box-shadow: 0 3px 0 var(--keycap-edge); transition: transform 0.07s ease-out, box-shadow 0.07s ease-out, background-color 0.12s; cursor: pointer; min-height: 40px; padding: 0 14px; color: var(--ink-2); } .ds-tab[aria-selected='true'] { background: var(--ink); border-color: var(--ink); color: #0f1116; box-shadow: 0 0 0 transparent; transform: translateY(3px); } .ds-tab:active { box-shadow: 0 0 0 transparent; transform: translateY(3px); } .ds-tab:focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; }"
+      "description": "Ряд клавиш над редактором; открытая — светлая и нажатая. Полоса листается вбок без полосы прокрутки; за краем есть ещё вкладки — край тает маской 48px.",
+      "html": "<div class=\"ds-tabs\" data-more-right=\"true\"><button class=\"ds-tab\" aria-selected=\"true\">Гайд</button><button class=\"ds-tab\">1 Герой</button><button class=\"ds-tab\">2 Яблоки</button><button class=\"ds-tab\">3 Очки</button><button class=\"ds-tab\">Движок</button></div>",
+      "css": ".ds-tabs { display: flex; align-items: flex-end; gap: 8px; max-width: 360px; padding: 12px 12px 8px; overflow-x: auto; scrollbar-width: none; background: var(--paper); } .ds-tabs::-webkit-scrollbar { display: none; } .ds-tabs[data-more-right='true'] { mask-image: linear-gradient(90deg, var(--desk) calc(100% - 48px), transparent); } .ds-tabs[data-more-left='true'] { mask-image: linear-gradient(90deg, transparent, var(--desk) 48px); } .ds-tabs[data-more-left='true'][data-more-right='true'] { mask-image: linear-gradient(90deg, transparent, var(--desk) 48px, var(--desk) calc(100% - 48px), transparent); } .ds-tab { flex: none; } .ds-tab { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 38px; margin-bottom: 3px; padding: 0 16px; border: 1px solid var(--keycap-line); border-radius: var(--radius-key); background: var(--keycap); color: var(--ink); font: 600 14px/1 var(--font-ui); box-shadow: 0 3px 0 var(--keycap-edge); transition: transform 0.07s ease-out, box-shadow 0.07s ease-out, background-color 0.12s; cursor: pointer; min-height: 40px; padding: 0 14px; color: var(--ink-2); } .ds-tab[aria-selected='true'] { background: var(--ink); border-color: var(--ink); color: #0f1116; box-shadow: 0 0 0 transparent; transform: translateY(3px); } .ds-tab:active { box-shadow: 0 0 0 transparent; transform: translateY(3px); } .ds-tab:focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; }"
     },
     {
       "name": "Чипы",
       "kind": "chip",
       "refersTo": "chip-ok",
-      "description": "«Готово» зелёным, «Квест k из n» — серым.",
-      "html": "<span class=\"ds-chip ds-chip-ok\">Готово</span> <span class=\"ds-chip ds-chip-todo\">Квест 2 из 4</span>",
-      "css": ".ds-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font: 600 13px/1.4 var(--font-ui); } .ds-chip-ok { background: var(--leaf-soft); color: var(--leaf); } .ds-chip-todo { background: var(--paper-2); color: var(--ink-2); }"
+      "description": "«Готово» зелёным, «Закрыто» — серым. Пройденные квесты шага — зелёные чипы в ряд над карточкой текущего.",
+      "html": "<span class=\"ds-chip ds-chip-ok\">Готово</span> <span class=\"ds-chip ds-chip-todo\">Закрыто</span><ul class=\"ds-quests\"><li class=\"ds-quest-done\">Яблоко падает</li><li class=\"ds-quest-done\">Яблоко снова сверху</li></ul>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font: 600 13px/1.4 var(--font-ui); } .ds-chip-ok { background: var(--leaf-soft); color: var(--leaf); } .ds-chip-todo { background: var(--paper-2); color: var(--ink-2); } .ds-quests { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; padding: 0; list-style: none; } .ds-quest-done { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px 4px 10px; border-radius: 999px; background: var(--leaf-soft); color: var(--leaf); font: 600 13px/1.4 var(--font-ui); animation: ds-quest-done 0.3s cubic-bezier(0.2, 0.8, 0.3, 1); } @keyframes ds-quest-done { from { opacity: 0; translate: 0 4px; } } @media (prefers-reduced-motion: reduce) { .ds-quest-done { animation: none; } }"
     },
     {
       "name": "Окно",
@@ -739,6 +774,14 @@
       "description": "Плоское окно на столе: бумага, линия 1px, скругление 22px.",
       "html": "<div class=\"ds-window\"><strong>Шаг 2. Яблоки</strong><p>Сверху падают яблоки. Собери их движение по кусочкам.</p></div>",
       "css": ".ds-window { max-width: 360px; padding: 18px; border: 1px solid var(--rule); border-radius: var(--radius-card); background: var(--paper); color: var(--ink); font: 400 15px/1.5 var(--font-ui); } .ds-window strong { font: 700 21px/1.3 var(--font-display); } .ds-window p { margin: 8px 0 0; color: var(--ink-2); }"
+    },
+    {
+      "name": "Карточка игры",
+      "kind": "card",
+      "refersTo": "window",
+      "description": "Карточка в меню — плоское окно, целиком ссылка своей клавиши. Наведение: рамка светлеет до rule-2, мини-приставку берут со стола (−4px, −2°).",
+      "html": "<a class=\"ds-game-card\" href=\"#\"><div class=\"ds-mini-console\"><div class=\"ds-mini-screen\"></div></div><strong>Птичка</strong></a>",
+      "css": ".ds-game-card { display: flex; flex-direction: column; align-items: center; gap: 16px; max-width: 240px; padding: 28px 24px 24px; border: 1px solid var(--rule); border-radius: var(--radius-card); background: var(--paper); color: var(--ink); text-decoration: none; transition: border-color 0.2s ease-out; } .ds-game-card:hover { border-color: var(--rule-2); } .ds-game-card:focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; } .ds-game-card strong { font: 700 28px/1.1 var(--font-display); letter-spacing: -0.01em; } .ds-mini-console { width: 120px; padding: 10px 10px 14px; border-radius: 20px 20px 30px 30px; background: linear-gradient(165deg, #6fdc86, #34b85a 42%, #229345); box-shadow: inset 0 2px 0 rgba(255,255,255,0.35), inset 0 -4px 0 rgba(0,0,0,0.16), 0 20px 36px -16px rgba(22,112,48,0.55); transform: rotate(-3deg); transition: transform 0.24s cubic-bezier(0.2, 0.8, 0.3, 1); } .ds-game-card:hover .ds-mini-console { transform: translateY(-4px) rotate(-2deg); } .ds-mini-screen { aspect-ratio: 380 / 470; border-radius: 8px; background: #141414; } @media (prefers-reduced-motion: reduce) { .ds-mini-console { transition: none; } }"
     },
     {
       "name": "Станция карты",
@@ -763,6 +806,14 @@
       "description": "Корпус цвета сложности, тёмная рамка и экран 380:470.",
       "html": "<div class=\"ds-console\" data-shell=\"green\"><div class=\"ds-bezel\"><div class=\"ds-screen\"></div></div></div>",
       "css": ".ds-console { width: 220px; padding: 14px 14px 22px; border-radius: 30px 30px 46px 46px; background: linear-gradient(165deg, #6fdc86, #34b85a 42%, #229345); box-shadow: inset 0 2px 0 rgba(255,255,255,0.35), inset 0 -5px 0 rgba(0,0,0,0.16), 0 24px 44px -16px rgba(22,112,48,0.55); } .ds-bezel { padding: 10px 10px 14px; border-radius: 18px 18px 30px 18px; background: #20232c; box-shadow: inset 0 2px 8px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.25); } .ds-screen { aspect-ratio: 380 / 470; border-radius: 8px; background: #141414; }"
+    },
+    {
+      "name": "Плитка рисунка",
+      "kind": "button",
+      "refersTo": "key-s",
+      "description": "Окно выбора рисунка: каждый рисунок — маленькая клавиша 44px с гранью 2px, при нажатии проседает; наведение — светлее фон и рамка, без увеличения; выбранный — рамка Солнцем.",
+      "html": "<div class=\"ds-pick-grid\"><button class=\"ds-pic\" aria-pressed=\"true\" aria-label=\"корзинка\"><span class=\"ds-pic-art\"></span></button><button class=\"ds-pic\" aria-label=\"яблоко\"><span class=\"ds-pic-art\"></span></button><button class=\"ds-pic\" aria-label=\"ракета\"><span class=\"ds-pic-art\"></span></button></div>",
+      "css": ".ds-pick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 6px 4px; max-width: 220px; } .ds-pic { display: grid; place-items: center; height: 44px; margin-bottom: 2px; padding: 0; border: 1px solid var(--keycap-line); border-radius: 10px; background: var(--keycap); box-shadow: 0 2px 0 var(--keycap-edge); cursor: pointer; transition: background-color 0.1s, border-color 0.1s, transform 0.07s ease-out, box-shadow 0.07s ease-out; } .ds-pic:hover { border-color: var(--rule-2); background: var(--keycap-hover); } .ds-pic:active { box-shadow: 0 0 0 var(--keycap-edge); transform: translateY(2px); } .ds-pic:focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; } .ds-pic[aria-pressed='true'] { border-color: var(--sun); } .ds-pic-art { width: 28px; height: 28px; background: conic-gradient(var(--apple) 0 25%, var(--leaf-fill) 0 50%, var(--sun) 0 75%, var(--ink-2) 0); image-rendering: pixelated; }"
     }
   ],
   "narrative": {
@@ -793,7 +844,7 @@
       },
       {
         "name": "The Readable Ink Rule",
-        "body": "Текст — только `ink`, `ink-2`, `scr-ink`, `scr-dim` или цвет акцента на тёмном фоне (не ниже 4.5:1). `ink-3` и `scr-faint` — для декора и зачёркнутого старого кода.",
+        "body": "Текст — только `ink`, `ink-2`, `scr-ink`, `scr-dim` или цвет акцента на тёмном фоне (не ниже 4.5:1). `ink-3` и `scr-faint` — для декора и зачёркнутого старого кода; номера строк — `scr-num` (4.9:1).",
         "section": "colors"
       },
       {
