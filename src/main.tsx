@@ -7,7 +7,7 @@ import { readRoute } from '@/app/routes.ts'
 import { Boot } from '@/components/Boot.tsx'
 import { Home } from '@/components/Home.tsx'
 import { LockScreen } from '@/components/LockScreen.tsx'
-import { isFinishedUnlocked } from '@/sandbox/storage.ts'
+import { isFinishedUnlocked, rememberLastGame } from '@/sandbox/storage.ts'
 import { CATCH_LESSON } from '@/lessons/catch/index.ts'
 import { lessonById } from '@/lessons/index.ts'
 
@@ -50,6 +50,7 @@ if (!lesson) {
   warmGame()
 } else {
   document.title = finished ? `HitBox — готовая игра ${lesson.title}` : `HitBox — ${lesson.title}`
+  if (!finished) rememberLastGame(lesson.id)
   if (finished && !isFinishedUnlocked()) {
     root.render(
       <StrictMode>

@@ -56,8 +56,11 @@ test('главное меню: выбор игры, прогресс и возв
   await expect(page.locator('iframe')).toHaveCount(0)
   const card = page.getByRole('article', { name: 'Корзинка' })
   await expect(card).toContainText('Очень легко')
-  await expect(card).toContainText('Ещё не начата')
-  await expect(page.getByLabel('Скоро')).toContainText('новые игры')
+  await expect(card).toContainText('3 шага · 2 бонуса')
+  // новичку красная клавиша одна — у первой игры; у остальных обычная
+  const apple = page.locator('a.key--apple')
+  await expect(apple).toHaveCount(1)
+  await expect(apple).toHaveAccessibleName('Начать Корзинка')
 
   // «Начать» открывает игру с гайдом
   await card.getByRole('link', { name: 'Начать Корзинка' }).click()
@@ -71,7 +74,9 @@ test('главное меню: выбор игры, прогресс и возв
   // логотип в шапке ведёт в меню; карточка помнит прогресс и героя
   await page.getByRole('link', { name: 'HitBox — в главное меню' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Выбери игру' })).toBeVisible()
-  await expect(card).toContainText('Пройдено 1 из 5')
+  // где остановился: шаг и станция; красная «Продолжить» — у этой игры
+  await expect(card).toContainText('Шаг 2 из 3 · Яблоки падают')
+  await expect(apple).toHaveAccessibleName('Продолжить Корзинка')
   await expect(card.locator('[data-pic="лиса"]')).not.toHaveCount(0)
   await card.getByRole('link', { name: 'Продолжить Корзинка' }).click()
   await waitGame(page)

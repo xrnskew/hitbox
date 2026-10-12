@@ -28,12 +28,13 @@ test('Космос в меню: своя карточка, «Сложно», о�
   await page.goto(app())
   const card = page.getByRole('article', { name: 'Космос' })
   await expect(card).toContainText('Сложно')
-  await expect(card).toContainText('Ещё не начата')
-  // игр нечётное число — место для новой стоит рядом с третьей карточкой, а не под ней
-  const soon = page.getByLabel('Скоро')
-  const [cardBox, soonBox] = [(await card.boundingBox())!, (await soon.boundingBox())!]
-  expect(Math.abs(soonBox.y - cardBox.y)).toBeLessThan(2)
-  expect(soonBox.x).toBeGreaterThan(cardBox.x + cardBox.width)
+  await expect(card).toContainText('2 бонуса')
+  // три игры в ряд по сложности: Космос — справа от Птички, на той же высоте; заглушки «скоро» нет
+  const bird = page.getByRole('article', { name: 'Птичка' })
+  const [cardBox, birdBox] = [(await card.boundingBox())!, (await bird.boundingBox())!]
+  expect(Math.abs(birdBox.y - cardBox.y)).toBeLessThan(2)
+  expect(cardBox.x).toBeGreaterThan(birdBox.x + birdBox.width)
+  await expect(page.getByLabel('Скоро')).toHaveCount(0)
 
   await card.getByRole('link', { name: 'Начать Космос' }).click()
   await expect(page).toHaveURL(/\?game=space$/)

@@ -1,18 +1,22 @@
 import { type CSSProperties, type ReactNode, useMemo } from 'react'
-import { lessonProgress } from '@/core/levels.ts'
+import { hereStation, lessonProgress, stationList } from '@/core/levels.ts'
 import { gameHref } from '@/app/routes.ts'
 import { LESSONS } from '@/lessons/index.ts'
 import { chosenPic } from '@/lessons/kit.ts'
 import type { Lesson } from '@/lessons/types.ts'
-import { loadCodes } from '@/sandbox/storage.ts'
-import { CheckIcon, LockIcon, LogoCube, PlayIcon } from './icons.tsx'
+import { loadCodes, loadLastGame } from '@/sandbox/storage.ts'
+import { CheckIcon, LogoCube, PlayIcon } from './icons.tsx'
 import { Pic } from './Pic.tsx'
 import styles from './Home.module.css'
 
 // Главное меню: выбор игры. Каждая игра — карточка с маленькой приставкой, на экране которой
-// игра идёт сама; прогресс берётся из сохранения этой игры в браузере.
+// игра идёт сама; прогресс берётся из сохранения этой игры в браузере. Красная клавиша на виду одна:
+// «Продолжить» у игры, которую ученик открывал последней (и ещё не прошёл), а новичку — «Начать» у первой.
+// Игры стоят по сложности: белая, зелёная, красная.
 
 export function Home() {
+  const progress = useMemo(() => LESSONS.map(progressOf), [])
+  const main = mainGame(progress)
   return (
     <div className={styles.home}>
       <header className={styles.header}>
@@ -24,19 +28,16 @@ export function Home() {
       <main className={styles.main}>
         <h1 className={styles.title}>Выбери игру</h1>
         <p className={styles.lead}>
-          Игра собирается по квестам: добавляешь кусочек кода, жмёшь «Собрать» — и сразу видишь, что получилось.
+          Игра собирается по квестам: добавляешь кусочек кода, жмёшь «Собрать» — и сразу видишь, что получилось. Игры
+          идут от лёгкой к сложной — начни с первой.
         </p>
 
         <ul className={styles.games} aria-label="Игры">
-          {LESSONS.map((lesson) => (
+          {LESSONS.map((lesson, i) => (
             <li key={lesson.id}>
-              <GameCard lesson={lesson} />
+              <GameCard lesson={lesson} p={progress[i]} main={i === main} />
             </li>
           ))}
-          <li className={styles.soon} aria-label="Скоро">
-            <LockIcon size={22} />
-            <p>Здесь появятся новые игры</p>
-          </li>
         </ul>
 
         <p className={styles.note}>Прогресс каждой игры сохраняется в этом браузере.</p>
@@ -47,7 +48,10 @@ export function Home() {
 
 interface Progress {
   started: boolean
-  marks: { kind: 'step' | 'extra'; done: boolean }[]
+  /** Пройдено всё: шаги и бонусы. */
+  done: boolean
+  /** Где ученик сейчас: станция карты гайда. */
+  here: { title: string; pic: string; label: string }
   hero: string
   item: string | null
 }
@@ -55,26 +59,45 @@ interface Progress {
 function progressOf(lesson: Lesson): Progress {
   const v = lesson.tutorial
   const codes = loadCodes(v.storageKey, v.tabs.length) ?? v.initial
-  const { levels, extras } = lessonProgress(lesson, codes)
+  const list = stationList(lesson, lessonProgress(lesson, codes))
+  const here = hereStation(list)
+  const steps = lesson.steps.length
   return {
     started: codes.some((c, i) => c !== v.initial[i]),
-    marks: [
-      ...levels.map((l) => ({ kind: 'step' as const, done: l.done })),
-      ...extras.map((x) => ({ kind: 'extra' as const, done: x.done })),
-    ],
+    done: here.kind === 'finish' && here.state === 'done',
+    here: {
+      title: here.title,
+      pic: here.pic,
+      label: here.kind === 'step' ? `Шаг ${here.n} из ${steps}` : here.kind === 'extra' ? 'Бонус' : 'Финиш',
+    },
     hero: chosenPic(codes, lesson.card.heroVar) ?? lesson.card.hero,
     item: (lesson.card.itemVar && chosenPic(codes, lesson.card.itemVar)) ?? lesson.card.item ?? null,
   }
 }
 
-function GameCard({ lesson }: { lesson: Lesson }) {
-  const p = useMemo(() => progressOf(lesson), [lesson])
-  const done = p.marks.filter((m) => m.done).length
-  const all = done === p.marks.length
+/** У какой игры красная клавиша: последняя открытая и не пройденная, иначе первая начатая и не пройденная, иначе первая. */
+function mainGame(progress: Progress[]): number {
+  const open = (i: number) => i >= 0 && progress[i].started && !progress[i].done
+  const last = LESSONS.findIndex((l) => l.id === loadLastGame())
+  if (open(last)) return last
+  const started = progress.findIndex((_, i) => open(i))
+  if (started >= 0) return started
+  const fresh = progress.findIndex((p) => !p.done)
+  return fresh >= 0 ? fresh : 0
+}
+
+/** «3 шага», «5 шагов», «1 бонус». */
+function count(n: number, [one, few, many]: [string, string, string]): string {
+  const d = n % 10
+  const word = n % 100 >= 11 && n % 100 <= 14 ? many : d === 1 ? one : d >= 2 && d <= 4 ? few : many
+  return `${n} ${word}`
+}
+
+function GameCard({ lesson, p, main }: { lesson: Lesson; p: Progress; main: boolean }) {
   const id = `game-${lesson.id}`
 
   return (
-    <article className={styles.card} aria-labelledby={id}>
+    <article className={styles.card} aria-labelledby={id} data-main={main}>
       {lesson.card.scene === 'bird' ? (
         <BirdAttract color={lesson.consoleColor} bird={p.hero} />
       ) : lesson.card.scene === 'space' ? (
@@ -94,26 +117,26 @@ function GameCard({ lesson }: { lesson: Lesson }) {
         </p>
         <p className={styles.blurb}>{lesson.card.blurb}</p>
 
-        <div className={styles.progress}>
-          <ol className={styles.marks} aria-hidden="true">
-            {p.marks.map((m, i) => (
-              <li key={i} data-kind={m.kind} data-done={m.done}>
-                {m.done && <CheckIcon size={11} />}
-              </li>
-            ))}
-          </ol>
-          <span>
-            {done === 0
-              ? p.started
-                ? 'Начата'
-                : 'Ещё не начата'
-              : all
-                ? 'Пройдена целиком'
-                : `Пройдено ${done} из ${p.marks.length}`}
-          </span>
-        </div>
+        <p className={styles.where}>
+          {p.done ? (
+            <span className="chip chip--ok">
+              <CheckIcon size={12} />
+              Пройдена целиком
+            </span>
+          ) : p.started ? (
+            <span className="chip chip--todo">
+              <Pic name={p.here.pic} className={styles.wherePic} />
+              {p.here.label} · {p.here.title}
+            </span>
+          ) : (
+            <span className="chip chip--todo">
+              {count(lesson.steps.length, ['шаг', 'шага', 'шагов'])} ·{' '}
+              {count(lesson.extras.length, ['бонус', 'бонуса', 'бонусов'])}
+            </span>
+          )}
+        </p>
 
-        <a className={`key key--apple key--l ${styles.play}`} href={gameHref(lesson.id)}>
+        <a className={`key ${main ? 'key--apple' : ''} key--l ${styles.play}`} href={gameHref(lesson.id)}>
           <PlayIcon size={15} />
           {p.started ? 'Продолжить' : 'Начать'}
           <span className="visually-hidden"> {lesson.title}</span>

@@ -17,7 +17,7 @@ test('Птичка в меню: своя карточка, открываетс�
   await page.goto(app())
   const card = page.getByRole('article', { name: 'Птичка' })
   await expect(card).toContainText('Легко')
-  await expect(card).toContainText('Ещё не начата')
+  await expect(card).toContainText('4 шага · 2 бонуса')
   await card.getByRole('link', { name: 'Начать Птичка' }).click()
   await expect(page).toHaveURL(/\?game=bird$/)
   await waitGame(page)

@@ -74,3 +74,14 @@ export function rememberFinishedUnlocked() {
     // нет хранилища — пароль спросят ещё раз
   }
 }
+
+const LAST_GAME_KEY = 'hitbox-last-game'
+
+/** Игра, которую ученик открывал последней: в меню «Продолжить» — у неё. */
+export function loadLastGame(): string | null {
+  return read(LAST_GAME_KEY)
+}
+
+export function rememberLastGame(id: string) {
+  write(LAST_GAME_KEY, id)
+}
