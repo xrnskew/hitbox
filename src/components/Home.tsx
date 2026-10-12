@@ -7,6 +7,7 @@ import type { Lesson } from '@/lessons/types.ts'
 import { loadLastGame, loadVariantCodes } from '@/sandbox/storage.ts'
 import { CheckIcon, LogoCube, PlayIcon } from './icons.tsx'
 import { Pic } from './Pic.tsx'
+import { WipeAll } from './WipeAll.tsx'
 import styles from './Home.module.css'
 
 // Главное меню: выбор игры. Каждая игра — карточка с маленькой приставкой, на экране которой
@@ -40,7 +41,10 @@ export function Home() {
           ))}
         </ul>
 
-        <p className={styles.note}>Прогресс каждой игры сохраняется в этом браузере.</p>
+        <footer className={styles.footer}>
+          <p className={styles.note}>Прогресс каждой игры сохраняется в этом браузере.</p>
+          <WipeAll />
+        </footer>
       </main>
     </div>
   )

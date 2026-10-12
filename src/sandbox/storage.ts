@@ -97,3 +97,21 @@ export function loadLastGame(): string | null {
 export function rememberLastGame(id: string) {
   write(LAST_GAME_KEY, id)
 }
+
+/**
+ * Стереть всё, что сайт хранит в браузере: код и вкладки всех игр, рекорды, последнюю игру, открытую готовую.
+ * `keys` — ключи кода (storageKey всех вариантов всех игр).
+ */
+export function wipeAll(keys: string[]) {
+  try {
+    for (const key of keys) for (const k of [key, `${key}:active`, `${key}:best`]) localStorage.removeItem(k)
+    localStorage.removeItem(LAST_GAME_KEY)
+  } catch {
+    // нет хранилища — и стирать нечего
+  }
+  try {
+    sessionStorage.removeItem(UNLOCK_KEY)
+  } catch {
+    // нет хранилища
+  }
+}

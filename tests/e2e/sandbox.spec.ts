@@ -82,6 +82,20 @@ test('главное меню: выбор игры, прогресс и возв
   await waitGame(page)
   expect(await game(page, 'playerPic')).toBe('лиса')
 
+  // временная «Сбросить всё» в меню: кнопка в окне ждёт код 1001, потом прогресс всех игр пропадает
+  await page.goto(app())
+  await page.getByRole('button', { name: 'Сбросить всё' }).click()
+  const wipe = page.getByRole('dialog', { name: 'Сбросить все игры?' })
+  const confirm = wipe.getByRole('button', { name: 'Сбросить всё' })
+  await expect(confirm).toBeDisabled()
+  await wipe.getByLabel(/впиши код/).fill('1000')
+  await expect(confirm).toBeDisabled()
+  await wipe.getByLabel(/впиши код/).fill('1001')
+  await confirm.click()
+  await expect(card).toContainText('3 шага · 2 бонуса')
+  await expect(apple).toHaveAccessibleName('Начать Корзинка')
+  expect(await page.evaluate(() => Object.keys(localStorage))).toEqual([])
+
   // неизвестная игра в адресе — меню
   await page.goto(`${app()}?game=nope`)
   await expect(page.getByRole('heading', { level: 1, name: 'Выбери игру' })).toBeVisible()
